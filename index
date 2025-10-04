@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Orçamentista Vidraçaria da Familia — Offline</title>
+<style>
+  :root{
+    --accent:#0056b3;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --bg:#f4f7f9;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:#111}
+  .wrap{max-width:1100px;margin:16px auto;padding:12px}
+  header.card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);display:flex;flex-direction:column;gap:6px}
+  header h1{margin:0;color:var(--accent);font-size:1.25rem}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+  @media(min-width:900px){ .grid{grid-template-columns:2fr 1fr} }
+  .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+  label{display:block;margin-bottom:6px;font-weight:600;color:#111}
+  select,input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+  .muted{color:var(--muted);font-size:0.9rem}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button.btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #e5e7eb;color:var(--accent)}
+  .item-row{display:flex;gap:8px;flex-wrap:wrap;padding:10px;border-radius:10px;border:1px solid #eef2f6;background:#fbfdff}
+  .item-row > *{flex:1 1 120px;min-width:120px}
+  .item-row button{flex:0 0 auto;padding:8px 10px}
+  .small{font-size:0.85rem;padding:6px 8px}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .budget-item{padding:10px;border-radius:8px;border:1px solid #e6f0ff;background:#f8fbff}
+  .right-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .search{display:flex;gap:8px;align-items:center}
+  .tot{font-size:1.25rem;font-weight:700;color:#064e3b}
+  .note{font-size:0.85rem;color:var(--muted);margin-top:8px}
+  .table{width:100%;border-collapse:collapse;margin-top:8px}
+  .table th,.table td{padding:8px;border-bottom:1px solid #eef2f6;text-align:left;font-size:0.95rem}
+  .nowrap{white-space:nowrap}
+  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:0.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="card">
+    <h1>Orçamentista Vidraçaria da Familia — Offline</h1>
+    <div class="muted">Selecione produto, configure e adicione itens. Salve orçamentos com cliente, consulte e exporte em PDF.</div>
+  </header>
+
+  <main class="grid">
+    <section class="card" id="formCard">
+      <h2 style="margin:0 0 10px 0">Novo / Editar Item</h2>
+
+      <label>Nome do Cliente (para salvar)</label>
+      <input id="cliente" placeholder="Ex: João da Silva">
+
+      <label>Telefone (opcional)</label>
+      <input id="telefone" placeholder="(xx) xxxxx-xxxx">
+
+      <label>Data do Orçamento</label>
+      <input id="dataOrc" type="date">
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2f6">
+
+      <label>Categoria</label>
+      <select id="category">
+        <option value="">— Selecione —</option>
+        <option value="1">Janela</option>
+        <option value="2">Porta</option>
+        <option value="5">Espelho</option>
+        <option value="6">Box Banheiro</option>
+        <option value="7">Painel/Vitrine</option>
+        <option value="8">Tela Mosquiteiro</option>
+      </select>
+
+      <div id="dynamicFields" style="margin-top:10px">
+        <div class="muted">Escolha uma categoria para ver opções.</div>
+      </div>
+
+      <div class="item-row" style="margin-top:10px">
+        <div>
+          <label>Largura (m)</label>
+          <input id="width" type="number" step="0.01" min="0" placeholder="Ex: 1.20">
+        </div>
+        <div>
+          <label>Altura (m)</label>
+          <input id="height" type="number" step="0.01" min="0" placeholder="Ex: 1.00">
+        </div>
+        <div>
+          <label>Quantidade</label>
+          <input id="qty" type="number" min="1" step="1" value="1">
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:12px">
+        <div class="tot">Subtotal: <span id="subtotal">R$ 0,00</span></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="addItemBtn">Adicionar Item</button>
+          <button class="ghost" id="resetFormBtn">Limpar</button>
+        </div>
+      </div>
+
+      <div class="note">Observações: área mínima por peça: <strong>0,25 m²</strong>. Espelhos são preço por m².</div>
+    </section>
+
+    <aside class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Orçamento Atual</h2>
+        <div class="right-actions">
+          <button class="ghost small" id="clearBudgetBtn">Limpar Tudo</button>
+          <button class="btn small" id="saveBudgetBtn">Salvar Orçamento</button>
+        </div>
+      </div>
+
+      <div id="itemsList" style="margin-top:10px" class="list">
+        <div class="muted">Nenhum item adicionado.</div>
+      </div>
+
+      <div style="margin-top:12px; display:flex;justify-content:space-between;align-items:center">
+        <div class="muted">Total Geral</div>
+        <div class="tot" id="grandTotal">R$ 0,00</div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2f6">
+
+      <h3 style="margin:0 0 8px 0">Orçamentos Salvos</h3>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input id="searchInput" placeholder="buscar por nome, telefone ou data" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6eef8">
+        <button class="btn small" id="searchBtn">Buscar</button>
+      </div>
+
+      <div id="savedBudgets" style="max-height:36vh;overflow:auto"></div>
+    </aside>
+  </main>
+
+  <footer>
+    Desenvolvido localmente — salve o arquivo HTML e use offline. Última atualização: versão completa.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* -------------------------
+   TABELA COMPLETA DE PREÇOS
+   Estrutura:
+   - categorias chaves: '1'..'8' (como no seu pedido)
+   - para itens baseados em m²: models -> prices[ thickness ][ color ] = R$
+   - para espelhos: options with price (unit)
+   - for box/painel/telas: options with price per m²
+   ------------------------- */
+const PRICE_TABLE = {
+  "1": { name: "Janela", steps: ["model","thickness","color"],
+    models: {
+      "Janela 4 folhas": { prices: { "8mm": { "Incolor": 377.65, "Fumê": 454.87, "Verde": 454.87, "Bronze": 641.98, "Fantasia": 477.14 } } },
+      "Janela 2 folhas": { prices: { "8mm": { "Incolor": 351.80, "Fumê": 429.02, "Verde": 429.02, "Bronze": 616.13, "Fantasia": 451.30 } } },
+      "Janela 4 folhas + 1 fixo + 1 bascula": { prices: { "8mm": { "Incolor": 548.15, "Fumê": 653.45, "Verde": 653.45, "Bronze": 908.60, "Fantasia": 683.83 } } },
+      "Janela 4 folhas + 1 bascula": { prices: { "8mm": { "Incolor": 475.46, "Fumê": 563.21, "Verde": 563.21, "Bronze": 775.83, "Fantasia": 588.52 } } },
+      "Janela 4 folhas + 1 fixo + 2 bascula": { prices: { "8mm": { "Incolor": 695.18, "Fumê": 818.03, "Verde": 818.03, "Bronze": 1115.70, "Fantasia": 853.47 } } },
+      "Basculante": { prices: { "8mm": { "Incolor": 326.57, "Fumê": 403.79, "Verde": 403.79, "Bronze": 590.90, "Fantasia": 426.07 } } },
+      "Maxim-ar": { prices: { "8mm": { "Incolor": 311.78, "Fumê": 381.98, "Verde": 381.98, "Bronze": 552.08, "Fantasia": 402.23 } } }
+    }
+  },
+  "2": { name: "Porta", steps: ["model","thickness","color"],
+    models: {
+      "Porta 4 folhas": { prices: { "8mm": { "Incolor": 392.40, "Fumê": 469.62, "Verde": 469.62, "Bronze": 656.73, "Fantasia": 491.90 }, "10mm": { "Incolor": 534.81, "Fumê": 551.30, "Verde": 551.30, "Bronze": 766.62, "Fantasia": 0.00 } } },
+      "Porta 2 folhas": { prices: { "8mm": { "Incolor": 396.79, "Fumê": 474.01, "Verde": 474.01, "Bronze": 661.12, "Fantasia": 496.28 }, "10mm": { "Incolor": 474.01, "Fumê": 555.68, "Verde": 555.68, "Bronze": 771.01, "Fantasia": 0.00 } } },
+      "Porta sanfonada": { prices: { "8mm": { "Incolor": 980.96, "Fumê": 1051.16, "Verde": 1051.16, "Bronze": 1221.26, "Fantasia": 1071.41 }, "10mm": { "Incolor": 1051.16, "Fumê": 1125.41, "Verde": 1125.41, "Bronze": 1321.16, "Fantasia": 0.00 } } },
+      "Porta de giro": { prices: { "8mm": { "Incolor": 410.61, "Fumê": 480.81, "Verde": 480.81, "Bronze": 650.91, "Fantasia": 501.06 }, "10mm": { "Incolor": 480.81, "Fumê": 555.06, "Verde": 555.06, "Bronze": 750.81, "Fantasia": 0.00 } } },
+      "Porta correr atrás parede sem tubo": { prices: { "8mm": { "Incolor": 483.22, "Fumê": 560.62, "Verde": 560.62, "Bronze": 748.15, "Fantasia": 582.95 }, "10mm": { "Incolor": 560.62, "Fumê": 642.48, "Verde": 642.48, "Bronze": 858.29, "Fantasia": 0.00 } } },
+      "Porta correr atrás parede com tubo": { prices: { "8mm": { "Incolor": 633.80, "Fumê": 711.20, "Verde": 711.20, "Bronze": 898.73, "Fantasia": 733.52 }, "10mm": { "Incolor": 711.20, "Fumê": 793.06, "Verde": 793.06, "Bronze": 1008.87, "Fantasia": 0.00 } } }
+    }
+  },
+  "5": { name: "Espelho", steps: ["option"],
+    options: {
+      "Com bisote 4mm": { type: "Com bisote", thickness: "4mm", price: 314.80 },
+      "Sem bisote 4mm": { type: "Sem bisote", thickness: "4mm", price: 291.50 },
+      "Com bisote 6mm": { type: "Com bisote", thickness: "6mm", price: 515.14 },
+      "Sem bisote 6mm": { type: "Sem bisote", thickness: "6mm", price: 471.96 }
+    }
+  },
+  "6": { name: "Box Banheiro", steps: ["material"],
+    options: {
+      "Vidro fumê/verde": { name: "Vidro fumê/verde", price: 437.00 },
+      "Vidro incolor": { name: "Vidro incolor", price: 335.00 },
+      "Plástico/acrílico": { name: "Plástico/acrílico", price: 250.00 }
+    }
+  },
+  "7": { name: "Painel/Vitrine", steps: ["panel_type"],
+    options: {
+      "Vidro incolor 8mm": { thickness: "8mm", price: 300.00 },
+      "Vidro incolor 10mm": { thickness: "10mm", price: 370.00 }
+    }
+  },
+  "8": { name: "Tela Mosquiteiro", steps: [],
+    price: 250.00
+  }
+};
+
+/* -------------------------
+   Estado do app em memória
+   ------------------------- */
+let currentItems = []; // itens do orçamento atual
+let budgets = JSON.parse(localStorage.getItem('budgets_vidra')) || []; // orçamentos salvos
+let editBudgetId = null; // se estivermos editando um orçamento salvo
+let editItemIndex = null; // se estivermos editando um item em memória
+
+/* -------------------------
+   UTILIDADES
+   ------------------------- */
+function formatCurrency(v){
+  const n = Number(v) || 0;
+  return 'R$ ' + n.toFixed(2).replace('.', ',');
+}
+function safeFloat(v, fallback=0){ const n = parseFloat(v); return isNaN(n) ? fallback : n; }
+
+/* -------------------------
+   DOM references
+   ------------------------- */
+const categorySelect = document.getElementById('category');
+const dynamicFields = document.getElementById('dynamicFields');
+const widthInput = document.getElementById('width');
+const heightInput = document.getElementById('height');
+const qtyInput = document.getElementById('qty');
+const subtotalEl = document.getElementById('subtotal');
+const addItemBtn = document.getElementById('addItemBtn');
+const resetFormBtn = document.getElementById('resetFormBtn');
+const itemsList = document.getElementById('itemsList');
+const grandTotalEl = document.getElementById('grandTotal');
+const clearBudgetBtn = document.getElementById('clearBudgetBtn');
+const saveBudgetBtn = document.getElementById('saveBudgetBtn');
+const searchInput = document.getElementById('searchInput');
+const savedBudgetsDiv = document.getElementById('savedBudgets');
+const clienteEl = document.getElementById('cliente');
+const telefoneEl = document.getElementById('telefone');
+const dataOrcEl = document.getElementById('dataOrc');
+
+/* -------------------------
+   RENDER / POPULATE HELPERS
+   ------------------------- */
+function renderDynamicFields(){
+  const cat = categorySelect.value;
+  dynamicFields.innerHTML = '';
+  if(!cat){
+    dynamicFields.innerHTML = '<div class="muted">Escolha uma categoria para ver opções específicas.</div>';
+    updateSubtotalDisplay();
+    return;
+  }
+  const entry = PRICE_TABLE[cat];
+  // For models-based categories (1..4)
+  if(entry.steps.includes('model') || entry.steps.includes('thickness') || entry.steps.includes('color')){
+    // model select
+    const modelLabel = document.createElement('label'); modelLabel.textContent = 'Modelo';
+    const modelSelect = document.createElement('select'); modelSelect.id='modelSelect';
+    modelSelect.innerHTML = '<option value="">— selecione —</option>';
+    // gather models
+    const models = Object.keys(entry.models || {});
+    models.forEach(m => {
+      const o = document.createElement('option'); o.value=m; o.textContent=m; modelSelect.appendChild(o);
+    });
+    modelSelect.addEventListener('change', onModelChange);
+    dynamicFields.appendChild(modelLabel); dynamicFields.appendChild(modelSelect);
+
+    // thickness select
+    const thickLabel = document.createElement('label'); thickLabel.textContent = 'Espessura';
+    const thickSelect = document.createElement('select'); thickSelect.id='thickSelect'; thickSelect.innerHTML = '<option value="">— selecione —</option>';
+    thickSelect.addEventListener('change', onThicknessChange);
+    dynamicFields.appendChild(thickLabel); dynamicFields.appendChild(thickSelect);
+
+    // color select
+    const colorLabel = document.createElement('label'); colorLabel.textContent = 'Cor';
+    const colorSelect = document.createElement('select'); colorSelect.id='colorSelect'; colorSelect.innerHTML = '<option value="">— selecione —</option>';
+    colorSelect.addEventListener('change', updateSubtotalDisplay);
+    dynamicFields.appendChild(colorLabel); dynamicFields.appendChild(colorSelect);
+  }
+  // Espelho
+  else if(cat === "5"){
+    const label = document.createElement('label'); label.textContent='Tipo de Espelho';
+    const sel = document.createElement('select'); sel.id='mirrorSelect';
+    sel.innerHTML = '<option value="">— selecione —</option>';
+    Object.keys(entry.options).forEach(k => {
+      const o = document.createElement('option'); o.value=k; o.textContent = k + ` (R$ ${entry.options[k].price.toFixed(2)}/m²)`; sel.appendChild(o);
+    });
+    sel.addEventListener('change', updateSubtotalDisplay);
+    dynamicFields.appendChild(label); dynamicFields.appendChild(sel);
+  }
+  // Box
+  else if(cat === "6"){
+    const label = document.createElement('label'); label.textContent='Material do Box';
+    const sel = document.createElement('select'); sel.id='boxSelect';
+    sel.innerHTML = '<option value="">— selecione —</option>';
+    Object.keys(entry.options).forEach(k=>{
+      const o = document.createElement('option'); o.value=k; o.textContent=`${k} (R$ ${entry.options[k].price.toFixed(2)}/m²)`; sel.appendChild(o);
+    });
+    sel.addEventListener('change', updateSubtotalDisplay);
+    dynamicFields.appendChild(label); dynamicFields.appendChild(sel);
+  }
+  // Painel
+  else if(cat === "7"){
+    const label = document.createElement('label'); label.textContent='Tipo de Painel';
+    const sel = document.createElement('select'); sel.id='panelSelect';
+    sel.innerHTML = '<option value="">— selecione —</option>';
+    Object.keys(entry.options).forEach(k=>{
+      const o = document.createElement('option'); o.value=k; o.textContent=`${k} (R$ ${entry.options[k].price.toFixed(2)}/m²)`; sel.appendChild(o);
+    });
+    sel.addEventListener('change', updateSubtotalDisplay);
+    dynamicFields.appendChild(label); dynamicFields.appendChild(sel);
+  }
+  // Tela
+  else if(cat === "8"){
+    const p = document.createElement('div'); p.className='muted';
+    p.textContent = `Tela Mosquiteiro — R$ ${entry.price.toFixed(2)} / m²`;
+    dynamicFields.appendChild(p);
+    updateSubtotalDisplay();
+  }
+  updateSubtotalDisplay();
+}
+
+function onModelChange(e){
+  const cat = categorySelect.value;
+  const model = e.target.value;
+  const thickSel = document.getElementById('thickSelect');
+  const colorSel = document.getElementById('colorSelect');
+  thickSel.innerHTML = '<option value="">— selecione —</option>';
+  colorSel.innerHTML = '<option value="">— selecione —</option>';
+  if(!model) { updateSubtotalDisplay(); return; }
+  const modelObj = PRICE_TABLE[cat].models[model];
+  if(!modelObj) { updateSubtotalDisplay(); return; }
+  const thicknesses = Object.keys(modelObj.prices || {});
+  thicknesses.forEach(t => {
+    const o = document.createElement('option'); o.value=t; o.textContent=t; thickSel.appendChild(o);
+  });
+  updateSubtotalDisplay();
+}
+
+function onThicknessChange(e){
+  const cat = categorySelect.value;
+  const modelSel = document.getElementById('modelSelect');
+  const thickness = e.target.value;
+  const colorSel = document.getElementById('colorSelect');
+  colorSel.innerHTML = '<option value="">— selecione —</option>';
+  if(!modelSel || !modelSel.value || !thickness) { updateSubtotalDisplay(); return; }
+  const prices = PRICE_TABLE[cat].models[modelSel.value].prices;
+  const colors = Object.keys(prices[thickness] || {});
+  colors.forEach(c => {
+    const o = document.createElement('option'); o.value=c; o.textContent=c; colorSel.appendChild(o);
+  });
+  updateSubtotalDisplay();
+}
+
+/* -------------------------
+   CÁLCULO
+   ------------------------- */
+function calculateItem(obj){
+  // obj includes category and chosen options; returns subtotal number
+  const cat = obj.category;
+  // Espelhos (price/m2)
+  if(cat === "5"){
+    const entry = PRICE_TABLE[cat];
+    const opt = entry.options[obj.option];
+    if(!opt) throw new Error('Opção de espelho inválida');
+    let area = obj.width * obj.height;
+    if(area < 0.25) area = 0.25;
+    return opt.price * area * obj.quantity;
+  }
+  // Box (price/m2)
+  if(cat === "6"){
+    const entry = PRICE_TABLE[cat];
+    const opt = entry.options[obj.material];
+    if(!opt) throw new Error('Material de box inválido');
+    let height = obj.height;
+    if(!height || height <= 0) height = 1.90; // default height
+    let area = obj.width * height;
+    if(area < 0.25) area = 0.25;
+    return opt.price * area * obj.quantity;
+  }
+  // Painel (price/m2)
+  if(cat === "7"){
+    const entry = PRICE_TABLE[cat];
+    const opt = entry.options[obj.panel_type];
+    if(!opt) throw new Error('Tipo de painel inválido');
+    let area = obj.width * obj.height;
+    if(area < 0.25) area = 0.25;
+    return opt.price * area * obj.quantity;
+  }
+  // Tela Mosquiteiro (price/m2)
+  if(cat === "8"){
+    const price = PRICE_TABLE[cat].price;
+    let area = obj.width * obj.height;
+    if(area < 0.25) area = 0.25;
+    return price * area * obj.quantity;
+  }
+  // General (Janelas, Portas, Basculante, Maxim-ar) -> price per m2 from model->thickness->color
+  const entry = PRICE_TABLE[cat];
+  const modelObj = entry.models[obj.model];
+  if(!modelObj) throw new Error('Modelo inválido');
+  const pricePerM2 = (modelObj.prices[obj.thickness] || {})[obj.color] || 0;
+  let area = obj.width * obj.height;
+  if(area < 0.25) area = 0.25;
+  return pricePerM2 * area * obj.quantity;
+}
+
+/* -------------------------
+   UI: Subtotal calc while configuring
+   ------------------------- */
+function gatherFormState(){
+  const cat = categorySelect.value;
+  const state = {
+    category: cat,
+    quantity: Math.max(1, parseInt(qtyInput.value || 1)),
+    width: safeFloat(widthInput.value, 0),
+    height: safeFloat(heightInput.value, 0)
+  };
+  if(!cat) return state;
+  const entry = PRICE_TABLE[cat];
+  if(entry.steps.includes('model')){
+    const modelSel = document.getElementById('modelSelect');
+    const thickSel = document.getElementById('thickSelect');
+    const colorSel = document.getElementById('colorSelect');
+    state.model = modelSel ? modelSel.value : null;
+    state.thickness = thickSel ? thickSel.value : null;
+    state.color = colorSel ? colorSel.value : null;
+  } else if(cat === "5"){
+    const sel = document.getElementById('mirrorSelect');
+    state.option = sel ? sel.value : null;
+  } else if(cat === "6"){
+    const sel = document.getElementById('boxSelect');
+    state.material = sel ? sel.value : null;
+  } else if(cat === "7"){
+    const sel = document.getElementById('panelSelect');
+    state.panel_type = sel ? sel.value : null;
+  } else if(cat === "8"){
+    // no extra fields
+  }
+  return state;
+}
+
+function updateSubtotalDisplay(){
+  try{
+    const s = gatherFormState();
+    if(!s.category) { subtotalEl.textContent = formatCurrency(0); addItemBtn.disabled = true; updateGrandTotal(); return; }
+    // check mandatory fields per category
+    const entry = PRICE_TABLE[s.category];
+    if(entry.steps.includes('model')){
+      if(!s.model || !s.thickness || !s.color){ subtotalEl.textContent = formatCurrency(0); addItemBtn.disabled = true; updateGrandTotal(); return; }
+    } else if(s.category==="5"){
+      if(!s.option){ subtotalEl.textContent = formatCurrency(0); addItemBtn.disabled = true; updateGrandTotal(); return;}
+    } else if(s.category==="6"){
+      if(!s.material){ subtotalEl.textContent = formatCurrency(0); addItemBtn.disabled = true; updateGrandTotal(); return;}
+    } else if(s.category==="7"){
+      if(!s.panel_type){ subtotalEl.textContent = formatCurrency(0); addItemBtn.disabled = true; updateGrandTotal(); return;}
+    }
+    // compute
+    const subtotal = calculateItem({
+      category: s.category,
+      model: s.model,
+      thickness: s.thickness,
+      color: s.color,
+      option: s.option,
+      material: s.material,
+      panel_type: s.panel_type,
+      width: s.width || 0,
+      height: s.height || 0,
+      quantity: s.quantity
+    });
+    subtotalEl.textContent = formatCurrency(subtotal);
+    addItemBtn.disabled = false;
+    updateGrandTotal();
+  } catch(err){
+    subtotalEl.textContent = formatCurrency(0);
+    addItemBtn.disabled = true;
+    updateGrandTotal();
+    // console.warn(err);
+  }
+}
+
+/* -------------------------
+   CÁLCULO - Mão de obra e taxas (removido)
+   ------------------------- */
+function updateGrandTotal(){
+  const grandTotal = currentItems.reduce((s,i)=> s + (i.subtotal || 0), 0);
+  grandTotalEl.textContent = formatCurrency(grandTotal);
+}
+
+/* -------------------------
+   ITEMS: add/remove/edit
+   ------------------------- */
+function renderItemsList(){
+  itemsList.innerHTML = '';
+  if(currentItems.length === 0){
+    itemsList.innerHTML = '<div class="muted">Nenhum item adicionado.</div>';
+  } else {
+    currentItems.forEach((it, idx) => {
+      const div = document.createElement('div');
+      div.className = 'budget-item';
+      // build details
+      let details = `<strong>${PRICE_TABLE[it.category].name}</strong> — `;
+      if(it.category === "5"){
+        details += `${it.option} — ${it.width.toFixed(2)} x ${it.height.toFixed(2)} m — Qtd: ${it.quantity} — Subtotal: ${formatCurrency(it.subtotal)}`;
+      } else if(it.category === "6"){
+        details += `${it.material} — ${it.width.toFixed(2)} x ${it.height.toFixed(2)} m — Qtd: ${it.quantity} — Subtotal: ${formatCurrency(it.subtotal)}`;
+      } else if(it.category === "7"){
+        details += `${it.panel_type} — ${it.width.toFixed(2)} x ${it.height.toFixed(2)} m — Qtd: ${it.quantity} — Subtotal: ${formatCurrency(it.subtotal)}`;
+      } else if(it.category === "8"){
+        details += `Tela Mosquiteiro — ${it.width.toFixed(2)} x ${it.height.toFixed(2)} m — Qtd: ${it.quantity} — Subtotal: ${formatCurrency(it.subtotal)}`;
+      } else {
+        details += `${it.model} — ${it.thickness} — ${it.color} — ${it.width.toFixed(2)} x ${it.height.toFixed(2)} m — Qtd: ${it.quantity} — Subtotal: ${formatCurrency(it.subtotal)}`;
+      }
+      div.innerHTML = `<div>${details}</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="ghost small" onclick="editItem(${idx})">Editar</button>
+          <button class="ghost small" onclick="deleteItem(${idx})">Remover</button>
+        </div>`;
+      itemsList.appendChild(div);
+    });
+  }
+  // total
+  updateGrandTotal();
+}
+
+/* add item */
+function addItem(){
+  try{
+    const state = gatherFormState();
+    if(!state.category) return alert('Selecione a categoria.');
+    // validate required fields:
+    if(PRICE_TABLE[state.category].steps.includes('model')){
+      if(!state.model || !state.thickness || !state.color) return alert('Preencha modelo/espessura/cor.');
+    } else if(state.category === "5"){
+      if(!state.option) return alert('Selecione um tipo de espelho.');
+    } else if(state.category === "6"){
+      if(!state.material) return alert('Selecione material do box.');
+    } else if(state.category === "7"){
+      if(!state.panel_type) return alert('Selecione tipo de painel.');
+    }
+    const subtotal = calculateItem({
+      category: state.category,
+      model: state.model,
+      thickness: state.thickness,
+      color: state.color,
+      option: state.option,
+      material: state.material,
+      panel_type: state.panel_type,
+      width: state.width,
+      height: state.height,
+      quantity: state.quantity
+    });
+    const itemObj = {
+      category: state.category,
+      model: state.model || null,
+      thickness: state.thickness || null,
+      color: state.color || null,
+      option: state.option || null,
+      material: state.material || null,
+      panel_type: state.panel_type || null,
+      width: state.width || 0,
+      height: state.height || 0,
+      quantity: state.quantity || 1,
+      subtotal
+    };
+    if(editItemIndex !== null && editItemIndex >=0){
+      currentItems[editItemIndex] = itemObj;
+      editItemIndex = null;
+    } else {
+      currentItems.push(itemObj);
+    }
+    // reset small form bits
+    resetForm(false);
+    renderItemsList();
+  } catch(err){
+    alert('Erro ao adicionar item: ' + err.message);
+  }
+}
+
+/* edit / delete */
+function editItem(index){
+  const it = currentItems[index];
+  // populate form
+  categorySelect.value = it.category;
+  renderDynamicFields();
+  setTimeout(()=>{ // wait small tick for dynamic fields creation
+    if(it.model) {
+      const m = document.getElementById('modelSelect'); if(m) m.value = it.model;
+      const t = document.getElementById('thickSelect'); if(t) {
+        // populate thickness/options properly
+        const ev = new Event('change');
+        m && m.dispatchEvent(ev);
+        t.value = it.thickness;
+        const ev2 = new Event('change'); t.dispatchEvent(ev2);
+      }
+      const c = document.getElementById('colorSelect'); if(c) c.value = it.color;
+    }
+    if(it.option){
+      const mir = document.getElementById('mirrorSelect');
+      if(mir) mir.value = it.option;
+    }
+    if(it.material){
+      const bx = document.getElementById('boxSelect'); if(bx) bx.value = it.material;
+    }
+    if(it.panel_type){
+      const p = document.getElementById('panelSelect'); if(p) p.value = it.panel_type;
+    }
+    widthInput.value = it.width || '';
+    heightInput.value = it.height || '';
+    qtyInput.value = it.quantity || 1;
+    updateSubtotalDisplay();
+    editItemIndex = index;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 60);
+}
+
+function deleteItem(index){
+  if(!confirm('Remover este item?')) return;
+  currentItems.splice(index,1);
+  renderItemsList();
+}
+
+/* reset form */
+function resetForm(full=true){
+  if(full){
+    categorySelect.value = '';
+    dynamicFields.innerHTML = '<div class="muted">Escolha uma categoria para ver opções específicas.</div>';
+    clienteEl.value = '';
+    telefoneEl.value = '';
+    dataOrcEl.value = '';
+  } else {
+    // only clear selection fields for item config
+    const model = document.getElementById('modelSelect'); if(model) model.value='';
+    const thick = document.getElementById('thickSelect'); if(thick) thick.value='';
+    const color = document.getElementById('colorSelect'); if(color) color.value='';
+    const mirror = document.getElementById('mirrorSelect'); if(mirror) mirror.value='';
+    const box = document.getElementById('boxSelect'); if(box) box.value='';
+    const panel = document.getElementById('panelSelect'); if(panel) panel.value='';
+    widthInput.value=''; heightInput.value=''; qtyInput.value=1;
+  }
+  updateSubtotalDisplay();
+}
+
+/* -------------------------
+   SAVE / LOAD budgets
+   ------------------------- */
+function saveBudget(){
+  // this saves the currentItems as a budget record with client, phone, date
+  const client = (clienteEl.value || '').trim();
+  if(!client) return alert('Informe o nome do cliente antes de salvar o orçamento.');
+  if(currentItems.length === 0) return alert('Adicione ao menos 1 item antes de salvar.');
+  const phone = (telefoneEl.value || '').trim();
+  const date = dataOrcEl.value || new Date().toISOString().slice(0,10);
+  const id = Date.now().toString();
+  const total = currentItems.reduce((s,i)=>s+(i.subtotal||0),0);
+  const budget = { id, client, phone, date, total, items: currentItems.slice() };
+  budgets.push(budget);
+  localStorage.setItem('budgets_vidra', JSON.stringify(budgets));
+  // clear current items for a fresh budget
+  currentItems = [];
+  renderItemsList();
+  renderSavedBudgets();
+  alert('Orçamento salvo com sucesso!');
+}
+function renderSavedBudgets(filter=''){
+  savedBudgetsDiv.innerHTML = '';
+  const term = (filter||searchInput.value||'').toLowerCase().trim();
+  const list = budgets.filter(b => {
+    if(!term) return true;
+    return (b.client||'').toLowerCase().includes(term) || (b.phone||'').toLowerCase().includes(term) || (b.date||'').includes(term);
+  });
+  if(list.length === 0){
+    savedBudgetsDiv.innerHTML = '<div class="muted">Nenhum orçamento salvo.</div>';
+    return;
+  }
+  list.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'orcamento';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div style="font-weight:700">${b.client} <span style="color:var(--muted);font-weight:500">(${b.phone||'—'})</span></div>
+          <div class="muted">Data: ${b.date} • Total: ${formatCurrency(b.total)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-direction:column">
+          <button class="small ghost" onclick="viewBudget('${b.id}')">Ver</button>
+          <button class="small ghost" onclick="editBudget('${b.id}')">Editar</button>
+          <button class="small" onclick="exportBudgetPDF('${b.id}')">PDF</button>
+          <button class="small ghost" style="color:#b91c1c" onclick="deleteBudget('${b.id}')">Excluir</button>
+        </div>
+      </div>
+    `;
+    savedBudgetsDiv.appendChild(el);
+  });
+}
+function viewBudget(id){
+  const b = budgets.find(x=>x.id===id);
+  if(!b) return alert('Orçamento não encontrado.');
+  
+  // 1. Constrói o texto do orçamento
+  let txt = `Orçamento — ${b.client}\nTelefone: ${b.phone||'—'}\nData: ${b.date}\nTotal: ${formatCurrency(b.total)}\n\nItens:\n`;
+  b.items.forEach((it,idx)=>{
+    let area_str = (it.width && it.height) ? ` — ${it.width.toFixed(2)}x${it.height.toFixed(2)}m` : '';
+    let detalhes = '';
+    if(it.category === "5") detalhes = `${it.option}${area_str}`;
+    else if(it.category === "6") detalhes = `${it.material}${area_str}`;
+    else if(it.category === "7") detalhes = `${it.panel_type}${area_str}`;
+    else if(it.category === "8") detalhes = `Tela Mosquiteiro${area_str}`;
+    else detalhes = `${it.model} — ${it.thickness} — ${it.color}${area_str}`;
+
+    txt += `${idx+1}) ${PRICE_TABLE[it.category].name} — ${detalhes} — Qtd: ${it.quantity} — ${formatCurrency(it.subtotal)}\n`;
+  });
+  
+  // 2. Abre a nova janela e escreve o conteúdo
+  const w = window.open('', '_blank', 'noopener');
+  if (!w) { // Adicionado verificação de bloqueador de pop-up
+      return alert('O navegador bloqueou a abertura da janela. Desative o bloqueador de pop-ups ou use a função "PDF".');
+  }
+  
+  // Adiciona a estrutura HTML mínima
+  w.document.write(`<!DOCTYPE html><title>Orçamento ${b.client}</title>
+                    <pre style="white-space:pre-wrap;font-family:monospace;padding:12px;margin:0">`);
+  w.document.write(escapeHtml(txt));
+  w.document.write(`</pre>`);
+  
+  // Linha de código crucial para forçar o navegador a renderizar o conteúdo:
+  w.document.close(); 
+}
+function editBudget(id){
+  const idx = budgets.findIndex(x=>x.id===id);
+  if(idx === -1) return alert('Orçamento não encontrado.');
+  const b = budgets[idx];
+  // load into current form & items
+  clienteEl.value = b.client;
+  telefoneEl.value = b.phone || '';
+  dataOrcEl.value = b.date || '';
+  currentItems = JSON.parse(JSON.stringify(b.items)); // clone
+  // remove the saved budget (we'll re-save on save)
+  budgets.splice(idx,1);
+  localStorage.setItem('budgets_vidra', JSON.stringify(budgets));
+  renderItemsList();
+  renderSavedBudgets();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteBudget(id){
+  if(!confirm('Confirmar exclusão deste orçamento?')) return;
+  const idx = budgets.findIndex(x=>x.id===id);
+  if(idx === -1) return;
+  budgets.splice(idx,1);
+  localStorage.setItem('budgets_vidra', JSON.stringify(budgets));
+  renderSavedBudgets();
+}
+function exportBudgetPDF(id){
+  const b = budgets.find(x=>x.id===id);
+  if(!b) return alert('Orçamento não encontrado.');
+  downloadBudgetPDF(b);
+}
+
+/* -------------------------
+   PDF generation
+   ------------------------- */
+function downloadBudgetPDF(budget){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  // Cabeçalho com fundo colorido
+  doc.setFillColor(0, 86, 179);
+  doc.rect(0, 0, 210, 25, 'F');
+  
+  doc.setFontSize(20);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont(undefined, 'bold');
+  doc.text('VIDRAÇARIA DA FAMILIA', 105, 12, { align: 'center' });
+  
+  doc.setFontSize(16);
+  doc.text('ORÇAMENTO', 105, 20, { align: 'center' });
+
+  // Borda decorativa
+  doc.setDrawColor(0, 86, 179);
+  doc.setLineWidth(0.5);
+  doc.rect(5, 5, 200, 287);
+
+  // Dados do cliente em quadro destacado
+  doc.setFillColor(240, 245, 255);
+  doc.rect(10, 30, 190, 25, 'F');
+  doc.setDrawColor(200, 220, 255);
+  doc.rect(10, 30, 190, 25);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'bold');
+  doc.text('DADOS DO CLIENTE', 15, 38);
+  
+  doc.setFont(undefined, 'normal');
+  doc.text(`Cliente: ${budget.client}`, 15, 45);
+  doc.text(`Telefone: ${budget.phone || '—'}`, 15, 52);
+  doc.text(`Data: ${budget.date}`, 150, 52);
+
+  // Tabela de itens com cabeçalho colorido
+  let y = 65;
+  
+  // Cabeçalho da tabela
+  doc.setFillColor(0, 86, 179);
+  doc.rect(10, y, 190, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.text('Descrição do Item', 12, y + 5.5);
+  doc.text('Dimensões', 120, y + 5.5);
+  doc.text('Qtd', 155, y + 5.5);
+  doc.text('Subtotal', 175, y + 5.5);
+
+  y += 12;
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'normal');
+
+  budget.items.forEach((it, idx) => {
+    // Alternar cores das linhas
+    if (idx % 2 === 0) {
+      doc.setFillColor(250, 250, 250);
+    } else {
+      doc.setFillColor(240, 245, 255);
+    }
+    doc.rect(10, y - 4, 190, 8, 'F');
+
+    let desc = `${PRICE_TABLE[it.category].name}`;
+    let dimensoes = '';
+    
+    if(it.category === "5") {
+      desc += ` - ${it.option}`;
+      dimensoes = `${it.width.toFixed(2)}x${it.height.toFixed(2)}m`;
+    } else if(it.category === "6") {
+      desc += ` - ${it.material}`;
+      dimensoes = `${it.width.toFixed(2)}x${it.height.toFixed(2)}m`;
+    } else if(it.category === "7") {
+      desc += ` - ${it.panel_type}`;
+      dimensoes = `${it.width.toFixed(2)}x${it.height.toFixed(2)}m`;
+    } else if(it.category === "8") {
+      desc += ` - Tela Mosquiteiro`;
+      dimensoes = `${it.width.toFixed(2)}x${it.height.toFixed(2)}m`;
+    } else {
+      desc += ` - ${it.model} - ${it.thickness} - ${it.color}`;
+      dimensoes = `${it.width.toFixed(2)}x${it.height.toFixed(2)}m`;
+    }
+
+    const split = doc.splitTextToSize(desc, 80);
+    doc.text(split, 12, y);
+    doc.text(dimensoes, 122, y);
+    doc.text(String(it.quantity), 157, y);
+    doc.text(formatCurrency(it.subtotal), 177, y, { align: 'right' });
+
+    y += split.length * 4.5;
+    if (y > 260) { 
+      doc.addPage(); 
+      y = 20; 
+      // Redesenhar borda na nova página
+      doc.setDrawColor(0, 86, 179);
+      doc.rect(5, 5, 200, 287);
+    }
+  });
+
+  // Total em quadro destacado
+  y += 10;
+  doc.setFillColor(240, 255, 240);
+  doc.rect(100, y, 100, 12, 'F');
+  doc.setDrawColor(200, 230, 200);
+  doc.rect(100, y, 100, 12);
+  
+  doc.setFontSize(13);
+  doc.setTextColor(0, 100, 0);
+  doc.setFont(undefined, 'bold');
+  doc.text(`TOTAL: ${formatCurrency(budget.total)}`, 195, y + 8, { align: 'right' });
+
+  // Rodapé
+  doc.setTextColor(120);
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'normal');
+  doc.text('Obrigado pela preferência! Entre em contato para mais informações.', 105, 285, { align: 'center' });
+  doc.text('Telefone: (xx) xxxx-xxxx | Email: contato@vidracaria.com', 105, 290, { align: 'center' });
+
+  doc.save(`Orcamento_${sanitizeFilename(budget.client)}.pdf`);
+}
+
+function sanitizeFilename(name){
+  return name.replace(/[^a-z0-9_\-]/gi, '_').slice(0,100);
+}
+
+/* -------------------------
+   helpers
+   ------------------------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* -------------------------
+   INIT & EVENT BINDINGS
+   ------------------------- */
+categorySelect.addEventListener('change', ()=>{ renderDynamicFields(); editItemIndex = null; });
+document.addEventListener('change', updateSubtotalDisplay);
+document.addEventListener('input', updateSubtotalDisplay);
+addItemBtn.addEventListener('click', addItem);
+resetFormBtn.addEventListener('click', ()=>resetForm(true));
+clearBudgetBtn.addEventListener('click', ()=>{
+  if(!confirm('Limpar todos os itens do orçamento atual?')) return;
+  currentItems = []; renderItemsList();
+});
+saveBudgetBtn.addEventListener('click', saveBudget);
+document.getElementById('searchBtn')?.addEventListener('click', ()=>renderSavedBudgets(searchInput.value));
+searchInput.addEventListener('input', ()=>renderSavedBudgets(searchInput.value));
+
+// programmatic save button in right panel
+document.getElementById('saveBudgetBtn').addEventListener('click', saveBudget);
+document.getElementById('searchBtn').addEventListener('click', ()=>renderSavedBudgets());
+
+function gerarPDF(){
+  // export current working items as temporary budget (not saved)
+  if(currentItems.length === 0) return alert('Adicione ao menos um item para gerar PDF.');
+  const budget = {
+    client: clienteEl.value || 'Orçamento',
+    phone: telefoneEl.value || '',
+    date: dataOrcEl.value || new Date().toISOString().slice(0,10),
+    total: currentItems.reduce((s,i)=>s+(i.subtotal||0),0),
+    items: currentItems
+  };
+  downloadBudgetPDF(budget);
+}
+
+/* load persisted budgets and init */
+function init(){
+  budgets = JSON.parse(localStorage.getItem('budgets_vidra')) || [];
+  currentItems = JSON.parse(sessionStorage.getItem('currentItems_vidra') || '[]') || [];
+  renderDynamicFields();
+  renderItemsList();
+  renderSavedBudgets();
+  updateSubtotalDisplay();
+  // save current items to session on unload
+  window.addEventListener('beforeunload', ()=> sessionStorage.setItem('currentItems_vidra', JSON.stringify(currentItems)) );
+}
+init();
+
+</script>
+</body>
+</html>
