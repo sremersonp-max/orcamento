@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamentos - Sistema de Esquadrias</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Incluir Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .orcamento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-rascunho { background: #fff3cd; color: #856404; }
+        .status-enviado { background: #d1ecf1; color: #0c5460; }
+        .status-aprovado { background: #d4edda; color: #155724; }
+        .status-recusado { background: #f8d7da; color: #721c24; }
+        .status-concluido { background: #e2e3e5; color: #383d41; }
+
+        .tabs-orcamento {
+            display: flex;
+            background: #34495e;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .tab-orcamento {
+            flex: 1;
+            padding: 15px 20px;
+            background: #34495e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab-orcamento:hover {
+            background: #3d566e;
+        }
+
+        .tab-orcamento.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content-orcamento {
+            display: none;
+            padding: 25px;
+            background: white;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #e1e5e9;
+            border-top: none;
+        }
+
+        .tab-content-orcamento.active {
+            display: block;
+        }
+
+        .linha-item {
+            display: grid;
+            grid-template-columns: 300px 100px 100px 100px 120px;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+
+        .item-substituivel {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .seletor-cor {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .amostra-cor {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        .calculadora-medidas {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .grid-medidas {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .resultado-calculo {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .resumo-orcamento {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .linha-resumo {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .linha-resumo.total {
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: none;
+            color: #2c3e50;
+        }
+
+        .alertas-estoque {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .estoque-negativo {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .acoes-rapidas {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .linha-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .grid-medidas {
+                grid-template-columns: 1fr;
+            }
+            
+            .orcamento-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho do Orçamento -->
+        <div class="card">
+            <div class="orcamento-header">
+                <div>
+                    <h1>💰 Novo Orçamento</h1>
+                    <div id="statusOrcamento" class="status-badge status-rascunho">RASCUNHO</div>
+                </div>
+                <div class="acoes-rapidas">
+                    <button class="btn btn-secondary" onclick="salvarRascunho()">💾 Salvar Rascunho</button>
+                    <button class="btn btn-primary" onclick="enviarOrcamento()">📤 Enviar</button>
+                    <button class="btn btn-success" onclick="aprovarOrcamento()">✅ Aprovar & Baixar Estoque</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abas do Orçamento -->
+        <div class="card" style="padding: 0;">
+            <div class="tabs-orcamento">
+                <button class="tab-orcamento active" onclick="abrirTab(event, 'tabCliente')">👤 Cliente</button>
+                <button class="tab-orcamento" onclick="abrirTab(event, 'tabProdutos')">📦 Produtos</button>
+                <button class="tab-orcamento" onclick="abrirTab(event, 'tabPersonalizacao')">🎨 Cores</button>
+                <button class="tab-orcamento" onclick="abrirTab(event, 'tabResumo')">📊 Resumo</button>
+            </div>
+
+            <!-- Aba Cliente -->
+            <div id="tabCliente" class="tab-content-orcamento active">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="clienteExistente">Cliente Existente</label>
+                        <select id="clienteExistente" onchange="carregarCliente()">
+                            <option value="">Selecionar cliente...</option>
+                        </select>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">OU</div>
+                        <button class="btn btn-primary" onclick="novoCliente()">➕ Novo Cliente</button>
+                    </div>
+                </div>
+
+                <div id="formCliente">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="cliente">Nome do Cliente *</label>
+                            <input type="text" id="cliente" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone">Telefone</label>
+                            <input type="tel" id="telefone">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="localizacao">Localização/Endereço</label>
+                        <input type="text" id="localizacao">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba Produtos -->
+            <div id="tabProdutos" class="tab-content-orcamento">
+                <div class="calculadora-medidas">
+                    <h4>📏 Calculadora de Medidas</h4>
+                    <div class="grid-medidas">
+                        <div class="form-group">
+                            <label for="quantidadeProduto">Quantidade</label>
+                            <input type="number" id="quantidadeProduto" value="1" min="1" onchange="calcularItens()">
+                        </div>
+                        <div class="form-group">
+                            <label for="largura">Largura (L)</label>
+                            <input type="number" id="largura" step="0.01" placeholder="0.00" onchange="calcularItens()">
+                        </div>
+                        <div class="form-group">
+                            <label for="altura">Altura (A)</label>
+                            <input type="number" id="altura" step="0.01" placeholder="0.00" onchange="calcularItens()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="produtoSelecionado">Selecionar Produto</label>
+                    <select id="produtoSelecionado" onchange="carregarItensProduto()">
+                        <option value="">Selecione um produto...</option>
+                    </select>
+                </div>
+
+                <div id="listaItensProduto">
+                    <div class="loading">Selecione um produto para ver os itens...</div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-warning btn-small" onclick="debugProdutos()" style="margin-left: 10px;">🐛 Debug Produtos</button>
+                </div>
+            </div>
+
+            <!-- Aba Personalização -->
+            <div id="tabPersonalizacao" class="tab-content-orcamento">
+                <h4>🎨 Personalização de Cores</h4>
+                <div id="listaPersonalizacao">
+                    <div class="loading">Adicione produtos primeiro...</div>
+                </div>
+            </div>
+
+            <!-- Aba Resumo -->
+            <div id="tabResumo" class="tab-content-orcamento">
+                <div class="grid grid-2">
+                    <div>
+                        <h4>📋 Itens do Orçamento</h4>
+                        <div id="resumoItens">
+                            <div class="loading">Nenhum item adicionado</div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label for="observacoes">Observações</label>
+                            <textarea id="observacoes" rows="3" placeholder="Observações sobre o orçamento..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="resumo-orcamento">
+                            <h4>💰 Resumo Financeiro</h4>
+                            <div class="linha-resumo">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">R$ 0,00</span>
+                            </div>
+                            <div class="linha-resumo">
+                                <span>Desconto:</span>
+                                <span>
+                                    <input type="number" id="desconto" value="0" style="width: 80px; display: inline-block;" onchange="calcularTotal()"> %
+                                </span>
+                            </div>
+                            <div class="linha-resumo">
+                                <span>Valor Desconto:</span>
+                                <span id="valorDesconto">R$ 0,00</span>
+                            </div>
+                            <div class="linha-resumo">
+                                <span>Custo Total:</span>
+                                <span id="custototal">R$ 0,00</span>
+                            </div>
+                            <div class="linha-resumo">
+                                <span>Margem Lucro:</span>
+                                <span>
+                                    <input type="number" id="margemlucro" value="30" style="width: 80px; display: inline-block;" onchange="calcularTotal()"> %
+                                </span>
+                            </div>
+                            <div class="linha-resumo total">
+                                <span>TOTAL VENDA:</span>
+                                <span id="totalvenda">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="data">Data do Orçamento</label>
+                            <input type="date" id="data">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Orçamentos Existentes -->
+        <div class="card">
+            <div class="orcamento-header">
+                <h2>📋 Orçamentos Existentes</h2>
+                <div class="search-box">
+                    <input type="text" id="pesquisaOrcamento" placeholder="🔍 Pesquisar orçamentos..." onkeyup="filtrarOrcamentos()">
+                </div>
+            </div>
+            
+            <div id="listaOrcamentos">
+                <div class="loading">Carregando orçamentos...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Visualização -->
+    <div class="modal" id="modalVisualizar">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Detalhes do Orçamento</h3>
+                <button class="btn btn-danger" onclick="fecharModal()">✕ Fechar</button>
+            </div>
+            <div id="modalConteudo">
+                <!-- Conteúdo será preenchido via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir config.js -->
+    <script src="config.js"></script>
+    
+    <script>
+        // =============================================================================
+        // VARIÁVEIS GLOBAIS
+        // =============================================================================
+        let orcamentoAtual = {
+            id: null,
+            cliente: '',
+            telefone: '',
+            localizacao: '',
+            data: new Date().toISOString().split('T')[0],
+            status: 'rascunho',
+            produtos: [],
+            itens_avulsos: [],
+            subtotal: 0,
+            desconto: 0,
+            custototal: 0,
+            margemlucro: 30,
+            totalvenda: 0,
+            observacoes: '',
+            estoque_baixado: false,
+            data_baixa_estoque: null,
+            data_criacao: new Date().toISOString(),
+            data_atualizacao: new Date().toISOString()
+        };
+
+        let produtosCadastrados = [];
+        let itensEstoque = [];
+        let clientesCadastrados = [];
+        let orcamentosExistentes = [];
+
+        // =============================================================================
+        // FUNÇÕES DE INICIALIZAÇÃO
+        // =============================================================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("🚀 Iniciando módulo de orçamentos...");
+            await inicializarOrcamentos();
+        });
+
+        async function inicializarOrcamentos() {
+            try {
+                await carregarProdutos();
+                await carregarItensEstoque();
+                await carregarClientes();
+                await carregarOrcamentos();
+                console.log("✅ Módulo de orçamentos inicializado!");
+            } catch (error) {
+                console.error("❌ Erro na inicialização:", error);
+            }
+        }
+
+        async function carregarProdutos() {
+            try {
+                const { data, error } = await supabase
+                    .from('produtos')
+                    .select('*, produto_categorias(nome)')
+                    .eq('ativo', true)
+                    .order('nome');
+                
+                if (error) throw error;
+                
+                produtosCadastrados = data || [];
+                
+                const select = document.getElementById('produtoSelecionado');
+                select.innerHTML = '<option value="">Selecione um produto...</option>';
+                
+                produtosCadastrados.forEach(produto => {
+                    const option = document.createElement('option');
+                    option.value = produto.id;
+                    option.textContent = `${produto.nome} (${produto.produto_categorias.nome})`;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+            }
+        }
+
+        async function carregarItensEstoque() {
+            try {
+                const { data, error } = await supabase
+                    .from('itens')
+                    .select('*, categorias(nome)')
+                    .eq('ativo', true)
+                    .order('nome');
+                
+                if (error) throw error;
+                itensEstoque = data || [];
+                
+            } catch (error) {
+                console.error('Erro ao carregar itens do estoque:', error);
+            }
+        }
+
+        async function carregarClientes() {
+            try {
+                const { data, error } = await supabase
+                    .from('clientes')
+                    .select('*')
+                    .eq('ativo', true)
+                    .order('nome');
+                
+                if (error) throw error;
+                clientesCadastrados = data || [];
+                
+                const select = document.getElementById('clienteExistente');
+                select.innerHTML = '<option value="">Selecionar cliente...</option>';
+                
+                clientesCadastrados.forEach(cliente => {
+                    const option = document.createElement('option');
+                    option.value = cliente.id;
+                    option.textContent = `${cliente.nome} - ${cliente.telefone}`;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar clientes:', error);
+            }
+        }
+
+        async function carregarOrcamentos() {
+            try {
+                const { data, error } = await supabase
+                    .from('orcamentos')
+                    .select('*')
+                    .order('data_criacao', { ascending: false });
+                
+                if (error) throw error;
+                orcamentosExistentes = data || [];
+                atualizarListaOrcamentos();
+                
+            } catch (error) {
+                console.error('Erro ao carregar orçamentos:', error);
+                orcamentosExistentes = [];
+                atualizarListaOrcamentos();
+            }
+        }
+
+        // =============================================================================
+        // FUNÇÕES DA INTERFACE
+        // =============================================================================
+
+        function abrirTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content-orcamento");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+
+            const tablinks = document.getElementsByClassName("tab-orcamento");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function novoCliente() {
+            console.log("🔧 novoCliente() executando...");
+            
+            const selectCliente = document.getElementById('clienteExistente');
+            if (selectCliente) {
+                selectCliente.value = '';
+                console.log("✅ Select cliente limpo");
+            }
+            
+            const campoCliente = document.getElementById('cliente');
+            const campoTelefone = document.getElementById('telefone');
+            const campoLocalizacao = document.getElementById('localizacao');
+            
+            if (campoCliente) campoCliente.value = '';
+            if (campoTelefone) campoTelefone.value = '';
+            if (campoLocalizacao) campoLocalizacao.value = '';
+            
+            console.log("✅ Campos do formulário limpos");
+            
+            orcamentoAtual.cliente = '';
+            orcamentoAtual.telefone = '';
+            orcamentoAtual.localizacao = '';
+            
+            if (campoCliente) {
+                campoCliente.focus();
+                console.log("✅ Foco no campo cliente");
+            }
+            
+            console.log("🎯 Novo cliente pronto para cadastro");
+        }
+
+        function carregarCliente() {
+            console.log("🔧 carregarCliente() executando...");
+            
+            const clienteId = document.getElementById('clienteExistente').value;
+            console.log("📋 Cliente selecionado:", clienteId);
+            
+            if (!clienteId) {
+                console.log("ℹ️ Nenhum cliente selecionado, limpando campos");
+                novoCliente();
+                return;
+            }
+
+            const cliente = clientesCadastrados.find(c => c.id == clienteId);
+            if (cliente) {
+                console.log("👤 Cliente encontrado:", cliente.nome);
+                
+                document.getElementById('cliente').value = cliente.nome;
+                document.getElementById('telefone').value = cliente.telefone || '';
+                document.getElementById('localizacao').value = cliente.endereco || '';
+                
+                orcamentoAtual.cliente = cliente.nome;
+                orcamentoAtual.telefone = cliente.telefone;
+                orcamentoAtual.localizacao = cliente.endereco;
+                
+                console.log("✅ Dados do cliente carregados no formulário");
+            } else {
+                console.log("❌ Cliente não encontrado na lista");
+            }
+        }
+
+        function carregarItensProduto() {
+            console.log("🔧 carregarItensProduto() executando...");
+            
+            const produtoId = document.getElementById('produtoSelecionado').value;
+            console.log("📦 Produto selecionado:", produtoId);
+            
+            if (!produtoId) {
+                console.log("ℹ️ Nenhum produto selecionado");
+                document.getElementById('listaItensProduto').innerHTML = '<div class="loading">Selecione um produto para ver os itens...</div>';
+                return;
+            }
+
+            const produto = produtosCadastrados.find(p => p.id == produtoId);
+            if (!produto) {
+                console.log("❌ Produto não encontrado");
+                document.getElementById('listaItensProduto').innerHTML = '<div class="error">Produto não encontrado</div>';
+                return;
+            }
+
+            console.log("✅ Produto encontrado:", produto.nome);
+            
+            const itens = produto.itens_composicao || [];
+            console.log(`📋 ${itens.length} itens encontrados em itens_composicao`);
+
+            const lista = document.getElementById('listaItensProduto');
+            
+            if (itens.length === 0) {
+                lista.innerHTML = '<div class="loading">Este produto não tem itens cadastrados</div>';
+                return;
+            }
+
+            lista.innerHTML = `
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="btn btn-success" onclick="adicionarTodosItens()">
+                        🚀 Adicionar TODOS os Itens ao Orçamento
+                    </button>
+                </div>
+                
+                <h4>📋 Itens do Produto</h4>
+                ${itens.map((item, index) => {
+                    const itemId = item.item_id;
+                    const itemNome = item.item_nome;  
+                    const itemDescricao = item.item_descricao || '';
+                    const itemUnidade = item.item_unidade || 'UN';
+                    const formula = item.formula || '1';
+                    const substituivel = item.substituivel || false;
+
+                    const itemEstoque = itensEstoque.find(i => i.id == itemId);
+                    let precoUnitario = 0;
+                    if (itemEstoque && itemEstoque.preco_venda) {
+                        precoUnitario = parseFloat(itemEstoque.preco_venda) || 0;
+                    }
+                    
+                    const classeSubstituivel = substituivel ? 'item-substituivel' : '';
+                    
+                    return `
+                        <div class="linha-item ${classeSubstituivel}" data-item-id="${itemId}">
+                            <div>
+                                <strong>${itemNome}</strong>
+                                ${substituivel ? '<span class="badge badge-success" style="margin-left: 10px;">SUBSTITUÍVEL</span>' : ''}
+                                <br>
+                                <small>${itemDescricao} | ${item.unidade_medida || itemUnidade}</small>
+                            </div>
+                            <div>
+                                <small>Fórmula:</small><br>
+                                <strong>${formula}</strong>
+                            </div>
+                            <div>
+                                <small>Quantidade:</small><br>
+                                <span id="qtd-${itemId}">0</span>
+                            </div>
+                            <div>
+                                <small>Preço Unit:</small><br>
+                                <span>R$ ${precoUnitario.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <small>Total:</small><br>
+                                <span id="total-${itemId}">R$ 0,00</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+
+            calcularItens();
+            console.log("✅ Itens do produto carregados na interface");
+        }
+
+        function adicionarTodosItens() {
+            console.log("🔧 adicionarTodosItens() executando...");
+            
+            const produtoId = document.getElementById('produtoSelecionado').value;
+            if (!produtoId) {
+                alert('❌ Selecione um produto primeiro');
+                return;
+            }
+
+            const produto = produtosCadastrados.find(p => p.id == produtoId);
+            if (!produto) {
+                alert('❌ Produto não encontrado');
+                return;
+            }
+
+            const quantidadeProduto = parseInt(document.getElementById('quantidadeProduto').value) || 1;
+            const largura = parseFloat(document.getElementById('largura').value) || 0;
+            const altura = parseFloat(document.getElementById('altura').value) || 0;
+
+            console.log(`🚀 Adicionando ${quantidadeProduto} unidades do produto "${produto.nome}"`);
+
+            const itens = produto.itens_composicao || [];
+            let itensAdicionados = 0;
+
+            itens.forEach(item => {
+                try {
+                    const itemId = item.item_id;
+                    const formula = item.formula || '1';
+                    const substituivel = item.substituivel || false;
+
+                    let formulaCalculada = formula
+                        .replace(/L/gi, largura)
+                        .replace(/A/gi, altura);
+                    
+                    const quantidadePorProduto = eval(formulaCalculada);
+                    const quantidadeTotal = quantidadePorProduto * quantidadeProduto;
+
+                    const itemEstoque = itensEstoque.find(i => i.id == itemId);
+                    if (!itemEstoque) {
+                        console.log(`❌ Item ${itemId} não encontrado no estoque`);
+                        return;
+                    }
+
+                    const precoUnitario = parseFloat(itemEstoque.preco_venda) || 0;
+                    
+                    const itemExistente = orcamentoAtual.produtos.find(prod => prod.item_id == itemId);
+                    
+                    if (itemExistente) {
+                        itemExistente.quantidade += quantidadeTotal;
+                        itemExistente.total = itemExistente.quantidade * precoUnitario;
+                    } else {
+                        orcamentoAtual.produtos.push({
+                            item_id: itemId,
+                            item_nome: itemEstoque.nome,
+                            item_descricao: itemEstoque.descricao,
+                            item_unidade: itemEstoque.unidade_medida,
+                            formula: formula,
+                            quantidade: quantidadeTotal,
+                            preco_unitario: precoUnitario,
+                            total: quantidadeTotal * precoUnitario,
+                            substituivel: substituivel,
+                            cor_escolhida: null,
+                            categoria: itemEstoque.categorias?.nome || 'Outros'
+                        });
+                        itensAdicionados++;
+                    }
+
+                } catch (error) {
+                    console.error(`❌ Erro ao adicionar item ${item.item_id}:`, error);
+                }
+            });
+
+            atualizarResumo();
+            alert(`✅ ${itensAdicionados} itens adicionados para ${quantidadeProduto} unidade(s) do produto!`);
+            console.log(`✅ ${itensAdicionados} itens adicionados ao orçamento`);
+        }
+
+        function calcularItens() {
+            console.log("🔧 calcularItens() executando...");
+            
+            const quantidadeProduto = parseInt(document.getElementById('quantidadeProduto').value) || 1;
+            const largura = parseFloat(document.getElementById('largura').value) || 0;
+            const altura = parseFloat(document.getElementById('altura').value) || 0;
+
+            console.log(`📏 Quantidade: ${quantidadeProduto}, L=${largura}, A=${altura}`);
+
+            const produtoId = document.getElementById('produtoSelecionado').value;
+            if (!produtoId) {
+                console.log("ℹ️ Nenhum produto selecionado para cálculo");
+                return;
+            }
+
+            const produto = produtosCadastrados.find(p => p.id == produtoId);
+            if (!produto) {
+                console.log("❌ Produto não encontrado para cálculo");
+                return;
+            }
+
+            const itens = produto.itens_composicao || [];
+            console.log(`🧮 Calculando ${itens.length} itens...`);
+            
+            itens.forEach(item => {
+                try {
+                    let formula = item.formula
+                        .replace(/L/gi, largura)
+                        .replace(/A/gi, altura);
+                    
+                    console.log(`📐 Fórmula "${item.formula}" → "${formula}"`);
+                    
+                    const quantidadePorProduto = eval(formula);
+                    const quantidadeTotal = quantidadePorProduto * quantidadeProduto;
+                    
+                    const elementoQtd = document.getElementById(`qtd-${item.item_id}`);
+                    const elementoTotal = document.getElementById(`total-${item.item_id}`);
+                    
+                    if (elementoQtd) {
+                        elementoQtd.textContent = quantidadeTotal.toFixed(2);
+                    }
+                    
+                    if (elementoTotal) {
+                        const itemEstoque = itensEstoque.find(i => i.id == item.item_id);
+                        const preco = itemEstoque ? (parseFloat(itemEstoque.preco_venda) || 0) : 0;
+                        const total = quantidadeTotal * preco;
+                        elementoTotal.textContent = `R$ ${total.toFixed(2)}`;
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao calcular fórmula:', error);
+                    console.error('📝 Fórmula problemática:', item.formula);
+                    
+                    const elementoQtd = document.getElementById(`qtd-${item.item_id}`);
+                    if (elementoQtd) {
+                        elementoQtd.textContent = 'Erro';
+                    }
+                    const elementoTotal = document.getElementById(`total-${item.item_id}`);
+                    if (elementoTotal) {
+                        elementoTotal.textContent = 'Erro';
+                    }
+                }
+            });
+            
+            console.log("✅ Cálculos concluídos");
+        }
+
+        function debugProdutos() {
+            console.log("=== DEBUG PRODUTOS ===");
+            console.log("Produtos carregados:", produtosCadastrados.length);
+            
+            if (produtosCadastrados.length > 0) {
+                const primeiroProduto = produtosCadastrados[0];
+                console.log("Primeiro produto:", primeiroProduto);
+                console.log("Estrutura do primeiro produto:", Object.keys(primeiroProduto));
+                
+                if (primeiroProduto.itens_composicao) {
+                    console.log("itens_composicao:", primeiroProduto.itens_composicao);
+                }
+            }
+            
+            const produtoId = document.getElementById('produtoSelecionado').value;
+            if (produtoId) {
+                const produto = produtosCadastrados.find(p => p.id == produtoId);
+                console.log("Produto selecionado:", produto);
+                if (produto) {
+                    console.log("Estrutura completa do produto selecionado:", produto);
+                }
+            }
+        }
+
+        function atualizarResumo() {
+            console.log("🔧 atualizarResumo() executando...");
+            console.log(`📋 ${orcamentoAtual.produtos.length} produtos no orçamento`);
+            
+            const resumoItens = document.getElementById('resumoItens');
+            if (orcamentoAtual.produtos.length === 0) {
+                resumoItens.innerHTML = '<div class="loading">Nenhum item adicionado</div>';
+                console.log("ℹ️ Nenhum item para exibir no resumo");
+            } else {
+                resumoItens.innerHTML = orcamentoAtual.produtos.map((item, index) => `
+                    <div class="linha-item ${item.substituivel ? 'item-substituivel' : ''}" style="margin-bottom: 10px;">
+                        <div>
+                            <strong>${item.item_nome}</strong>
+                            ${item.substituivel ? '<span class="badge badge-success">SUBSTITUÍVEL</span>' : ''}
+                            <br>
+                            <small>${item.item_descricao || ''}</small>
+                        </div>
+                        <div>${item.quantidade.toFixed(2)} ${item.item_unidade}</div>
+                        <div>R$ ${item.preco_unitario.toFixed(2)}</div>
+                        <div><strong>R$ ${item.total.toFixed(2)}</strong></div>
+                        <div>
+                            <button class="btn btn-danger btn-small" onclick="removerItem(${index})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+                console.log("✅ Resumo de itens atualizado");
+            }
+
+            calcularTotal();
+            atualizarPersonalizacao();
+        }
+
+        function removerItem(index) {
+            console.log("🔧 removerItem() executando...");
+            console.log(`🗑️ Removendo item índice: ${index}`);
+            
+            if (confirm('Remover este item do orçamento?')) {
+                const itemRemovido = orcamentoAtual.produtos[index];
+                orcamentoAtual.produtos.splice(index, 1);
+                console.log(`✅ Item removido: ${itemRemovido.item_nome}`);
+                atualizarResumo();
+            }
+        }
+
+        function atualizarPersonalizacao() {
+            console.log("🔧 atualizarPersonalizacao() executando...");
+            
+            const lista = document.getElementById('listaPersonalizacao');
+            const itensComCor = orcamentoAtual.produtos.filter(item => 
+                !item.substituivel && item.categoria === 'Perfis de Alumínio'
+            );
+
+            console.log(`🎨 ${itensComCor.length} itens para personalização`);
+
+            if (itensComCor.length === 0) {
+                lista.innerHTML = '<div class="loading">Nenhum item que necessite personalização</div>';
+                return;
+            }
+
+            lista.innerHTML = itensComCor.map((item, index) => `
+                <div class="linha-item">
+                    <div>
+                        <strong>${item.item_nome}</strong><br>
+                        <small>${item.item_descricao || ''}</small>
+                    </div>
+                    <div class="seletor-cor">
+                        <div class="amostra-cor" style="background-color: ${item.cor_escolhida || '#cccccc'};"></div>
+                        <select onchange="selecionarCor(${index}, this.value)">
+                            <option value="">Selecionar cor...</option>
+                            <option value="#FFFFFF" ${item.cor_escolhida === '#FFFFFF' ? 'selected' : ''}>Branco</option>
+                            <option value="#C0C0C0" ${item.cor_escolhida === '#C0C0C0' ? 'selected' : ''}>Cinza</option>
+                            <option value="#8B4513" ${item.cor_escolhida === '#8B4513' ? 'selected' : ''}>Marrom</option>
+                            <option value="#000000" ${item.cor_escolhida === '#000000' ? 'selected' : ''}>Preto</option>
+                            <option value="#FFD700" ${item.cor_escolhida === '#FFD700' ? 'selected' : ''}>Dourado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <small>Quantidade:</small><br>
+                        ${item.quantidade} ${item.item_unidade}
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log("✅ Personalização atualizada");
+        }
+
+        function selecionarCor(index, cor) {
+            console.log("🔧 selecionarCor() executando...");
+            console.log(`🎨 Selecionando cor ${cor} para item índice ${index}`);
+            
+            orcamentoAtual.produtos[index].cor_escolhida = cor;
+            console.log("✅ Cor selecionada e salva");
+            atualizarPersonalizacao();
+        }
+
+        function calcularTotal() {
+            console.log("🔧 calcularTotal() executando...");
+            
+            const subtotal = orcamentoAtual.produtos.reduce((sum, item) => sum + item.total, 0);
+            const descontoPercent = parseFloat(document.getElementById('desconto').value) || 0;
+            const margemLucro = parseFloat(document.getElementById('margemlucro').value) || 30;
+            const valorDesconto = subtotal * (descontoPercent / 100);
+            const custoTotal = subtotal - valorDesconto;
+            const totalVenda = custoTotal * (1 + margemLucro / 100);
+
+            orcamentoAtual.subtotal = subtotal;
+            orcamentoAtual.desconto = descontoPercent;
+            orcamentoAtual.custototal = custoTotal;
+            orcamentoAtual.margemlucro = margemLucro;
+            orcamentoAtual.totalvenda = totalVenda;
+
+            document.getElementById('subtotal').textContent = `R$ ${subtotal.toFixed(2)}`;
+            document.getElementById('valorDesconto').textContent = `R$ ${valorDesconto.toFixed(2)}`;
+            document.getElementById('custototal').textContent = `R$ ${custoTotal.toFixed(2)}`;
+            document.getElementById('totalvenda').textContent = `R$ ${totalVenda.toFixed(2)}`;
+
+            console.log(`💰 Totais calculados: Subtotal=R$ ${subtotal.toFixed(2)}, Desconto=${descontoPercent}%, Total=R$ ${totalVenda.toFixed(2)}`);
+        }
+
+        // =============================================================================
+        // FUNÇÕES DE GERENCIAMENTO DE ORÇAMENTOS
+        // =============================================================================
+
+        async function salvarRascunho() {
+            console.log("🔧 salvarRascunho() executando...");
+            
+            if (!validarOrcamento()) {
+                console.log("❌ Validação do orçamento falhou");
+                return;
+            }
+
+            orcamentoAtual.status = 'rascunho';
+            orcamentoAtual.observacoes = document.getElementById('observacoes').value;
+            orcamentoAtual.data = document.getElementById('data').value;
+            orcamentoAtual.data_atualizacao = new Date().toISOString();
+
+            console.log("💾 Salvando orçamento...", orcamentoAtual);
+
+            try {
+                let resultado;
+                
+                if (orcamentoAtual.id) {
+                    const { data, error } = await supabase
+                        .from('orcamentos')
+                        .update(orcamentoAtual)
+                        .eq('id', orcamentoAtual.id)
+                        .select();
+                    
+                    if (error) throw error;
+                    resultado = data[0];
+                    console.log("✅ Orçamento atualizado:", resultado.id);
+                } else {
+                    const { data, error } = await supabase
+                        .from('orcamentos')
+                        .insert([orcamentoAtual])
+                        .select();
+                    
+                    if (error) throw error;
+                    resultado = data[0];
+                    orcamentoAtual.id = resultado.id;
+                    console.log("✅ Novo orçamento criado:", resultado.id);
+                }
+
+                alert('✅ Orçamento salvo como rascunho!');
+                await carregarOrcamentos();
+                
+            } catch (error) {
+                console.error('❌ Erro ao salvar orçamento:', error);
+                alert('❌ Erro ao salvar orçamento: ' + error.message);
+            }
+        }
+
+        async function enviarOrcamento() {
+            console.log("🔧 enviarOrcamento() executando...");
+            
+            if (!validarOrcamento()) {
+                console.log("❌ Validação do orçamento falhou");
+                return;
+            }
+
+            orcamentoAtual.status = 'enviado';
+            orcamentoAtual.data_atualizacao = new Date().toISOString();
+
+            console.log("📤 Enviando orçamento...", orcamentoAtual);
+
+            try {
+                const { data, error } = await supabase
+                    .from('orcamentos')
+                    .update(orcamentoAtual)
+                    .eq('id', orcamentoAtual.id)
+                    .select();
+                
+                if (error) throw error;
+                
+                alert('✅ Orçamento enviado ao cliente!');
+                document.getElementById('statusOrcamento').className = 'status-badge status-enviado';
+                document.getElementById('statusOrcamento').textContent = 'ENVIADO';
+                
+                await carregarOrcamentos();
+                console.log("✅ Orçamento enviado com sucesso");
+                
+            } catch (error) {
+                console.error('❌ Erro ao enviar orçamento:', error);
+                alert('❌ Erro ao enviar orçamento: ' + error.message);
+            }
+        }
+
+        async function aprovarOrcamento() {
+            console.log("🔧 aprovarOrcamento() executando...");
+            
+            if (!validarOrcamento()) {
+                console.log("❌ Validação do orçamento falhou");
+                return;
+            }
+            
+            if (!confirm('✅ APROVAR ORÇAMENTO?\n\nEsta ação irá:\n• Baixar estoque dos itens FIXOS\n• Itens insuficientes ficarão NEGATIVOS\n• Gerar alertas de compra\n\nContinuar?')) {
+                console.log("❌ Aprovação cancelada pelo usuário");
+                return;
+            }
+
+            try {
+                orcamentoAtual.status = 'aprovado';
+                orcamentoAtual.data_atualizacao = new Date().toISOString();
+                orcamentoAtual.estoque_baixado = true;
+                orcamentoAtual.data_baixa_estoque = new Date().toISOString();
+
+                console.log("📝 Atualizando status do orçamento para 'aprovado'");
+
+                const { error: errorOrcamento } = await supabase
+                    .from('orcamentos')
+                    .update(orcamentoAtual)
+                    .eq('id', orcamentoAtual.id);
+                
+                if (errorOrcamento) throw errorOrcamento;
+
+                const movimentacoes = [];
+                const alertasEstoque = [];
+
+                console.log(`📦 Iniciando baixa de estoque para ${orcamentoAtual.produtos.length} itens`);
+
+                for (const item of orcamentoAtual.produtos) {
+                    if (!item.substituivel) {
+                        console.log(`🔧 Processando item: ${item.item_nome} (${item.quantidade} ${item.item_unidade})`);
+                        
+                        const { data: itemEstoque, error: errorItem } = await supabase
+                            .from('itens')
+                            .select('quantidade_estoque, quantidade_minima, nome')
+                            .eq('id', item.item_id)
+                            .single();
+                        
+                        if (errorItem) {
+                            console.error(`❌ Erro ao buscar item ${item.item_id}:`, errorItem);
+                            continue;
+                        }
+
+                        const estoqueAnterior = itemEstoque.quantidade_estoque;
+                        const estoqueAtual = estoqueAnterior - item.quantidade;
+
+                        console.log(`📊 Estoque: ${estoqueAnterior} → ${estoqueAtual} (${item.quantidade} baixados)`);
+
+                        const { error: errorUpdate } = await supabase
+                            .from('itens')
+                            .update({ quantidade_estoque: estoqueAtual })
+                            .eq('id', item.item_id);
+                        
+                        if (errorUpdate) throw errorUpdate;
+
+                        movimentacoes.push({
+                            item_id: item.item_id,
+                            orcamento_id: orcamentoAtual.id,
+                            tipo: 'baixa_orcamento',
+                            quantidade: item.quantidade,
+                            estoque_anterior: estoqueAnterior,
+                            estoque_atual: estoqueAtual,
+                            produto_nome: item.item_nome,
+                            motivo: `Baixa automática - Orçamento ${orcamentoAtual.id}`,
+                            data_movimentacao: new Date().toISOString()
+                        });
+
+                        if (estoqueAtual < 0) {
+                            alertasEstoque.push({
+                                item_id: item.item_id,
+                                item_nome: itemEstoque.nome,
+                                quantidade_negativa: Math.abs(estoqueAtual),
+                                prioridade: 'ALTA'
+                            });
+                            console.log(`🔴 ALERTA: ${itemEstoque.nome} ficou negativo: ${estoqueAtual}`);
+                        } else if (estoqueAtual < itemEstoque.quantidade_minima) {
+                            alertasEstoque.push({
+                                item_id: item.item_id,
+                                item_nome: itemEstoque.nome,
+                                quantidade_atual: estoqueAtual,
+                                quantidade_minima: itemEstoque.quantidade_minima,
+                                prioridade: 'MEDIA'
+                            });
+                            console.log(`🟡 ALERTA: ${itemEstoque.nome} estoque baixo: ${estoqueAtual}/${itemEstoque.quantidade_minima}`);
+                        }
+                    } else {
+                        console.log(`ℹ️ Item substituível ignorado: ${item.item_nome}`);
+                    }
+                }
+
+                if (movimentacoes.length > 0) {
+                    console.log(`💾 Salvando ${movimentacoes.length} movimentações de estoque`);
+                    const { error: errorMov } = await supabase
+                        .from('movimentacoes_estoque')
+                        .insert(movimentacoes);
+                    
+                    if (errorMov) throw errorMov;
+                    console.log("✅ Movimentações salvas com sucesso");
+                }
+
+                if (alertasEstoque.length > 0) {
+                    let mensagemAlerta = '⚠️ ALERTAS DE ESTOQUE:\n\n';
+                    
+                    alertasEstoque.forEach(alerta => {
+                        if (alerta.quantidade_negativa) {
+                            mensagemAlerta += `🔴 ${alerta.item_nome}: ESTOQUE NEGATIVO -${alerta.quantidade_negativa}\n`;
+                        } else {
+                            mensagemAlerta += `🟡 ${alerta.item_nome}: Estoque baixo (${alerta.quantidade_atual}/${alerta.quantidade_minima})\n`;
+                        }
+                    });
+                    
+                    mensagemAlerta += '\nVerifique a página de COMPRAS para reposição.';
+                    alert(mensagemAlerta);
+                    console.log("⚠️ Alertas de estoque exibidos para o usuário");
+                }
+
+                alert('✅ Orçamento APROVADO e estoque baixado!\n\n' + 
+                      (alertasEstoque.length > 0 ? 'Verifique os alertas de estoque.' : 'Estoque atualizado com sucesso.'));
+                
+                document.getElementById('statusOrcamento').className = 'status-badge status-aprovado';
+                document.getElementById('statusOrcamento').textContent = 'APROVADO';
+                
+                await carregarOrcamentos();
+                limparOrcamento();
+
+                console.log("✅ Orçamento aprovado e processo concluído");
+
+            } catch (error) {
+                console.error('❌ Erro ao aprovar orçamento:', error);
+                alert('❌ Erro ao aprovar orçamento: ' + error.message);
+            }
+        }
+
+        function validarOrcamento() {
+            console.log("🔧 validarOrcamento() executando...");
+            
+            const cliente = document.getElementById('cliente').value.trim();
+            if (!cliente) {
+                console.log("❌ Validação falhou: Nome do cliente não informado");
+                alert('❌ Informe o nome do cliente');
+                return false;
+            }
+
+            if (orcamentoAtual.produtos.length === 0) {
+                console.log("❌ Validação falhou: Nenhum item adicionado ao orçamento");
+                alert('❌ Adicione pelo menos um item ao orçamento');
+                return false;
+            }
+
+            console.log("✅ Orçamento validado com sucesso");
+            return true;
+        }
+
+        function limparOrcamento() {
+            console.log("🔧 limparOrcamento() executando...");
+            
+            orcamentoAtual = {
+                id: null,
+                cliente: '',
+                telefone: '',
+                localizacao: '',
+                data: new Date().toISOString().split('T')[0],
+                status: 'rascunho',
+                produtos: [],
+                itens_avulsos: [],
+                subtotal: 0,
+                desconto: 0,
+                custototal: 0,
+                margemlucro: 30,
+                totalvenda: 0,
+                observacoes: '',
+                estoque_baixado: false,
+                data_baixa_estoque: null,
+                data_criacao: new Date().toISOString(),
+                data_atualizacao: new Date().toISOString()
+            };
+
+            document.getElementById('cliente').value = '';
+            document.getElementById('telefone').value = '';
+            document.getElementById('localizacao').value = '';
+            document.getElementById('observacoes').value = '';
+            document.getElementById('data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('desconto').value = '0';
+            document.getElementById('margemlucro').value = '30';
+            document.getElementById('produtoSelecionado').value = '';
+            document.getElementById('quantidadeProduto').value = '1';
+            document.getElementById('largura').value = '';
+            document.getElementById('altura').value = '';
+
+            document.getElementById('statusOrcamento').className = 'status-badge status-rascunho';
+            document.getElementById('statusOrcamento').textContent = 'RASCUNHO';
+
+            atualizarResumo();
+            
+            console.log("✅ Orçamento limpo e resetado");
+        }
+
+        // =============================================================================
+        // FUNÇÕES PARA LISTA DE ORÇAMENTOS
+        // =============================================================================
+
+        function atualizarListaOrcamentos() {
+            console.log("🔧 atualizarListaOrcamentos() executando...");
+            console.log(`📋 ${orcamentosExistentes.length} orçamentos para exibir`);
+            
+            const lista = document.getElementById('listaOrcamentos');
+            
+            if (orcamentosExistentes.length === 0) {
+                lista.innerHTML = '<div class="loading">Nenhum orçamento cadastrado</div>';
+                console.log("ℹ️ Nenhum orçamento para exibir");
+                return;
+            }
+
+            lista.innerHTML = orcamentosExistentes.map(orcamento => {
+                const statusClass = `status-${orcamento.status}`;
+                const produtosCount = orcamento.produtos ? orcamento.produtos.length : 0;
+                const dataFormatada = new Date(orcamento.data).toLocaleDateString('pt-BR');
+                const estoqueBadge = orcamento.estoque_baixado ? '<span class="badge badge-success" style="margin-left: 5px;">ESTOQUE BAIXADO</span>' : '';
+                
+                return `
+                    <div class="produto-card">
+                        <div class="produto-header">
+                            <div>
+                                <strong>${orcamento.cliente}</strong>
+                                <span class="status-badge ${statusClass}">${orcamento.status.toUpperCase()}</span>
+                                ${estoqueBadge}
+                                <div class="produto-detalhes">
+                                    📅 ${dataFormatada}
+                                    • 📦 ${produtosCount} itens
+                                    • 💰 R$ ${orcamento.totalvenda ? orcamento.totalvenda.toFixed(2) : '0.00'}
+                                    ${orcamento.telefone ? `• 📞 ${orcamento.telefone}` : ''}
+                                </div>
+                            </div>
+                            <div class="produto-acoes">
+                                <button class="btn btn-view" onclick="visualizarOrcamento(${orcamento.id})">👁️ Ver</button>
+                                <button class="btn btn-edit" onclick="editarOrcamento(${orcamento.id})">✏️ Editar</button>
+                                ${orcamento.status === 'aprovado' ? '' : `<button class="btn btn-success" onclick="aprovarOrcamentoExistente(${orcamento.id})">✅ Aprovar</button>`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            console.log("✅ Lista de orçamentos atualizada");
+        }
+
+        async function visualizarOrcamento(id) {
+            console.log("🔧 visualizarOrcamento() executando...");
+            console.log(`👁️ Visualizando orçamento ID: ${id}`);
+            
+            const orcamento = orcamentosExistentes.find(o => o.id === id);
+            if (!orcamento) {
+                console.log("❌ Orçamento não encontrado");
+                return;
+            }
+
+            let conteudo = `
+                <div style="margin-bottom: 20px;">
+                    <strong>Cliente:</strong> ${orcamento.cliente}<br>
+                    <strong>Telefone:</strong> ${orcamento.telefone || 'Não informado'}<br>
+                    <strong>Localização:</strong> ${orcamento.localizacao || 'Não informado'}<br>
+                    <strong>Status:</strong> <span class="status-badge status-${orcamento.status}">${orcamento.status.toUpperCase()}</span><br>
+                    <strong>Data:</strong> ${new Date(orcamento.data).toLocaleDateString('pt-BR')}<br>
+                    ${orcamento.estoque_baixado ? `<strong>Estoque Baixado:</strong> Sim (${new Date(orcamento.data_baixa_estoque).toLocaleDateString('pt-BR')})<br>` : ''}
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Itens do Orçamento:</strong>
+                    <div style="margin-top: 15px;">
+            `;
+
+            if (orcamento.produtos && orcamento.produtos.length > 0) {
+                console.log(`📦 Exibindo ${orcamento.produtos.length} itens do orçamento`);
+                orcamento.produtos.forEach(item => {
+                    const badgeSubstituivel = item.substituivel ? '<span class="badge badge-success">SUBSTITUÍVEL</span>' : '';
+                    const badgeCor = item.cor_escolhida ? `<span class="badge" style="background: ${item.cor_escolhida}; color: white;">${item.cor_escolhida}</span>` : '';
+                    
+                    conteudo += `
+                        <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #007bff;">
+                            <strong>${item.item_nome}</strong> ${badgeSubstituivel} ${badgeCor}
+                            ${item.item_descricao ? `<br><small>${item.item_descricao}</small>` : ''}
+                            <br><small style="color: #666;">
+                                <strong>Quantidade:</strong> ${item.quantidade} ${item.item_unidade}
+                                | <strong>Preço Unit.:</strong> R$ ${item.preco_unitario.toFixed(2)}
+                                | <strong>Total:</strong> R$ ${item.total.toFixed(2)}
+                                ${item.formula ? `| <strong>Fórmula:</strong> ${item.formula}` : ''}
+                            </small>
+                        </div>
+                    `;
+                });
+            } else {
+                conteudo += '<div class="loading">Nenhum item</div>';
+                console.log("ℹ️ Orçamento sem itens");
+            }
+
+            conteudo += `
+                    </div>
+                </div>
+                
+                <div class="resumo-orcamento">
+                    <strong>Resumo Financeiro:</strong>
+                    <div class="linha-resumo">
+                        <span>Subtotal:</span>
+                        <span>R$ ${orcamento.subtotal ? orcamento.subtotal.toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div class="linha-resumo">
+                        <span>Desconto (${orcamento.desconto || 0}%):</span>
+                        <span>R$ ${((orcamento.subtotal || 0) * (orcamento.desconto || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div class="linha-resumo">
+                        <span>Custo Total:</span>
+                        <span>R$ ${orcamento.custototal ? orcamento.custototal.toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div class="linha-resumo">
+                        <span>Margem Lucro (${orcamento.margemlucro || 0}%):</span>
+                        <span>R$ ${((orcamento.custototal || 0) * (orcamento.margemlucro || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div class="linha-resumo total">
+                        <span>TOTAL VENDA:</span>
+                        <span>R$ ${orcamento.totalvenda ? orcamento.totalvenda.toFixed(2) : '0.00'}</span>
+                    </div>
+                </div>
+                
+                ${orcamento.observacoes ? `
+                <div style="margin-top: 20px;">
+                    <strong>Observações:</strong><br>
+                    ${orcamento.observacoes}
+                </div>
+                ` : ''}
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="editarOrcamento(${id}); fecharModal();">✏️ Editar Orçamento</button>
+                    ${orcamento.status !== 'aprovado' ? `<button class="btn btn-success" onclick="aprovarOrcamentoExistente(${id}); fecharModal();">✅ Aprovar</button>` : ''}
+                </div>
+            `;
+
+            document.getElementById('modalTitulo').textContent = `💰 Orçamento - ${orcamento.cliente}`;
+            document.getElementById('modalConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizar').style.display = 'flex';
+            
+            console.log("✅ Modal de visualização aberto");
+        }
+
+        async function editarOrcamento(id) {
+            console.log("🔧 editarOrcamento() executando...");
+            console.log(`✏️ Editando orçamento ID: ${id}`);
+            
+            const orcamento = orcamentosExistentes.find(o => o.id === id);
+            if (!orcamento) {
+                console.log("❌ Orçamento não encontrado para edição");
+                return;
+            }
+
+            orcamentoAtual = { ...orcamento };
+            
+            document.getElementById('cliente').value = orcamento.cliente;
+            document.getElementById('telefone').value = orcamento.telefone || '';
+            document.getElementById('localizacao').value = orcamento.localizacao || '';
+            document.getElementById('observacoes').value = orcamento.observacoes || '';
+            document.getElementById('data').value = orcamento.data;
+            document.getElementById('desconto').value = orcamento.desconto || 0;
+            document.getElementById('margemlucro').value = orcamento.margemlucro || 30;
+
+            document.getElementById('statusOrcamento').className = `status-badge status-${orcamento.status}`;
+            document.getElementById('statusOrcamento').textContent = orcamento.status.toUpperCase();
+
+            atualizarResumo();
+
+            window.scrollTo(0, 0);
+            
+            console.log("✅ Orçamento carregado para edição");
+            alert('📝 Editando orçamento existente...');
+        }
+
+        async function aprovarOrcamentoExistente(id) {
+            console.log("🔧 aprovarOrcamentoExistente() executando...");
+            console.log(`✅ Aprovando orçamento existente ID: ${id}`);
+            
+            const orcamento = orcamentosExistentes.find(o => o.id === id);
+            if (!orcamento) {
+                console.log("❌ Orçamento não encontrado para aprovação");
+                return;
+            }
+
+            orcamentoAtual = { ...orcamento };
+            await aprovarOrcamento();
+        }
+
+        function filtrarOrcamentos() {
+            console.log("🔧 filtrarOrcamentos() executando...");
+            
+            const termo = document.getElementById('pesquisaOrcamento').value.toLowerCase();
+            console.log(`🔍 Filtrando orçamentos por: "${termo}"`);
+            
+            const orcamentosFiltrados = orcamentosExistentes.filter(orcamento => 
+                orcamento.cliente.toLowerCase().includes(termo) || 
+                orcamento.telefone.toLowerCase().includes(termo) ||
+                orcamento.status.toLowerCase().includes(termo)
+            );
+            
+            console.log(`📊 ${orcamentosFiltrados.length} orçamentos encontrados`);
+            
+            const lista = document.getElementById('listaOrcamentos');
+            if (orcamentosFiltrados.length === 0) {
+                lista.innerHTML = '<div class="loading">Nenhum orçamento encontrado</div>';
+                return;
+            }
+
+            lista.innerHTML = orcamentosFiltrados.map(orcamento => {
+                const statusClass = `status-${orcamento.status}`;
+                const produtosCount = orcamento.produtos ? orcamento.produtos.length : 0;
+                const dataFormatada = new Date(orcamento.data).toLocaleDateString('pt-BR');
+                const estoqueBadge = orcamento.estoque_baixado ? '<span class="badge badge-success" style="margin-left: 5px;">ESTOQUE BAIXADO</span>' : '';
+                
+                return `
+                    <div class="produto-card">
+                        <div class="produto-header">
+                            <div>
+                                <strong>${orcamento.cliente}</strong>
+                                <span class="status-badge ${statusClass}">${orcamento.status.toUpperCase()}</span>
+                                ${estoqueBadge}
+                                <div class="produto-detalhes">
+                                    📅 ${dataFormatada}
+                                    • 📦 ${produtosCount} itens
+                                    • 💰 R$ ${orcamento.totalvenda ? orcamento.totalvenda.toFixed(2) : '0.00'}
+                                </div>
+                            </div>
+                            <div class="produto-acoes">
+                                <button class="btn btn-view" onclick="visualizarOrcamento(${orcamento.id})">👁️ Ver</button>
+                                <button class="btn btn-edit" onclick="editarOrcamento(${orcamento.id})">✏️ Editar</button>
+                                ${orcamento.status === 'aprovado' ? '' : `<button class="btn btn-success" onclick="aprovarOrcamentoExistente(${orcamento.id})">✅ Aprovar</button>`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            console.log("✅ Filtro aplicado com sucesso");
+        }
+
+        function fecharModal() {
+            console.log("🔧 fecharModal() executando...");
+            document.getElementById('modalVisualizar').style.display = 'none';
+            console.log("✅ Modal fechado");
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalVisualizar');
+            if (event.target === modal) {
+                fecharModal();
+            }
+        }
+    </script>
+</body>
+</html>
