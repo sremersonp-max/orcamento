@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Orçamentos - Esquadrias</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ESTILOS CSS (SEM ALTERAÇÕES) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 25px 30px; text-align: center; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .tabs { display: flex; background: #34495e; border-bottom: 1px solid #2c3e50; }
+        .tab { flex: 1; padding: 18px 20px; text-align: center; background: #34495e; color: white; border: none; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.3s ease; }
+        .tab:hover { background: #3d566e; }
+        .tab.active { background: white; color: #2c3e50; border-bottom: 3px solid #3498db; }
+        .tab-content { display: none; padding: 0; min-height: 600px; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: border-color 0.3s ease; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3498db; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-view { background: #17a2b8; color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn-small { padding: 8px 12px; font-size: 12px; }
+        .orcamento-section { padding: 25px 30px; border-bottom: 1px solid #e9ecef; }
+        .section-title { font-size: 20px; color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .cliente-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .produto-orcamento-card { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #3498db; }
+        .produto-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; margin-bottom: 15px; }
+        .resumo-orcamento { background: #2c3e50; color: white; padding: 25px 30px; margin-top: 20px; border-radius: 10px; }
+        .resumo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .total-geral { font-size: 28px; font-weight: bold; color: #27ae60; }
+        .acoes-orcamento { display: flex; gap: 15px; justify-content: flex-end; margin-top: 20px; }
+        .produto-info { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 3px solid #27ae60; }
+        .preco-produto { font-size: 18px; font-weight: bold; color: #27ae60; text-align: center; margin-top: 10px; }
+        .lista-orcamentos-section { padding: 25px 30px; background: #f8f9fa; }
+        .orcamentos-grid { display: grid; gap: 20px; margin-top: 20px; }
+        .orcamento-card { background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; transition: all 0.3s ease; }
+        .orcamento-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .orcamento-header-card { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+        .orcamento-acoes { display: flex; gap: 10px; flex-direction: column; align-items: flex-end; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-rascunho { background: #fff3cd; color: #856404; }
+        .status-finalizado { background: #d1ecf1; color: #0c5460; }
+        .status-aprovado { background: #d4edda; color: #155724; }
+        .search-box { margin-bottom: 20px; display: flex; gap: 10px; }
+        .search-box input { flex: 1; padding: 12px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .hidden { display: none; }
+        .substituivel-section { background: #e8f5e8; border: 2px dashed #28a745; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .subtitulo-substituivel { color: #28a745; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .tabela-resumo { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; }
+        .tabela-resumo th { background: rgba(52, 73, 94, 0.8); color: white; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #34495e; }
+        .tabela-resumo td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tabela-resumo tr:last-child td { border-bottom: none; }
+        .tabela-resumo tr:hover { background: rgba(255,255,255,0.05); }
+        .valor-unitario { color: #27ae60; font-weight: bold; }
+        .subtotal { color: #e67e22; font-weight: bold; }
+        @media (max-width: 768px) {
+            .tabs { flex-direction: column; }
+            .cliente-info, .produto-header { grid-template-columns: 1fr; }
+            .acoes-orcamento { flex-direction: column; }
+            .orcamento-acoes { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+            .orcamento-header-card { flex-direction: column; gap: 15px; }
+            .search-box { flex-direction: column; }
+            .produto-header { grid-template-columns: 1fr; gap: 10px; }
+            .tabela-resumo { font-size: 12px; }
+            .tabela-resumo th, .tabela-resumo td { padding: 8px 4px; }
+            .resumo-header { flex-direction: column; gap: 15px; align-items: stretch; }
+            .total-geral { text-align: right; }
+            .resumo-header .form-group { width: 100%; }
+            .resumo-header .form-group select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 Sistema de Orçamentos - Esquadrias</h1>
+            <p>Sistema completo para gestão de orçamentos</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="openTab('orcamentos', event)">
+                📋 Orçamentos
+            </button>
+            <button class="tab" onclick="openTab('produtos', event)">
+                🧮 Produtos
+            </button>
+            <button class="tab" onclick="openTab('estoque', event)">
+                📦 Estoque
+            </button>
+        </div>
+
+        <div id="orcamentos" class="tab-content active">
+            <div class="orcamento-section">
+                <h2 class="section-title">📝 Novo Orçamento</h2>
+                <div class="cliente-info">
+                    <div class="form-group">
+                        <label for="nomeCliente">Nome do Cliente *</label>
+                        <input type="text" id="nomeCliente" placeholder="Digite o nome do cliente">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefoneCliente">Telefone</label>
+                        <input type="text" id="telefoneCliente" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="dataOrcamento">Data do Orçamento</label>
+                        <input type="text" id="dataOrcamento" readonly>
+                    </div>
+                </div>
+                <div class="cliente-info">
+                    <div class="form-group">
+                        <label for="localizacaoObra">Localização da Obra</label>
+                        <input type="text" id="localizacaoObra" placeholder="Endereço da obra">
+                    </div>
+                    <div class="form-group">
+                        <label for="observacoes">Observações</label>
+                        <textarea id="observacoes" placeholder="Observações adicionais..." rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusOrcamento">Status</label>
+                        <select id="statusOrcamento">
+                            <option value="rascunho">Rascunho</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="aprovado">Aprovado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="section-title">🛒 Produtos do Orçamento</h3>
+                
+                <div id="listaProdutosOrcamento">
+                    <div class="loading" id="loadingProdutos">Nenhum produto adicionado ao orçamento</div>
+                </div>
+
+                <button class="btn btn-primary" onclick="adicionarProdutoOrcamento()">
+                    ➕ Adicionar Produto
+                </button>
+
+                <div class="resumo-orcamento">
+                    <div class="resumo-header">
+                        <h3 style="color: white; margin: 0;">💰 Resumo do Orçamento</h3>
+                        
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="color: white; margin-bottom: 4px; font-size: 14px;">Margem de Lucro</label>
+                            <select id="margemLucro" onchange="atualizarResumoOrcamento()" style="padding: 8px 10px; width: 150px; font-size: 15px; border-radius: 6px;">
+                                <option value="1.0">0%</option>
+                                <option value="1.3">30%</option>
+                                <option value="1.5" selected>50%</option>
+                                <option value="1.7">70%</option>
+                                <option value="2.0">100%</option>
+                            </select>
+                        </div>
+
+                        <div class="total-geral" id="totalGeral">R$ 0,00</div>
+                    </div>
+                    
+                    <div id="tabelaItensResumo">
+                        <table class="tabela-resumo">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Detalhes (Cor/Vidro)</th>
+                                    <th>Valor Unitário</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpoTabelaResumo">
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; color: #bdc3c7; margin-top: 15px;">
+                        <div>Total de Produtos: <span id="totalProdutos">0</span></div>
+                        <div>Itens no Orçamento: <span id="totalItens">0</span></div>
+                    </div>
+
+                    <div class="acoes-orcamento">
+                        <button class="btn btn-secondary" onclick="salvarOrcamento()">
+                            💾 Salvar Orçamento
+                        </button>
+                        <button class="btn btn-success" onclick="gerarPDF()">
+                            📄 Gerar PDF
+                        </button>
+                        <button class="btn btn-primary" onclick="novoOrçamento()">
+                            🆕 Novo Orçamento
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+            <div class="lista-orcamentos-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 class="section-title">📋 Orçamentos Cadastrados</h2>
+                    <div class="search-box">
+                        <input type="text" id="pesquisaOrcamentos" placeholder="🔍 Pesquisar por cliente, localização..." onkeyup="filtrarOrcamentos()">
+                        <select id="filtroStatus" onchange="filtrarOrcamentos()">
+                            <option value="">Todos os status</option>
+                            <option value="rascunho">Rascunho</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="aprovado">Aprovado</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="limparFiltros()">🔄 Limpar</button>
+                    </div>
+                </div>
+                
+                <div id="listaOrcamentos" class="orcamentos-grid">
+                    <div class="loading">Carregando orçamentos...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="produtos" class="tab-content">
+             <div style="padding: 25px 30px; background: #f8f9fa; min-height: 100%;">
+                <div class="header" style="padding: 20px; text-align: left; margin-bottom: 20px; border-radius: 8px;">
+                    <h2 style="color: white; margin:0;">🧮 Gestão de Produtos (Receitas)</h2>
+                    <p style="color: #bdc3c7; margin:0;">Abra em nova aba para gerenciar as receitas dos produtos.</p>
+                </div>
+                 <button class="btn btn-success" onclick="abrirProdutosExterno()" style="font-size: 16px; padding: 15px 25px;">
+                    ➡️ Abrir Gerenciador de Produtos
+                </button>
+            </div>
+        </div>
+
+        <div id="estoque" class="tab-content">
+            <div style="padding: 25px 30px; background: #f8f9fa; min-height: 100%;">
+                <div class="header" style="padding: 20px; text-align: left; margin-bottom: 20px; border-radius: 8px;">
+                    <h2 style="color: white; margin:0;">📦 Gestão de Estoque (Itens)</h2>
+                    <p style="color: #bdc3c7; margin:0;">Abra em nova aba para gerenciar os itens, modelos e variações.</p>
+                </div>
+                <button class="btn btn-success" onclick="abrirEstoqueExterno()" style="font-size: 16px; padding: 15px 25px;">
+                    ➡️ Abrir Gerenciador de Estoque
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal" id="modalVisualizar">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Detalhes do Orçamento</h3>
+                <button class="btn btn-danger btn-small" onclick="fecharModal()">✕ Fechar</button>
+            </div>
+            <div id="modalConteudo">
+                </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script> 
+    
+    <script>
+        // =============================================================================
+        // VARIÁVEIS GLOBAIS
+        // =============================================================================
+        let produtosCadastrados = []; // Receitas (ex: Janela 4 Folhas)
+        let itensPai = []; // Modelos de Estoque (ex: Perfil U) da tabela 'itens'
+        let variacoesCadastradas = []; // Variações (ex: Perfil U - Branco) da tabela 'item_variacoes'
+        let coresCadastradas = []; // Tabela de Cores
+        let produtosOrcamento = []; // Produtos no orçamento atual [{id, produtoId, ..., substituicoes, corGeralId}]
+        let orcamentosCadastrados = []; // Orçamentos salvos
+        
+        let orcamentoAtual = {
+            id: null,
+            cliente: '',
+            telefone: '',
+            localizacao: '',
+            observacoes: '',
+            data: '',
+            status: 'rascunho',
+            produtos: [],
+            total: 0, // Custo total
+            margem: 1.5, // Margem de lucro (ex: 1.5 = 50%)
+            // selecoesGrupo foi removido daqui, pois agora está dentro de cada produto em orcamentoAtual.produtos
+            data_atualizacao: null
+        };
+        let editandoOrcamentoId = null;
+
+        // =============================================================================
+        // FUNÇÕES DE NAVEGAÇÃO E LINKS EXTERNOS
+        // =============================================================================
+
+        // INÍCIO abrirProdutosExterno
+        function abrirProdutosExterno() {
+            window.open('produtos.html', '_blank');
+        }
+        // FIM abrirProdutosExterno
+
+        // INÍCIO abrirEstoqueExterno
+        function abrirEstoqueExterno() {
+            window.open('estoque.html', '_blank');
+        }
+        // FIM abrirEstoqueExterno
+
+        // INÍCIO openTab
+        function openTab(tabName, event) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const tabButtons = document.querySelectorAll('.tab');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            const tabElement = document.getElementById(tabName);
+            if (tabElement) tabElement.classList.add('active');
+            
+            if (event) {
+                event.currentTarget.classList.add('active');
+            } else {
+                const activeTab = document.querySelector(`.tab[onclick*="openTab('${tabName}')"]`);
+                if (activeTab) activeTab.classList.add('active');
+            }
+            
+            if (tabName === 'orcamentos') {
+                carregarOrcamentos();
+            }
+        }
+        // FIM openTab
+
+        // =============================================================================
+        // FUNÇÕES DE INICIALIZAÇÃO (CARREGAMENTO DE DADOS)
+        // =============================================================================
+
+        // INÍCIO inicialização
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Iniciando sistema de orçamentos...');
+            atualizarData();
+            
+            try {
+                 // Verifica se config.js (e portanto supabase) foi carregado
+                 if (typeof supabase === 'undefined') {
+                    throw new Error("Supabase (config.js) não foi carregado corretamente.");
+                }
+
+                await Promise.all([
+                    carregarProdutos(),
+                    carregarDadosEstoque(),
+                    carregarOrcamentos()
+                ]);
+                console.log('✅ Sistema pronto!');
+            } catch (error) {
+                console.error('❌ Erro fatal na inicialização:', error);
+                alert('Erro ao carregar dados essenciais: ' + error.message + '\nVerifique o console para mais detalhes.');
+                // Desabilitar botões ou mostrar mensagem de erro na UI seria bom aqui
+            }
+        });
+        // FIM inicialização
+
+        // INÍCIO atualizarData
+        function atualizarData() {
+            const now = new Date();
+            const dataFormatada = now.toLocaleDateString('pt-BR');
+            const dataInput = document.getElementById('dataOrcamento');
+            if (dataInput) dataInput.value = dataFormatada;
+            orcamentoAtual.data = dataFormatada; // Salva no formato DD/MM/AAAA
+        }
+        // FIM atualizarData
+
+        // INÍCIO carregarProdutos
+        async function carregarProdutos() {
+            try {
+                const { data, error } = await supabase
+                    .from('produtos')
+                    .select(`*, produto_categorias(nome)`)
+                    .eq('ativo', true)
+                    .order('nome');
+                if (error) throw error;
+                produtosCadastrados = data || [];
+                console.log('✅ Receitas de Produtos carregadas:', produtosCadastrados.length);
+            } catch (error) {
+                console.error('❌ Erro ao carregar produtos (receitas):', error);
+                produtosCadastrados = [];
+                throw error; // Propaga o erro para a inicialização
+            }
+        }
+        // FIM carregarProdutos
+
+        // INÍCIO carregarDadosEstoque
+        async function carregarDadosEstoque() {
+            try {
+                const [itensPaiRes, variacoesRes, coresRes] = await Promise.all([
+                    supabase.from('itens').select('*, categorias(nome), linhas(nome)').eq('ativo', true),
+                    supabase.from('item_variacoes').select('*, cores(nome)'), // Junta com cores
+                    supabase.from('cores').select('*').order('nome')
+                ]);
+
+                if (itensPaiRes.error) throw itensPaiRes.error;
+                if (variacoesRes.error) throw variacoesRes.error;
+                if (coresRes.error) throw coresRes.error;
+
+                itensPai = itensPaiRes.data || [];
+                variacoesCadastradas = variacoesRes.data || [];
+                coresCadastradas = coresRes.data || [];
+
+                console.log('✅ Itens Modelo (Pai) carregados:', itensPai.length);
+                console.log('✅ Variações de Estoque carregadas:', variacoesCadastradas.length);
+                console.log('✅ Cores carregadas:', coresCadastradas.length);
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados do estoque:', error);
+                itensPai = [];
+                variacoesCadastradas = [];
+                coresCadastradas = [];
+                throw error; // Propaga o erro para a inicialização
+            }
+        }
+        // FIM carregarDadosEstoque
+
+        // =============================================================================
+        // FUNÇÕES DO ORÇAMENTO (ADICIONAR/REMOVER/CALCULAR PRODUTOS)
+        // =============================================================================
+
+        // INÍCIO adicionarProdutoOrcamento (MODIFICADA)
+        function adicionarProdutoOrcamento() {
+            const produtoDivId = 'produto_' + Date.now();
+            
+            const produtoHTML = `
+                <div class="produto-orcamento-card" id="${produtoDivId}">
+                    <div class="produto-header">
+                        <div class="form-group"><label>Produto (Receita)</label>
+                            <select onchange="atualizarProdutoOrcamento('${produtoDivId}', this.value)">
+                                <option value="">Selecione...</option>
+                                ${produtosCadastrados.map(p => `<option value="${p.id}">${p.nome} (${p.produto_categorias?.nome || ''})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Largura (m)</label><input type="number" placeholder="1.20" min="0.1" step="0.01" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_largura"></div>
+                        <div class="form-group"><label>Altura (m)</label><input type="number" placeholder="2.00" min="0.1" step="0.01" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_altura"></div>
+                        <div class="form-group"><label>Quantidade</label><input type="number" placeholder="1" min="1" value="1" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_quantidade"></div>
+                        <button class="btn btn-danger btn-small" onclick="removerProdutoOrcamento('${produtoDivId}')">🗑️</button>
+                    </div>
+                    <div id="${produtoDivId}_substituiveis" class="hidden"></div>
+                    
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button class="btn btn-secondary btn-small" 
+                                onclick="toggleDetalhesProduto('${produtoDivId}')" 
+                                id="${produtoDivId}_btn_detalhes" style="display: none;">
+                            👁️ Ver Detalhes (Custo)
+                        </button>
+                        <div id="${produtoDivId}_preco" class="preco-produto hidden" style="display: inline-block; margin-right: 15px;">R$ 0,00</div>
+                    </div>
+                    
+                    <div id="${produtoDivId}_info_wrapper" class="hidden">
+                        <div id="${produtoDivId}_info" class="produto-info" style="margin-top: 10px;"></div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('loadingProdutos')?.classList.add('hidden');
+            document.getElementById('listaProdutosOrcamento').insertAdjacentHTML('beforeend', produtoHTML);
+            
+            produtosOrcamento.push({
+                id: produtoDivId,
+                produtoId: '',
+                largura: 0,
+                altura: 0,
+                quantidade: 1,
+                substituicoes: {}, // { item_pai_id: variacao_id }
+                corGeralId: null, // ID da cor selecionada no seletor geral
+                preco: 0,
+                detalhes: []
+            });
+            atualizarResumoOrcamento();
+        }
+        // FIM adicionarProdutoOrcamento
+
+        // NOVO: Função para alternar a visibilidade dos detalhes
+        function toggleDetalhesProduto(produtoDivId) {
+            const wrapper = document.getElementById(`${produtoDivId}_info_wrapper`);
+            const btn = document.getElementById(`${produtoDivId}_btn_detalhes`);
+            
+            if (wrapper.classList.contains('hidden')) {
+                wrapper.classList.remove('hidden');
+                btn.textContent = '▲ Ocultar Detalhes (Custo)';
+            } else {
+                wrapper.classList.add('hidden');
+                btn.textContent = '👁️ Ver Detalhes (Custo)';
+            }
+        }
+        // FIM toggleDetalhesProduto
+
+
+        // INÍCIO atualizarProdutoOrcamento
+        function atualizarProdutoOrcamento(produtoDivId, produtoReceitaId) {
+            const produtoIndex = produtosOrcamento.findIndex(p => p.id === produtoDivId);
+            if (produtoIndex === -1) return;
+
+            const produtoOrcamento = produtosOrcamento[produtoIndex];
+            produtoOrcamento.produtoId = produtoReceitaId;
+            produtoOrcamento.substituicoes = {};
+            produtoOrcamento.corGeralId = null; // Reseta a cor geral
+
+            const produtoReceita = produtosCadastrados.find(p => p.id == produtoReceitaId);
+            const containerSubstituiveis = document.getElementById(`${produtoDivId}_substituiveis`);
+            if (!containerSubstituiveis) return;
+            
+            containerSubstituiveis.innerHTML = ''; // Limpa seletores antigos
+            containerSubstituiveis.classList.add('hidden');
+
+            if (produtoReceita && produtoReceita.itens_composicao) {
+                const itensSubstituiveis = produtoReceita.itens_composicao.filter(item => item.substituivel);
+                if (itensSubstituiveis.length > 0) {
+                    mostrarOpcoesSubstituiveis(produtoDivId, produtoReceita, itensSubstituiveis);
+                    containerSubstituiveis.classList.remove('hidden');
+                }
+            }
+            calcularProdutoOrcamento(produtoDivId);
+        }
+        // FIM atualizarProdutoOrcamento
+
+        // INÍCIO mostrarOpcoesSubstituiveis (MODIFICADA)
+        function mostrarOpcoesSubstituiveis(produtoDivId, produtoReceita, itensSubstituiveis) {
+            const container = document.getElementById(`${produtoDivId}_substituiveis`);
+            if (!container) return;
+
+            let html = `<div class="substituivel-section">`;
+            let temGrupoGeral = false;
+            
+            // 1. Agrupar itens por 'tipo_item'
+            const grupos = {};
+            itensSubstituiveis.forEach(item => {
+                const tipo = item.tipo_item || 'Outros';
+                if (!grupos[tipo]) grupos[tipo] = [];
+                grupos[tipo].push(item);
+                if (tipo === 'Perfis' || tipo === 'Acessorios') {
+                    temGrupoGeral = true;
+                }
+            });
+
+            // 2. Criar Seletor Geral (se aplicável)
+            if (temGrupoGeral) {
+                // LISTA FIXA DE CORES SOLICITADAS PELO USUÁRIO (PERFIS/ACESSÓRIOS)
+                const coresFixasNomes = ['Branco', 'Preto', 'Marrom', 'Fosco', 'Brilhante', 'Bronze'];
+                
+                // Filtra as cores cadastradas para incluir apenas as da lista fixa
+                // Usando toLowerCase() para ignorar maiúsculas/minúsculas na comparação
+                const opcoesCoresGerais = coresCadastradas
+                    .filter(cor => coresFixasNomes.map(name => name.toLowerCase()).includes(cor.nome.toLowerCase()))
+                    .map(cor => `<option value="${cor.id}">${cor.nome}</option>`)
+                    .join('');
+
+                 html += `
+                    <div style="margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="subtitulo-substituivel" style="margin-bottom: 8px;">
+                                🎨 Cor Geral (Perfis e Acessórios):
+                            </label>
+                            <select class="form-group" 
+                                    style="width: 100%; padding: 12px 15px; border-radius: 8px; font-size: 15px;"
+                                    onchange="selecionarCorGeral('${produtoDivId}', this.value)"
+                                    id="${produtoDivId}_select_cor_geral">
+                                <option value="">Selecione a Cor...</option>
+                                ${opcoesCoresGerais}
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. Criar Seletores Individuais (para grupos NÃO gerais)
+            for (const [tipo, itensDoGrupo] of Object.entries(grupos)) {
+                // Pula os grupos que já foram cobertos pelo seletor geral
+                if (tipo === 'Perfis' || tipo === 'Acessorios') continue;
+
+                itensDoGrupo.forEach(itemComposicao => {
+                    const itemPai = itensPai.find(p => p.id == itemComposicao.item_id);
+                    if (!itemPai) return;
+
+                    const opcoesVariacao = variacoesCadastradas.filter(v => v.item_id == itemPai.id);
+                    
+                    if (opcoesVariacao.length > 0) {
+                         html += `
+                            <div style="margin-bottom: 20px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="subtitulo-substituivel" style="margin-bottom: 8px;">
+                                        🔄 ${itemPai.nome} - Escolha o tipo:
+                                    </label>
+                                    <select class="form-group" 
+                                            style="width: 100%; padding: 12px 15px; border-radius: 8px; font-size: 15px;"
+                                            onchange="selecionarItemSubstituicao('${produtoDivId}', ${itemPai.id}, this.value)"
+                                            id="${produtoDivId}_select_item_${itemPai.id}">
+                                        <option value="">Selecione uma opção...</option>
+                                        ${opcoesVariacao.map(variacao => `
+                                            <option value="${variacao.id}">
+                                                ${variacao.cores.nome} (R$ ${(variacao.preco_venda || 0).toFixed(2)}/${itemPai.unidade_medida || 'UN'})
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        // FIM mostrarOpcoesSubstituiveis
+
+        // INÍCIO selecionarItemSubstituicao
+        function selecionarItemSubstituicao(produtoDivId, itemPaiId, variacaoId) {
+            const produtoIndex = produtosOrcamento.findIndex(p => p.id === produtoDivId);
+            if (produtoIndex === -1) return;
+
+            const variacaoIdNumerico = parseInt(variacaoId);
+            const produtoOrcamento = produtosOrcamento[produtoIndex];
+
+            if (!produtoOrcamento.substituicoes) produtoOrcamento.substituicoes = {};
+            
+            if (variacaoIdNumerico) {
+                produtoOrcamento.substituicoes[itemPaiId] = variacaoIdNumerico;
+            } else {
+                delete produtoOrcamento.substituicoes[itemPaiId];
+            }
+
+            calcularProdutoOrcamento(produtoDivId);
+        }
+        // FIM selecionarItemSubstituicao
+
+        // INÍCIO selecionarCorGeral
+        function selecionarCorGeral(produtoDivId, corId) {
+            const produtoIndex = produtosOrcamento.findIndex(p => p.id === produtoDivId);
+            if (produtoIndex === -1) return;
+
+            const corIdNumerica = parseInt(corId);
+            const produtoOrcamento = produtosOrcamento[produtoIndex];
+            
+            produtoOrcamento.corGeralId = corIdNumerica || null; // Salva o ID da cor geral
+
+            // Limpa substituições antigas de perfis/acessórios
+            // (Poderia ser mais otimizado, mas assim garante consistência)
+             if (!produtoOrcamento.substituicoes) produtoOrcamento.substituicoes = {};
+             const produtoReceita = produtosCadastrados.find(p => p.id == produtoOrcamento.produtoId);
+             if(produtoReceita && produtoReceita.itens_composicao){
+                 produtoReceita.itens_composicao.forEach(itemComp => {
+                     if(itemComp.tipo_item === 'Perfis' || itemComp.tipo_item === 'Acessorios'){
+                         delete produtoOrcamento.substituicoes[itemComp.item_id];
+                     }
+                 });
+             }
+
+
+            calcularProdutoOrcamento(produtoDivId); // Recalcula com a nova cor geral
+        }
+        // FIM selecionarCorGeral
+
+        // INÍCIO calcularProdutoOrcamento
+        function calcularProdutoOrcamento(produtoDivId) {
+            const produtoIndex = produtosOrcamento.findIndex(p => p.id === produtoDivId);
+            if (produtoIndex === -1) return;
+
+            const produtoOrcamento = produtosOrcamento[produtoIndex];
+            const produtoReceita = produtosCadastrados.find(p => p.id == produtoOrcamento.produtoId);
+            
+            if (!produtoReceita) return;
+
+            const larguraElement = document.getElementById(`${produtoDivId}_largura`);
+            const alturaElement = document.getElementById(`${produtoDivId}_altura`);
+            const quantidadeElement = document.getElementById(`${produtoDivId}_quantidade`);
+            
+            produtoOrcamento.largura = parseFloat(larguraElement?.value) || 0;
+            produtoOrcamento.altura = parseFloat(alturaElement?.value) || 0;
+            produtoOrcamento.quantidade = parseInt(quantidadeElement?.value) || 1;
+
+            // Calcular preço - Passa a cor geral selecionada
+            const resultado = calcularPrecoProduto(
+                produtoReceita, 
+                produtoOrcamento.largura, 
+                produtoOrcamento.altura, 
+                produtoOrcamento.quantidade, 
+                produtoOrcamento.substituicoes,
+                produtoOrcamento.corGeralId // Passa o ID da cor geral
+            );
+            
+            produtoOrcamento.preco = resultado.precoTotalCusto; // Custo
+            produtoOrcamento.detalhes = resultado.detalhes;
+             // Atualiza o mapa de substituições com base na cor geral (importante para salvar e dar baixa)
+            produtoOrcamento.substituicoes = resultado.substituicoesFinais; 
+
+            atualizarInterfaceProduto(produtoDivId, produtoOrcamento, produtoReceita.nome);
+            atualizarResumoOrcamento();
+        }
+        // FIM calcularProdutoOrcamento
+
+        // INÍCIO calcularPrecoProduto
+        function calcularPrecoProduto(produtoReceita, largura, altura, quantidade, substituicoesIndividuais = {}, corGeralId = null) {
+            const itensComposicao = produtoReceita.itens_composicao || [];
+            let precoTotalCusto = 0;
+            const detalhes = [];
+            const substituicoesFinais = { ...substituicoesIndividuais }; // Começa com as individuais (vidro)
+            const L = largura;
+            const A = altura;
+
+            itensComposicao.forEach(itemComposicao => {
+                const itemPaiId = itemComposicao.item_id;
+                const itemPai = itensPai.find(p => p.id == itemPaiId);
+                if (!itemPai) {
+                    detalhes.push({ nome: `Item ID ${itemPaiId} ?`, erro: 'Item Pai não encontrado' });
+                    return;
+                }
+
+                let variacaoSelecionadaId = null;
+                let variacaoSelecionada = null;
+                const tipo = itemComposicao.tipo_item || 'Outros';
+
+                // 1. Determinar a Variação a ser usada
+                if (itemComposicao.substituivel) {
+                    if ((tipo === 'Perfis' || tipo === 'Acessorios') && corGeralId) {
+                        // Usa a Cor Geral
+                        const variacao = variacoesCadastradas.find(v => v.item_id == itemPaiId && v.cor_id == corGeralId);
+                        if (variacao) {
+                            variacaoSelecionada = variacao;
+                            variacaoSelecionadaId = variacao.id;
+                            substituicoesFinais[itemPaiId] = variacao.id; // Atualiza o mapa final
+                        } else {
+                            detalhes.push({ nome: itemPai.nome, erro: `Cor Geral selecionada não disponível.` });
+                        }
+                    } else if (substituicoesIndividuais[itemPaiId]) {
+                        // Usa a Seleção Individual (ex: Vidro)
+                        variacaoSelecionadaId = substituicoesIndividuais[itemPaiId];
+                        variacaoSelecionada = variacoesCadastradas.find(v => v.id == variacaoSelecionadaId);
+                         // Não precisa atualizar substituicoesFinais, já está lá
+                    } else {
+                         // Substituível, mas nada selecionado (nem geral, nem individual)
+                         detalhes.push({ nome: itemPai.nome, erro: `Nenhuma variação/cor selecionada.` });
+                    }
+                } else {
+                    // Item NÃO substituível (Padrão)
+                    const variacaoPadrao = variacoesCadastradas.find(v => v.item_id == itemPaiId);
+                    if (variacaoPadrao) {
+                        variacaoSelecionada = variacaoPadrao;
+                        variacaoSelecionadaId = variacaoPadrao.id;
+                         // Itens não substituíveis não entram no mapa de substituições
+                    } else {
+                        detalhes.push({ nome: itemPai.nome, erro: `Variação padrão não encontrada.` });
+                    }
+                }
+
+                // 2. Calcular Preço se a variação foi encontrada
+                if (variacaoSelecionada) {
+                    const precoBase = variacaoSelecionada.preco_venda || 0;
+                    try {
+                        const quantidadeCalculada = calcularQuantidadeFormula(itemComposicao.formula, L, A);
+                        const precoItem = quantidadeCalculada * precoBase;
+                        precoTotalCusto += precoItem;
+
+                        detalhes.push({
+                            nome: itemPai.nome,
+                            variacaoNome: variacaoSelecionada.cores.nome, // Nome da cor
+                            formula: itemComposicao.formula,
+                            quantidade: quantidadeCalculada,
+                            precoUnitario: precoBase,
+                            precoTotal: precoItem,
+                            unidade: itemPai.unidade_medida || 'UN',
+                            substituido: itemComposicao.substituivel
+                        });
+                    } catch (error) {
+                        detalhes.push({ nome: itemPai.nome, formula: itemComposicao.formula, erro: `Erro fórmula: ${error.message}` });
+                    }
+                }
+            });
+
+            precoTotalCusto *= quantidade; // Aplica quantidade do produto
+
+            return {
+                precoTotalCusto: precoTotalCusto,
+                detalhes: detalhes,
+                substituicoesFinais: substituicoesFinais // Retorna o mapa completo de substituições
+            };
+        }
+        // FIM calcularPrecoProduto
+
+        // INÍCIO calcularQuantidadeFormula
+        function calcularQuantidadeFormula(formula, L, A) {
+            if (!formula || formula.trim() === '') return 1;
+            const formulaLower = formula.toLowerCase().trim();
+            let expressao = formulaLower.replace(/l/g, L.toString()).replace(/a/g, A.toString());
+            try {
+                // Usar Function em vez de eval para um pouco mais de segurança
+                const resultado = new Function(`return ${expressao}`)();
+                return parseFloat(resultado) || 0;
+            } catch (error) {
+                 console.error(`Erro ao avaliar fórmula "${formula}" com L=${L}, A=${A} -> "${expressao}"`, error);
+                throw new Error(`Fórmula inválida: "${formula}"`);
+            }
+        }
+        // FIM calcularQuantidadeFormula
+
+        // INÍCIO atualizarInterfaceProduto (MODIFICADA)
+        function atualizarInterfaceProduto(produtoDivId, produtoOrcamento, nomeProduto) {
+            const infoDiv = document.getElementById(`${produtoDivId}_info`);
+            const precoDiv = document.getElementById(`${produtoDivId}_preco`);
+            const btnDetalhes = document.getElementById(`${produtoDivId}_btn_detalhes`);
+            const wrapperDetalhes = document.getElementById(`${produtoDivId}_info_wrapper`);
+
+            if (!infoDiv || !precoDiv || !btnDetalhes) return;
+
+            const temErro = produtoOrcamento.detalhes.some(d => d.erro);
+
+            if (produtoOrcamento.preco > 0 || temErro) { // Mostra mesmo se tiver erro
+                let detalhesHTML = `
+                    <strong>${nomeProduto}</strong><br>
+                    <small>Dimensões: ${produtoOrcamento.largura}m × ${produtoOrcamento.altura}m | Quantidade: ${produtoOrcamento.quantidade}</small>
+                    <div style="margin-top: 10px; font-size: 12px;">
+                        <strong>Detalhes do cálculo (preço de custo):</strong>`;
+                
+                produtoOrcamento.detalhes.forEach(detalhe => {
+                    if (detalhe.erro) {
+                        detalhesHTML += `<div class="item-calc" style="color: #e74c3c;">❌ ${detalhe.nome}<br><small>${detalhe.erro}</small></div>`;
+                    } else {
+                        const icone = detalhe.substituido ? '🔄' : '✅';
+                        detalhesHTML += `<div class="item-calc">${icone} ${detalhe.nome} (${detalhe.variacaoNome})<br><small>${detalhe.quantidade.toFixed(2)} ${detalhe.unidade} × R$ ${detalhe.precoUnitario.toFixed(2)} = R$ ${detalhe.precoTotal.toFixed(2)}</small></div>`;
+                    }
+                });
+                
+                detalhesHTML += `</div>`;
+                infoDiv.innerHTML = detalhesHTML;
+                
+                precoDiv.textContent = `Custo: R$ ${produtoOrcamento.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                precoDiv.classList.remove('hidden');
+
+                // MOSTRA O BOTÃO DE DETALHES
+                btnDetalhes.style.display = 'inline-block';
+                 // Reseta o texto do botão (pode ser necessário na edição)
+                btnDetalhes.textContent = wrapperDetalhes.classList.contains('hidden') ? '👁️ Ver Detalhes (Custo)' : '▲ Ocultar Detalhes (Custo)';
+                
+                // Adiciona borda vermelha se houver erro e abre o painel de detalhes
+                const card = document.getElementById(produtoDivId);
+                if (temErro) {
+                    card.style.borderLeft = '4px solid #e74c3c';
+                    wrapperDetalhes.classList.remove('hidden'); // Abre o painel se houver erro
+                    btnDetalhes.textContent = '▲ Ocultar Detalhes (Custo)';
+                } else {
+                    card.style.borderLeft = '4px solid #3498db';
+                     // Garante que o painel está escondido se não houver erro (para visual limpo)
+                    if (wrapperDetalhes.classList.contains('hidden') && wrapperDetalhes.innerHTML != '') {
+                         wrapperDetalhes.classList.add('hidden');
+                         btnDetalhes.textContent = '👁️ Ver Detalhes (Custo)';
+                    }
+                }
+
+            } else {
+                // Limpa a interface se não houver preço/dados válidos
+                infoDiv.innerHTML = '';
+                precoDiv.classList.add('hidden');
+                btnDetalhes.style.display = 'none';
+                wrapperDetalhes.classList.add('hidden');
+                const card = document.getElementById(produtoDivId);
+                card.style.borderLeft = '4px solid #3498db'; 
+            }
+        }
+        // FIM atualizarInterfaceProduto
+
+        // INÍCIO removerProdutoOrcamento
+        function removerProdutoOrcamento(produtoDivId) {
+            if (confirm('Tem certeza que deseja remover este produto do orçamento?')) {
+                produtosOrcamento = produtosOrcamento.filter(p => p.id !== produtoDivId);
+                document.getElementById(produtoDivId)?.remove();
+                atualizarResumoOrcamento();
+                if (produtosOrcamento.length === 0) {
+                    document.getElementById('loadingProdutos')?.classList.remove('hidden');
+                }
+            }
+        }
+        // FIM removerProdutoOrcamento
+
+        // INÍCIO atualizarResumoOrcamento
+        function atualizarResumoOrcamento() {
+            const margem = parseFloat(document.getElementById('margemLucro').value) || 1.0;
+            const totalCusto = produtosOrcamento.reduce((sum, p) => sum + (p.preco || 0), 0);
+            const totalGeralComMargem = totalCusto * margem;
+            const totalItens = produtosOrcamento.reduce((sum, p) => sum + (p.quantidade || 0), 0);
+            
+            document.getElementById('totalGeral').textContent = `R$ ${totalGeralComMargem.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('totalProdutos').textContent = produtosOrcamento.length;
+            document.getElementById('totalItens').textContent = totalItens;
+            
+            orcamentoAtual.total = totalCusto;
+            orcamentoAtual.margem = margem;
+            orcamentoAtual.produtos = produtosOrcamento; // Atualiza produtos com suas seleções
+
+            // Atualizar tabela de resumo
+            const corpoTabela = document.getElementById('corpoTabelaResumo');
+            if (corpoTabela) {
+                corpoTabela.innerHTML = '';
+                produtosOrcamento.forEach(produto => {
+                    if (produto.preco > 0 && produto.produtoId) {
+                        const produtoReceita = produtosCadastrados.find(p => p.id == produto.produtoId);
+                        const nomeProduto = produtoReceita ? produtoReceita.nome : 'Produto';
+                        
+                        let detalhes = [];
+                        if(produto.corGeralId) {
+                            const cor = coresCadastradas.find(c => c.id == produto.corGeralId);
+                            if(cor) detalhes.push(`Cor: ${cor.nome}`);
+                        }
+                        Object.values(produto.substituicoes || {}).forEach(variacaoId => {
+                            const variacao = variacoesCadastradas.find(v => v.id == variacaoId);
+                            // Evita adicionar a cor geral novamente se ela já foi pega
+                            if(variacao && (!produto.corGeralId || variacao.cor_id != produto.corGeralId)) {
+                                 detalhes.push(variacao.cores.nome);
+                            }
+                        });
+                        
+                        const valorUnitarioCusto = (produto.quantidade > 0 && produto.preco > 0) ? produto.preco / produto.quantidade : 0;
+                        const valorUnitarioComMargem = valorUnitarioCusto * margem;
+                        const subtotalComMargem = (produto.preco || 0) * margem;
+                        
+                        const linha = document.createElement('tr');
+                        linha.innerHTML = `
+                            <td>${nomeProduto}</td>
+                            <td>${detalhes.join(', ') || 'Padrão'}</td>
+                            <td class="valor-unitario">R$ ${valorUnitarioComMargem.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="subtotal">R$ ${subtotalComMargem.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
+                        corpoTabela.appendChild(linha);
+                    }
+                });
+            }
+        }
+        // FIM atualizarResumoOrcamento
+
+        // =============================================================================
+        // CRUD ORÇAMENTOS (SALVAR/CARREGAR/EXCLUIR)
+        // =============================================================================
+
+        // INÍCIO salvarOrcamento
+        async function salvarOrcamento() {
+            const nomeCliente = document.getElementById('nomeCliente').value.trim();
+            if (!nomeCliente) { alert('❌ Digite o nome do cliente.'); return; }
+            if (produtosOrcamento.length === 0) { alert('❌ Adicione produtos.'); return; }
+            
+            orcamentoAtual.cliente = nomeCliente;
+            orcamentoAtual.telefone = document.getElementById('telefoneCliente').value;
+            orcamentoAtual.localizacao = document.getElementById('localizacaoObra').value;
+            orcamentoAtual.observacoes = document.getElementById('observacoes').value;
+            orcamentoAtual.status = document.getElementById('statusOrcamento').value;
+            orcamentoAtual.data_atualizacao = new Date().toISOString();
+
+            let dataOrcamento = document.getElementById('dataOrcamento').value;
+            if (dataOrcamento.includes('/')) {
+                const [dia, mes, ano] = dataOrcamento.split('/');
+                dataOrcamento = `${ano}-${mes}-${dia}`;
+            }
+            orcamentoAtual.data = dataOrcamento;
+
+            // Prepara os dados para salvar (sem detalhes de cálculo)
+             const produtosParaSalvar = orcamentoAtual.produtos.map(p => ({
+                id: p.id,
+                produtoId: p.produtoId,
+                largura: p.largura,
+                altura: p.altura,
+                quantidade: p.quantidade,
+                substituicoes: p.substituicoes, // Mapa {itemPaiId: variacaoId}
+                corGeralId: p.corGeralId,       // ID da cor geral
+                preco: p.preco // Custo
+            }));
+            
+            try {
+                let dadosParaSalvar = {
+                    cliente: orcamentoAtual.cliente,
+                    telefone: orcamentoAtual.telefone,
+                    localizacao: orcamentoAtual.localizacao,
+                    observacoes: orcamentoAtual.observacoes,
+                    data: orcamentoAtual.data,
+                    status: orcamentoAtual.status,
+                    produtos: produtosParaSalvar, // Salva a versão limpa
+                    total: orcamentoAtual.total,
+                    margem: orcamentoAtual.margem,
+                    // Não salvamos mais selecoesGrupo aqui, está dentro de produtos
+                    data_atualizacao: orcamentoAtual.data_atualizacao
+                };
+
+                let result;
+                if (editandoOrcamentoId) {
+                    result = await supabase.from('orcamentos').update(dadosParaSalvar).eq('id', editandoOrcamentoId);
+                } else {
+                    dadosParaSalvar.estoque_baixado = false;
+                    result = await supabase.from('orcamentos').insert([dadosParaSalvar]);
+                }
+
+                if (result.error) throw result.error;
+
+                alert('✅ Orçamento salvo com sucesso!');
+                await carregarOrcamentos();
+                novoOrçamento();
+                
+            } catch (error) {
+                console.error('❌ Erro ao salvar orçamento:', error);
+                alert('❌ Erro ao salvar orçamento: ' + error.message);
+            }
+        }
+        // FIM salvarOrcamento
+
+        // INÍCIO carregarOrcamentos
+        async function carregarOrcamentos() {
+            try {
+                const { data, error } = await supabase
+                    .from('orcamentos')
+                    .select('*')
+                    .order('data_criacao', { ascending: false });
+                if (error) throw error;
+                orcamentosCadastrados = data || [];
+                atualizarListaOrcamentos();
+            } catch (error) {
+                console.error('❌ Erro ao carregar orçamentos:', error);
+                orcamentosCadastrados = [];
+                atualizarListaOrcamentos();
+                throw error; // Propaga para inicialização saber do erro
+            }
+        }
+        // FIM carregarOrcamentos
+
+       // INÍCIO atualizarListaOrcamentos
+        function atualizarListaOrcamentos(listaFiltrada = null) {
+            const lista = document.getElementById('listaOrcamentos');
+            if (!lista) return;
+            const orcamentosParaMostrar = listaFiltrada || orcamentosCadastrados;
+            
+            if (orcamentosParaMostrar.length === 0) {
+                lista.innerHTML = '<div class="loading">Nenhum orçamento encontrado</div>'; return;
+            }
+
+            lista.innerHTML = orcamentosParaMostrar.map(orc => {
+                const statusClass = `status-${orc.status}`;
+                let dataF = 'Inválida';
+                try {
+                     if (orc.data) {
+                        // Tenta converter AAAA-MM-DD para DD/MM/AAAA
+                        const [ano, mes, dia] = orc.data.split('-');
+                        if(dia && mes && ano) dataF = `${dia}/${mes}/${ano}`;
+                        else dataF = orc.data; // Se já estiver DD/MM/AAAA ou outro formato
+                     }
+                } catch(e){ console.error("Erro formatando data:", orc.data, e); }
+
+                let btEstoque = '';
+                if (orc.status === 'aprovado') {
+                    btEstoque = orc.estoque_baixado ? 
+                        `<button class="btn btn-secondary btn-small" style="width: 100%;" onclick="event.stopPropagation(); reverterBaixaEstoque(${orc.id})">🔄 Reverter Baixa</button>` : 
+                        `<button class="btn btn-success btn-small" style="width: 100%;" onclick="event.stopPropagation(); darBaixaEstoque(${orc.id})">⬇️ Dar Baixa</button>`;
+                }
+                
+                const totalVenda = (orc.total || 0) * (orc.margem || 1.0);
+
+                return `
+                    <div class="orcamento-card">
+                        <div class="orcamento-header-card">
+                            <div>
+                                <strong style="font-size: 18px;">${orc.cliente || 'Cliente'}</strong> <span class="status-badge ${statusClass}">${orc.status}</span>
+                                <div style="margin-top: 8px; color: #666; font-size: 13px;">📅 ${dataF} ${orc.telefone ? `• 📞 ${orc.telefone}` : ''} ${orc.localizacao ? `• 📍 ${orc.localizacao}` : ''}</div>
+                                <div style="margin-top: 5px; font-size: 14px;"><strong>R$ ${totalVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong> • ${(orc.produtos || []).length} prod.</div>
+                            </div>
+                            <div class="orcamento-acoes">${btEstoque}
+                                <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end; margin-top: ${btEstoque ? '10px' : '0'};">
+                                    <button class="btn btn-view btn-small" onclick="event.stopPropagation(); visualizarOrcamento(${orc.id})">👁️</button>
+                                    <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editarOrcamento(${orc.id})">✏️</button>
+                                    <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); excluirOrcamento(${orc.id})">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+        // FIM atualizarListaOrcamentos
+
+       // INÍCIO visualizarOrcamento
+        async function visualizarOrcamento(id) {
+             const data = orcamentosCadastrados.find(o => o.id === id);
+            if (!data) { alert('❌ Orçamento não encontrado'); return; }
+
+            let dataF = 'Inválida';
+             try {
+                 if (data.data) {
+                    const [ano, mes, dia] = data.data.split('-');
+                    if(dia && mes && ano) dataF = `${dia}/${mes}/${ano}`; else dataF = data.data;
+                 }
+            } catch(e){ console.error("Erro formatando data:", data.data, e); }
+            
+            let statusEstoque = data.status === 'aprovado' ? (data.estoque_baixado ? '<strong style="color: #27ae60;">(Baixado)</strong>' : '<strong style="color: #f39c12;">(Aguardando Baixa)</strong>') : '';
+            const totalCusto = data.total || 0;
+            const margem = data.margem || 1.0;
+            const totalVenda = totalCusto * margem;
+            const percMargem = (margem - 1) * 100;
+
+            let conteudo = `
+                <div style="margin-bottom: 20px;">
+                    <strong>Cliente:</strong> ${data.cliente || '-'}<br>
+                    <strong>Telefone:</strong> ${data.telefone || '-'}<br>
+                    <strong>Localização:</strong> ${data.localizacao || '-'}<br>
+                    <strong>Data:</strong> ${dataF}<br>
+                    <strong>Status:</strong> <span class="status-badge status-${data.status}">${data.status}</span> ${statusEstoque}<br>
+                    <strong>Custo:</strong> R$ ${totalCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                    <strong>Margem:</strong> ${percMargem.toFixed(0)}%<br>
+                    <strong>Total Venda:</strong> R$ ${totalVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </div>
+                <strong>Produtos:</strong><div style="margin-top: 5px;">`;
+            
+            (data.produtos || []).forEach((prod, i) => {
+                const receita = produtosCadastrados.find(p => p.id == prod.produtoId);
+                const nome = receita ? receita.nome : 'Produto ?';
+                const precoVenda = (prod.preco || 0) * margem;
+                conteudo += `<div style="background: #f8f9fa; padding: 8px; margin: 3px 0; border-radius: 4px; font-size: 13px;">
+                        <strong>${i + 1}. ${nome}</strong><br>
+                        <small>Dim: ${prod.largura || 0}m × ${prod.altura || 0}m | Qtd: ${prod.quantidade || 1} | Venda: R$ ${precoVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</small></div>`;
+            });
+
+            conteudo += `</div><div style="text-align: center; margin-top: 20px;"><button class="btn btn-primary" onclick="gerarPDFOrcamento(${data.id})">📄 Gerar PDF</button></div>`;
+            
+            document.getElementById('modalTitulo').textContent = `Orçamento #${data.id}`;
+            document.getElementById('modalConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizar').style.display = 'flex';
+        }
+        // FIM visualizarOrcamento
+
+       // INÍCIO editarOrcamento
+        async function editarOrcamento(id) {
+            const data = orcamentosCadastrados.find(o => o.id === id);
+            if (!data) { alert('❌ Orçamento não encontrado'); return; }
+
+            document.getElementById('nomeCliente').value = data.cliente || '';
+            document.getElementById('telefoneCliente').value = data.telefone || '';
+            document.getElementById('localizacaoObra').value = data.localizacao || '';
+            document.getElementById('observacoes').value = data.observacoes || '';
+            document.getElementById('statusOrcamento').value = data.status || 'rascunho';
+            document.getElementById('margemLucro').value = data.margem || 1.5;
+            
+             try {
+                 if (data.data) {
+                    const [ano, mes, dia] = data.data.split('-');
+                    if(dia && mes && ano) document.getElementById('dataOrcamento').value = `${dia}/${mes}/${ano}`;
+                    else document.getElementById('dataOrcamento').value = data.data;
+                 } else {
+                     atualizarData(); // Coloca data atual se não houver
+                 }
+            } catch(e){ console.error("Erro formatando data:", data.data, e); atualizarData(); }
+
+
+            produtosOrcamento = data.produtos || [];
+            editandoOrcamentoId = id;
+            // Não precisa mais carregar selecoesGrupo aqui, ele está dentro dos produtos
+
+            document.getElementById('listaProdutosOrcamento').innerHTML = '';
+            produtosOrcamento.forEach(produto => {
+                adicionarProdutoOrcamentoExistente(produto);
+            });
+
+            atualizarResumoOrcamento();
+            document.querySelector('.orcamento-section')?.scrollIntoView({ behavior: 'smooth' });
+        }
+        // FIM editarOrcamento
+
+        // INÍCIO adicionarProdutoOrcamentoExistente
+        function adicionarProdutoOrcamentoExistente(produtoExistente) {
+            const produtoDivId = produtoExistente.id || ('produto_' + Date.now() + Math.random()); // Garante ID único
+             produtoExistente.id = produtoDivId; // Garante que o objeto tenha o ID do DOM
+
+            const produtoHTML = `
+                <div class="produto-orcamento-card" id="${produtoDivId}">
+                     <div class="produto-header">
+                        <div class="form-group"><label>Produto</label>
+                            <select onchange="atualizarProdutoOrcamento('${produtoDivId}', this.value)">
+                                <option value="">Selecione...</option>
+                                ${produtosCadastrados.map(p => `<option value="${p.id}" ${p.id == produtoExistente.produtoId ? 'selected' : ''}>${p.nome} (${p.produto_categorias?.nome || ''})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Largura (m)</label><input type="number" value="${produtoExistente.largura || ''}" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_largura"></div>
+                        <div class="form-group"><label>Altura (m)</label><input type="number" value="${produtoExistente.altura || ''}" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_altura"></div>
+                        <div class="form-group"><label>Quantidade</label><input type="number" value="${produtoExistente.quantidade || 1}" onchange="calcularProdutoOrcamento('${produtoDivId}')" id="${produtoDivId}_quantidade"></div>
+                        <button class="btn btn-danger btn-small" onclick="removerProdutoOrcamento('${produtoDivId}')">🗑️</button>
+                    </div>
+                    <div id="${produtoDivId}_substituiveis"></div>
+                    
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button class="btn btn-secondary btn-small" 
+                                onclick="toggleDetalhesProduto('${produtoDivId}')" 
+                                id="${produtoDivId}_btn_detalhes" style="display: none;">
+                            👁️ Ver Detalhes (Custo)
+                        </button>
+                        <div id="${produtoDivId}_preco" class="preco-produto hidden" style="display: inline-block; margin-right: 15px;">R$ 0,00</div>
+                    </div>
+                    
+                    <div id="${produtoDivId}_info_wrapper" class="hidden">
+                         <div id="${produtoDivId}_info" class="produto-info" style="margin-top: 10px;"></div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('loadingProdutos')?.classList.add('hidden');
+            document.getElementById('listaProdutosOrcamento').insertAdjacentHTML('beforeend', produtoHTML);
+            
+             // Adiciona ao array global se não estiver lá (importante para recalcular)
+            const indexGlobal = produtosOrcamento.findIndex(p => p.id === produtoDivId);
+            if (indexGlobal === -1) {
+                 produtosOrcamento.push(produtoExistente);
+            } else {
+                // Atualiza o objeto no array global com os dados carregados
+                produtosOrcamento[indexGlobal] = produtoExistente;
+            }
+
+
+            setTimeout(() => {
+                const produtoReceita = produtosCadastrados.find(p => p.id == produtoExistente.produtoId);
+                if (produtoReceita && produtoReceita.itens_composicao) {
+                    const itensSubstituiveis = produtoReceita.itens_composicao.filter(item => item.substituivel);
+                    if (itensSubstituiveis.length > 0) {
+                        const containerSubst = document.getElementById(`${produtoDivId}_substituiveis`);
+                         if(containerSubst){
+                            containerSubst.classList.remove('hidden');
+                            mostrarOpcoesSubstituiveis(produtoDivId, produtoReceita, itensSubstituiveis);
+                            
+                            // Restaurar Cor Geral
+                            if (produtoExistente.corGeralId) {
+                                const selectCorGeral = document.getElementById(`${produtoDivId}_select_cor_geral`);
+                                if (selectCorGeral) selectCorGeral.value = produtoExistente.corGeralId;
+                            }
+                            
+                            // Restaurar Seleções Individuais
+                            if (produtoExistente.substituicoes) {
+                                Object.entries(produtoExistente.substituicoes).forEach(([itemPaiId, variacaoId]) => {
+                                    // Apenas restaura se NÃO for perfil/acessório (pois esses usam corGeralId)
+                                     const itemComp = produtoReceita.itens_composicao.find(ic => ic.item_id == itemPaiId);
+                                     if (itemComp && itemComp.tipo_item !== 'Perfis' && itemComp.tipo_item !== 'Acessorios') {
+                                        const selectElement = document.getElementById(`${produtoDivId}_select_item_${itemPaiId}`);
+                                        if (selectElement) selectElement.value = variacaoId;
+                                     }
+                                });
+                            }
+                        }
+                    }
+                }
+                // Recalcula para garantir que os preços e detalhes sejam exibidos
+                calcularProdutoOrcamento(produtoDivId);
+            }, 300); // Delay para garantir que o DOM foi atualizado
+        }
+        // FIM adicionarProdutoOrcamentoExistente
+
+        // INÍCIO excluirOrcamento
+        async function excluirOrcamento(id) {
+            if (!confirm('Excluir este orçamento?')) return;
+            try {
+                const { error } = await supabase.from('orcamentos').delete().eq('id', id);
+                if (error) throw error;
+                alert('✅ Orçamento excluído!');
+                await carregarOrcamentos();
+            } catch (error) {
+                console.error('❌ Erro ao excluir:', error); alert('❌ Erro: ' + error.message);
+            }
+        }
+        // FIM excluirOrcamento
+
+        // INÍCIO filtrarOrcamentos
+        function filtrarOrcamentos() {
+            const termo = document.getElementById('pesquisaOrcamentos').value.toLowerCase();
+            const status = document.getElementById('filtroStatus').value;
+            const filtrados = orcamentosCadastrados.filter(o => 
+                ((o.cliente || '').toLowerCase().includes(termo) || (o.localizacao || '').toLowerCase().includes(termo)) &&
+                (!status || o.status === status)
+            );
+            atualizarListaOrcamentos(filtrados);
+        }
+        // FIM filtrarOrcamentos
+
+        // INÍCIO limparFiltros
+        function limparFiltros() {
+            document.getElementById('pesquisaOrcamentos').value = '';
+            document.getElementById('filtroStatus').value = '';
+            atualizarListaOrcamentos();
+        }
+        // FIM limparFiltros
+
+        // INÍCIO fecharModal
+        function fecharModal() {
+            document.getElementById('modalVisualizar').style.display = 'none';
+        }
+        // FIM fecharModal
+         // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('modalVisualizar')) {
+                fecharModal();
+            }
+        }
+
+        // =============================================================================
+        // FUNÇÕES DE AÇÃO (PDF, NOVO ORÇAMENTO)
+        // =============================================================================
+
+        // INÍCIO gerarPDF
+        function gerarPDF() {
+            if (!document.getElementById('nomeCliente').value) { alert('Nome do cliente é obrigatório.'); return; }
+            if (produtosOrcamento.length === 0) { alert('Adicione produtos.'); return; }
+            gerarPDFOrcamento(null); // Gera PDF do orçamento atual
+        }
+        // FIM gerarPDF
+
+        // INÍCIO gerarPDFOrcamento
+        function gerarPDFOrcamento(orcamentoId) {
+            const orc = orcamentoId ? orcamentosCadastrados.find(o => o.id === orcamentoId) : orcamentoAtual;
+            if (!orc) { alert('Orçamento não encontrado para PDF.'); return; }
+
+            const { jsPDF } = window.jspdf;
+            if (!jsPDF) { alert('Erro: Biblioteca jsPDF não carregada.'); return; }
+
+            const doc = new jsPDF();
+            const margemLucro = parseFloat(orc.margem) || 1.0;
+            const mLeft = 15, mTop = 15, pWidth = doc.internal.pageSize.width;
+            const mRight = pWidth - mLeft;
+            let y = mTop;
+
+             const addText = (text, x, size = 10, style = 'normal', align = 'left', color = [0, 0, 0]) => {
+                doc.setFontSize(size);
+                doc.setFont(undefined, style);
+                doc.setTextColor(color[0], color[1], color[2]);
+                doc.text(text, x, y, { align: align });
+            };
+            
+            const addLine = (yOffset = 1) => {
+                y += yOffset;
+                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2);
+                doc.line(mLeft, y, mRight, y);
+                y += 4;
+            };
+
+            // Cabeçalho
+            addText('ORÇAMENTO - ESQUADRIAS', pWidth / 2, 18, 'bold', 'center', [44, 62, 80]); y += 10;
+            addLine(2);
+
+            // Cliente
+            addText('CLIENTE:', mLeft, 11, 'bold'); y += 6;
+            addText(`Nome: ${orc.cliente || '-'}`, mLeft, 10); y += 5;
+            addText(`Telefone: ${orc.telefone || '-'}`, mLeft, 10); y += 5;
+            addText(`Local: ${orc.localizacao || '-'}`, mLeft, 10); y += 5;
+             let dataF = ' - ';
+             try { if(orc.data){ const [a, m, d] = orc.data.split('-'); if(a && m && d) dataF = `${d}/${m}/${a}`; else dataF = orc.data; } } catch(e){}
+            addText(`Data: ${dataF}`, mLeft, 10); y += 8;
+            addLine();
+
+            // Tabela Cabeçalho
+            const colProd = mLeft + 2;
+            const colDet = mLeft + 70;
+            const colUnit = mLeft + 125;
+            const colSub = mRight - 2; // Alinha à direita
+             doc.setFillColor(52, 73, 94); doc.rect(mLeft, y - 4, pWidth - 2 * mLeft, 7, 'F');
+             addText('Produto', colProd, 10, 'bold', 'left', [255, 255, 255]);
+             addText('Detalhes', colDet, 10, 'bold', 'left', [255, 255, 255]);
+             addText('Unitário', colUnit, 10, 'bold', 'left', [255, 255, 255]);
+             addText('Subtotal', colSub, 10, 'bold', 'right', [255, 255, 255]);
+             y += 7;
+
+            // Produtos
+            (orc.produtos || []).forEach((prod, i) => {
+                if (y > doc.internal.pageSize.height - 30) { doc.addPage(); y = mTop; } // Nova página
+
+                const receita = produtosCadastrados.find(p => p.id == prod.produtoId);
+                const nomeProd = receita ? receita.nome : 'Produto ?';
+
+                let detalhes = [];
+                if(prod.corGeralId) { const cor = coresCadastradas.find(c => c.id == prod.corGeralId); if(cor) detalhes.push(`Cor: ${cor.nome}`); }
+                Object.values(prod.substituicoes || {}).forEach(vId => {
+                    const variacao = variacoesCadastradas.find(v => v.id == vId);
+                    if(variacao && (!prod.corGeralId || variacao.cor_id != prod.corGeralId)) detalhes.push(variacao.cores.nome);
+                });
+                const infoDet = detalhes.join(', ') || 'Padrão';
+
+                const custoUnit = (prod.quantidade > 0 && prod.preco > 0) ? prod.preco / prod.quantidade : 0;
+                const vendaUnit = custoUnit * margemLucro;
+                const vendaSub = (prod.preco || 0) * margemLucro;
+                const dimensoes = `${prod.largura || 0}m x ${prod.altura || 0}m - Qtd: ${prod.quantidade || 1}`;
+
+                 if (i % 2 !== 0) { doc.setFillColor(245, 245, 245); doc.rect(mLeft, y - 4, pWidth - 2 * mLeft, 10, 'F'); }
+
+                addText(nomeProd, colProd, 10, 'normal', 'left', [0,0,0]);
+                addText(infoDet, colDet, 9, 'normal', 'left', [80,80,80]);
+                 addText(`R$ ${vendaUnit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, colUnit, 10, 'normal', 'left', [0,0,0]);
+                 addText(`R$ ${vendaSub.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, colSub, 10, 'bold', 'right', [0,0,0]);
+                 y += 5; // Espaço para a linha de baixo
+                 addText(dimensoes, colProd, 8, 'normal', 'left', [100,100,100]);
+                 y += 5; // Próxima linha
+            });
+
+            // Total
+            addLine(5);
+            const totalVenda = (orc.total || 0) * margemLucro;
+            addText('TOTAL GERAL:', colUnit, 12, 'bold', 'left', [44, 62, 80]);
+            addText(`R$ ${totalVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, colSub, 14, 'bold', 'right', [231, 76, 60]);
+            y += 10;
+
+            const nomeArq = `Orcamento_${(orc.cliente || 'SemNome').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            doc.save(nomeArq);
+        }
+        // FIM gerarPDFOrcamento
+
+        // INÍCIO novoOrçamento
+        function novoOrçamento() {
+            if (produtosOrcamento.length > 0 && !confirm('Limpar orçamento atual?')) return;
+
+            document.getElementById('nomeCliente').value = '';
+            document.getElementById('telefoneCliente').value = '';
+            document.getElementById('localizacaoObra').value = '';
+            document.getElementById('observacoes').value = '';
+            document.getElementById('statusOrcamento').value = 'rascunho';
+            document.getElementById('margemLucro').value = '1.5';
+            atualizarData();
+            
+            produtosOrcamento = [];
+            editandoOrcamentoId = null;
+            // Reseta o objeto global também
+            orcamentoAtual = { ...orcamentoAtual, id: null, cliente: '', telefone: '', localizacao: '', observacoes: '', status: 'rascunho', produtos: [], total: 0, margem: 1.5, data_atualizacao: null };
+
+            document.getElementById('listaProdutosOrcamento').innerHTML = '<div class="loading" id="loadingProdutos">Nenhum produto adicionado</div>';
+            atualizarResumoOrcamento();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // FIM novoOrçamento
+
+        // =============================================================================
+        // GESTÃO DE ESTOQUE (BAIXA/REVERSÃO)
+        // =============================================================================
+
+        // INÍCIO darBaixaEstoque
+        async function darBaixaEstoque(orcamentoId) {
+            if (!confirm('Dar baixa no estoque?')) return;
+            try {
+                const orcamento = orcamentosCadastrados.find(o => o.id === orcamentoId);
+                if (!orcamento) throw new Error('Orçamento não encontrado');
+                const stockUpdates = await calcularMudancasEstoque(orcamento);
+                await aplicarMudancasEstoque(stockUpdates, 'subtrair');
+                const { error } = await supabase.from('orcamentos').update({ estoque_baixado: true, data_atualizacao: new Date().toISOString() }).eq('id', orcamentoId);
+                if (error) throw error;
+                alert('✅ Estoque atualizado!');
+                await carregarOrcamentos();
+            } catch (error) { console.error('Erro baixa:', error); alert('❌ Erro: ' + error.message); }
+        }
+        // FIM darBaixaEstoque
+
+        // INÍCIO reverterBaixaEstoque
+        async function reverterBaixaEstoque(orcamentoId) {
+            if (!confirm('Reverter baixa?')) return;
+            try {
+                const orcamento = orcamentosCadastrados.find(o => o.id === orcamentoId);
+                if (!orcamento) throw new Error('Orçamento não encontrado');
+                const stockUpdates = await calcularMudancasEstoque(orcamento);
+                await aplicarMudancasEstoque(stockUpdates, 'adicionar');
+                const { error } = await supabase.from('orcamentos').update({ estoque_baixado: false, data_atualizacao: new Date().toISOString() }).eq('id', orcamentoId);
+                if (error) throw error;
+                alert('✅ Baixa revertida!');
+                await carregarOrcamentos();
+            } catch (error) { console.error('Erro reversão:', error); alert('❌ Erro: ' + error.message); }
+        }
+        // FIM reverterBaixaEstoque
+
+        // INÍCIO calcularMudancasEstoque
+        async function calcularMudancasEstoque(orcamento) {
+            const stockUpdates = new Map(); // { variacao_id: quantidade_a_mudar }
+            if (produtosCadastrados.length === 0) await carregarProdutos(); // Garante receitas
+
+            for (const prodOrc of orcamento.produtos) {
+                const receita = produtosCadastrados.find(p => p.id == prodOrc.produtoId);
+                if (!receita || !receita.itens_composicao) continue;
+
+                const L = prodOrc.largura || 0;
+                const A = prodOrc.altura || 0;
+                const QtdProd = prodOrc.quantidade || 1;
+                
+                for (const itemComp of receita.itens_composicao) {
+                    const itemPaiId = itemComp.item_id;
+                    let variacaoIdFinal = null;
+                    const tipo = itemComp.tipo_item || 'Outros';
+
+                    if (itemComp.substituivel) {
+                        if ((tipo === 'Perfis' || tipo === 'Acessorios') && prodOrc.corGeralId) {
+                            const variacao = variacoesCadastradas.find(v => v.item_id == itemPaiId && v.cor_id == prodOrc.corGeralId);
+                            if (variacao) variacaoIdFinal = variacao.id;
+                        } else if (prodOrc.substituicoes && prodOrc.substituicoes[itemPaiId]) {
+                             // Usa substituição individual (vidro) que já está no mapa 'substituicoes'
+                             // O mapa foi atualizado em calcularProdutoOrcamento
+                            variacaoIdFinal = prodOrc.substituicoes[itemPaiId];
+                        }
+                    } else {
+                        const variacaoPadrao = variacoesCadastradas.find(v => v.item_id == itemPaiId);
+                        if (variacaoPadrao) variacaoIdFinal = variacaoPadrao.id;
+                    }
+
+                    if (variacaoIdFinal) {
+                        try {
+                            const qtdUnitaria = calcularQuantidadeFormula(itemComp.formula, L, A);
+                            const qtdTotal = qtdUnitaria * QtdProd;
+                            if (qtdTotal > 0) {
+                                stockUpdates.set(variacaoIdFinal, (stockUpdates.get(variacaoIdFinal) || 0) + qtdTotal);
+                            }
+                        } catch (e) { console.error(`Erro fórmula '${itemComp.formula}' no item ${itemComp.item_nome}`, e); }
+                    } else {
+                         console.warn(`Variação não determinada para ${itemComp.item_nome} (Pai ID ${itemPaiId}) no orçamento ${orcamento.id}`);
+                    }
+                }
+            }
+            console.log('Mapa de baixa (Variação ID -> Qtd):', stockUpdates);
+            return stockUpdates;
+        }
+        // FIM calcularMudancasEstoque
+
+        // INÍCIO aplicarMudancasEstoque
+        async function aplicarMudancasEstoque(stockUpdates, operacao = 'subtrair') {
+            const promises = [];
+            for (const [variacaoId, quantidade] of stockUpdates.entries()) {
+                if (!variacaoId || quantidade <= 0) continue;
+                promises.push(supabase.rpc('atualizar_variacao_estoque', {
+                    variacao_id_in: variacaoId,
+                    quantidade_in: quantidade,
+                    operacao_in: operacao
+                }));
+            }
+            const results = await Promise.all(promises);
+            const errors = results.filter(res => res.error);
+            if (errors.length > 0) {
+                console.error('Falhas na baixa:', errors);
+                throw new Error('Falha ao atualizar estoque de alguns itens.');
+            }
+        }
+        // FIM aplicarMudancasEstoque
+
+    </script>
+</body>
+</html>

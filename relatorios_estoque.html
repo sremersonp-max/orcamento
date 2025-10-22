@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios de Estoque - Esquadrias</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* Estilos específicos para a tabela de relatórios */
+        .relatorio-tabela {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .relatorio-tabela th, .relatorio-tabela td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .relatorio-tabela th {
+            background-color: #f2f2f2;
+        }
+        .estoque-negativo {
+            background-color: #fce4e4; /* Cor suave para negativo */
+            font-weight: bold;
+            color: #c00;
+        }
+        .estoque-baixo {
+            background-color: #fff9e4; /* Cor suave para baixo */
+        }
+        .destaque-compra {
+            background-color: #f0f8ff; /* Cor suave para sugestão de compra */
+            border-left: 5px solid #007bff;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .destaque-compra strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        /* Estilo para a nova seção de filtros avançados */
+        .filtros-avancados {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <h1>📊 Relatórios de Estoque</h1>
+                <div style="display: flex; gap: 10px;">
+                    <a href="index.html" class="btn btn-secondary">🏠 Início</a>
+                    <a href="estoque.html" class="btn btn-primary">🏭 Gestão de Estoque</a>
+                    <a href="orcamento.html" class="btn btn-success">📋 Orçamentos</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔎 Opções de Consulta</h2>
+            
+            <div class="grid grid-3" style="gap: 20px;">
+                <div class="form-group">
+                    <label for="tipoRelatorio">Filtro de Status de Estoque *</label>
+                    <select id="tipoRelatorio" onchange="gerarRelatorio()">
+                        <option value="baixo">Estoque Baixo (Abaixo do Mínimo)</option>
+                        <option value="negativo">Estoque Negativo</option>
+                        <option value="critico">Crítico (Baixo OU Negativo)</option>
+                        <option value="todos">Todos os Itens</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nivelMinimo">Nível Mínimo de Alerta</label>
+                    <input type="number" id="nivelMinimo" value="5" min="0" onchange="gerarRelatorio()">
+                    <small class="text-muted">Valor de referência para "Estoque Baixo".</small>
+                </div>
+                
+                 <div class="form-group">
+                    <label for="categoriaFiltro">Filtrar por Categoria</label>
+                    <select id="categoriaFiltro" onchange="gerarRelatorio()">
+                        </select>
+                </div>
+            </div>
+
+            <div class="filtros-avancados">
+                <h4>Filtros Avançados</h4>
+                <div class="grid grid-2" style="gap: 20px;">
+                    <div class="form-group">
+                        <label for="pesquisaRelatorio">Pesquisa por Nome/SKU</label>
+                        <input type="text" id="pesquisaRelatorio" placeholder="🔍 Pesquisar..." onkeyup="gerarRelatorio()">
+                    </div>
+                    <div class="form-group">
+                        <label>Itens sem Estoque Físico (Excluídos)</label>
+                        <p class="text-muted" id="categoriasExcluidas">Vidros, Mão de Obra, etc. (Definido no JS)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                 <button class="btn btn-primary" onclick="gerarRelatorio()">🔄 Recarregar Relatório</button>
+                 <button class="btn btn-danger" id="btnExportarPDF" onclick="exportarParaPDF()">📄 Exportar PDF</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>🛒 Sugestão de Compras (Itens Críticos)</h2>
+            <div id="sugestaoCompras">
+                 <p class="muted">Aguardando geração do relatório.</p>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;" id="conteudoRelatorio">
+            <h2>Lista de Itens (Total: <span id="totalItens">0</span>)</h2>
+            <div id="resultadosRelatorio">
+                <p class="muted">Selecione e filtre o tipo de relatório.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const { jsPDF } = window.jspdf;
+        // CATEGORIAS EXCLUÍDAS DO RELATÓRIO DE ESTOQUE FÍSICO (Ex: itens comprados sob demanda)
+        // OBS: Estes nomes devem ser EXATAMENTE iguais aos nomes de categorias no seu Supabase.
+        const CATEGORIAS_EXCLUIDAS_NOME = ['Vidro', 'Mão de Obra', 'Serviço']; 
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verifica PDF
+            if (typeof jsPDF === 'undefined' || typeof html2canvas === 'undefined') {
+                 console.error("Bibliotecas jsPDF ou html2canvas não carregadas. PDF desabilitado.");
+                 document.getElementById('btnExportarPDF').style.opacity = '0.5';
+                 document.getElementById('btnExportarPDF').disabled = true;
+            }
+            // Popula filtros e gera relatório
+            await popularSelectsRelatorio();
+            document.getElementById('categoriasExcluidas').textContent = CATEGORIAS_EXCLUIDAS_NOME.join(', ');
+            gerarRelatorio(); 
+        });
+
+        // =============================================================================
+        // INICIALIZAÇÃO DE FILTROS
+        // =============================================================================
+        async function popularSelectsRelatorio() {
+            const selectCategoria = document.getElementById('categoriaFiltro');
+            try {
+                const categorias = await estoqueFunctions.carregarCategorias();
+                
+                let html = '<option value="todos">Todas as Categorias</option>';
+                html += categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+                selectCategoria.innerHTML = html;
+            } catch (error) {
+                console.error("Erro ao carregar categorias para o filtro:", error);
+                selectCategoria.innerHTML = '<option value="todos">Erro ao carregar</option>';
+            }
+        }
+
+        // =============================================================================
+        // FUNÇÕES DE RELATÓRIO
+        // =============================================================================
+
+        async function gerarRelatorio() {
+            const tipoRelatorio = document.getElementById('tipoRelatorio').value;
+            const nivelMinimo = parseFloat(document.getElementById('nivelMinimo').value) || 0;
+            const categoriaFiltroId = document.getElementById('categoriaFiltro').value;
+            const filtroPesquisa = document.getElementById('pesquisaRelatorio').value.toLowerCase();
+            
+            const resultadosDiv = document.getElementById('resultadosRelatorio');
+            const sugestaoDiv = document.getElementById('sugestaoCompras');
+            
+            resultadosDiv.innerHTML = '<div class="loading">Carregando dados de estoque...</div>';
+            sugestaoDiv.innerHTML = '<div class="loading">Calculando sugestões...</div>';
+
+            try {
+                // Carrega todos os itens ativos
+                let dadosEstoque = await estoqueFunctions.carregarItens(filtroPesquisa); 
+                
+                let itensFiltrados = [];
+                let itensCriticos = [];
+
+                // 1. FILTRAGEM BASE (Exclusão de categorias sem estoque físico)
+                dadosEstoque = dadosEstoque.filter(item => {
+                    // Retorna TRUE se a categoria do item NÃO estiver na lista de exclusão
+                    return !CATEGORIAS_EXCLUIDAS_NOME.includes(item.categorias.nome);
+                });
+                
+                // 2. FILTRAGEM POR CATEGORIA
+                if (categoriaFiltroId !== 'todos') {
+                     dadosEstoque = dadosEstoque.filter(item => String(item.categoria_id) === categoriaFiltroId);
+                }
+
+
+                // 3. FILTRAGEM POR STATUS E IDENTIFICAÇÃO DE CRÍTICOS
+                dadosEstoque.forEach(item => {
+                    const isNegativo = item.quantidade_estoque < 0;
+                    const isBaixo = item.quantidade_estoque >= 0 && item.quantidade_estoque < nivelMinimo;
+
+                    // Todos os itens que precisam de atenção
+                    if (isNegativo || isBaixo) {
+                        itensCriticos.push(item);
+                    }
+                    
+                    // Itens que correspondem ao filtro de status selecionado
+                    if (tipoRelatorio === 'negativo' && isNegativo) {
+                        itensFiltrados.push(item);
+                    } else if (tipoRelatorio === 'baixo' && isBaixo) {
+                        itensFiltrados.push(item);
+                    } else if (tipoRelatorio === 'critico' && (isNegativo || isBaixo)) {
+                        itensFiltrados.push(item);
+                    } else if (tipoRelatorio === 'todos') {
+                        itensFiltrados.push(item);
+                    }
+                });
+
+
+                // 4. Renderizar o relatório principal
+                document.getElementById('totalItens').textContent = itensFiltrados.length;
+                
+                if (itensFiltrados.length === 0) {
+                    resultadosDiv.innerHTML = '<p class="muted">Nenhum item encontrado com os critérios de filtro.</p>';
+                } else {
+                    resultadosDiv.innerHTML = renderTabelaRelatorio(itensFiltrados, nivelMinimo);
+                }
+                
+                // 5. Renderizar a sugestão de compras (baseada em todos os itens críticos, APÓS filtros de exclusão)
+                sugestaoDiv.innerHTML = renderSugestaoCompras(itensCriticos, nivelMinimo);
+
+            } catch(error) {
+                resultadosDiv.innerHTML = `<p class="text-danger">❌ Erro ao carregar dados: ${error.message}</p>`;
+                sugestaoDiv.innerHTML = `<p class="text-danger">❌ Erro ao calcular sugestões: ${error.message}</p>`;
+            }
+        }
+
+        /**
+         * Renderiza a tabela principal do relatório.
+         */
+        function renderTabelaRelatorio(itens, nivelMinimo) {
+            let html = `
+                <table class="relatorio-tabela">
+                    <thead>
+                        <tr>
+                            <th>Item Modelo</th>
+                            <th>Variação/Cor</th>
+                            <th>SKU</th>
+                            <th>Unid.</th>
+                            <th>Qtd. em Estoque</th>
+                            <th>Categoria</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            itens.forEach(item => {
+                let classeLinha = '';
+                let status = 'OK';
+                if (item.quantidade_estoque < 0) {
+                    classeLinha = 'estoque-negativo';
+                    status = 'NEGATIVO';
+                } else if (item.quantidade_estoque < nivelMinimo) {
+                    classeLinha = 'estoque-baixo';
+                    status = 'BAIXO';
+                }
+                
+                html += `
+                    <tr class="${classeLinha}">
+                        <td>${item.nome_base}</td>
+                        <td>${item.cor}</td>
+                        <td>${item.sku || 'N/A'}</td>
+                        <td>${item.unidade_medida}</td>
+                        <td>${item.quantidade_estoque.toFixed(2)}</td>
+                        <td>${item.categorias.nome || 'S/Categoria'}</td>
+                        <td><strong>${status}</strong></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            return html;
+        }
+        
+        /**
+         * Renderiza a lista de sugestão de compras com base em itens críticos.
+         */
+        function renderSugestaoCompras(itensCriticos, nivelMinimo) {
+            if (itensCriticos.length === 0) {
+                return '<p class="muted">Nenhum item em estoque crítico (negativo ou abaixo do mínimo) que exija compra.</p>';
+            }
+            
+            let html = '';
+            
+            itensCriticos.forEach(item => {
+                const isNegativo = item.quantidade_estoque < 0;
+                
+                let qtdNecessaria = 0;
+                let statusMsg = '';
+                
+                if (isNegativo) {
+                    // Repõe o que está faltando para zero + o nível mínimo
+                    qtdNecessaria = (item.quantidade_estoque * -1) + nivelMinimo;
+                    statusMsg = `**NEGATIVO (${item.quantidade_estoque.toFixed(2)} ${item.unidade_medida})**. Sugerido repor para atender a demanda e atingir o mínimo.`;
+                } else {
+                    // Repõe o que falta para o nível mínimo + 5 de margem de segurança
+                    qtdNecessaria = (nivelMinimo - item.quantidade_estoque) + 5; 
+                    statusMsg = `**BAIXO (${item.quantidade_estoque.toFixed(2)} ${item.unidade_medida})**. Sugerido repor para sair da zona crítica.`;
+                }
+
+                
+                html += `
+                    <div class="destaque-compra">
+                        <strong>${item.nome_base} - ${item.cor} (SKU: ${item.sku || 'N/A'})</strong>
+                        <p style="margin: 5px 0 0;">Categoria: ${item.categorias.nome}. Status: ${statusMsg}</p>
+                        <p style="margin: 0; font-weight: bold; color: green;">COMPRAR: ${qtdNecessaria.toFixed(2)} ${item.unidade_medida}</p>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+
+
+        // =============================================================================
+        // FUNÇÃO DE EXPORTAÇÃO PARA PDF (MANTIDA)
+        // =============================================================================
+        async function exportarParaPDF() {
+            if (typeof jsPDF === 'undefined' || typeof html2canvas === 'undefined') {
+                alert('As bibliotecas de PDF não carregaram corretamente. Tente novamente ou verifique sua conexão.');
+                return;
+            }
+            
+            const input = document.getElementById('conteudoRelatorio'); 
+            const tipoRelatorio = document.getElementById('tipoRelatorio').options[document.getElementById('tipoRelatorio').selectedIndex].text;
+            
+            const btn = document.getElementById('btnExportarPDF');
+            btn.textContent = 'Gerando PDF...';
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(input, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 190;
+                const pageHeight = 295;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 10; 
+
+                // Adiciona o cabeçalho
+                doc.setFontSize(16);
+                doc.text(`Relatório de Estoque - ${tipoRelatorio}`, 10, position);
+                doc.setFontSize(10);
+                doc.text(`Filtro Categoria: ${document.getElementById('categoriaFiltro').options[document.getElementById('categoriaFiltro').selectedIndex].text}`, 10, position + 7);
+                doc.text(`Data: ${new Date().toLocaleDateString()}`, 10, position + 14);
+                position += 25;
+
+                // Adiciona a imagem do HTML
+                doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - position);
+
+                // Lógica para múltiplas páginas
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight + 10;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - 20);
+                }
+                
+                // Salva o arquivo
+                doc.save(`relatorio-estoque-${tipoRelatorio.toLowerCase().replace(/\s/g, '-')}-${new Date().getTime()}.pdf`);
+                
+                alert('✅ PDF gerado com sucesso!');
+
+            } catch (e) {
+                console.error('Erro ao gerar PDF:', e);
+                alert('❌ Erro ao gerar o PDF. Verifique o console para mais detalhes.');
+            } finally {
+                // Restaura o botão
+                btn.textContent = '📄 Exportar PDF';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

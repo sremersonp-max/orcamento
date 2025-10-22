@@ -49,7 +49,7 @@ async function carregarLinhas() {
     }
 }
 
-// Carregar TODAS as variações (para orçamentos)
+// Carregar TODAS as variações (para orçamentos e RELATÓRIOS)
 async function carregarItensEstoque(filtro = '') {
     try {
         let query = supabase
@@ -91,7 +91,7 @@ async function carregarItensEstoque(filtro = '') {
             return {
                 id: variacao.id,
                 nome: `${itemPai.nome || 'Item s/ nome'} - ${cor.nome || 'S/ cor'}`,
-                nome_base: itemPai.nome || 'Item s/ nome',
+                nome_base: itemPai.nome || 'Item s/ nome', // Novo campo para relatório
                 item_pai_id: variacao.item_id,
                 cor: cor.nome || 'S/ cor',
                 cor_id: cor.id,
@@ -265,7 +265,7 @@ window.estoqueFunctions = {
     carregarCategorias: carregarCategoriasEstoque,
     carregarCores: carregarCores,
     carregarLinhas: carregarLinhas,
-    carregarItens: carregarItensEstoque, // Para orçamentos (com variações)
+    carregarItens: carregarItensEstoque, // Para orçamentos e RELATÓRIOS (com variações)
     carregarItensPai: carregarItensPai,  // Para produtos (apenas modelos)
     carregarVariacoesDeItem: carregarVariacoesDeItem,
     salvarItemPai: salvarItemPai,
