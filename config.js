@@ -118,6 +118,7 @@ async function carregarItensEstoque(filtro = '') {
 async function carregarItensPai(filtro = '') {
      try {
         let query = supabase
+            // Adicionado todos os campos da tabela 'itens' no select
             .from('itens')
             .select(`*, categorias(nome), linhas(nome)`)
             .eq('ativo', true)
@@ -153,7 +154,7 @@ async function carregarVariacoesDeItem(itemPaiId) {
     }
 }
 
-// Salvar Item Pai (Modelo) - CORRIGIDO
+// Salvar Item Pai (Modelo) - CORRIGIDO e ATUALIZADO para incluir novos campos
 async function salvarItemPai(item) {
     try {
         let response;
@@ -162,7 +163,12 @@ async function salvarItemPai(item) {
             categoria_id: item.categoria_id,
             unidade_medida: item.unidade_medida,
             linha_id: item.linha_id || null,
-            ativo: true
+            ativo: true,
+            
+            // NOVOS CAMPOS ADICIONADOS PARA SALVAR:
+            descricao: item.descricao || null,
+            preco_custo: item.preco_custo || null,
+            quantidade_minima: item.quantidade_minima || 0
         };
 
         // Remove o ID se for null ou undefined (para criação)

@@ -29,30 +29,59 @@
             padding: 20px;
             display: none; /* Começa fechado */
         }
+        /* ALTERAÇÃO: Novo grid para incluir mais colunas (SKU e Unidade de Medida) */
         .variacao-linha {
             display: grid;
-            grid-template-columns: 1fr 100px 100px auto;
+            grid-template-columns: 1fr 150px 100px 120px auto; /* 4 colunas de dados + Ações */
             gap: 15px;
             align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #f0f0f0;
         }
         .variacao-linha:last-child { border-bottom: none; }
+        
+        /* NOVOS ESTILOS PARA OS FILTROS */
+        .filtros-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e1e5e9;
+        }
+        .filtros-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        .filtros-acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-<div class="card" style="margin-bottom: 25px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <h1>🏭 Gestão de Estoque</h1>
-        <div style="display: flex; gap: 10px;">
-            <a href="index.html" class="btn btn-secondary">🏠 Início</a>
-            <a href="produtos.html" class="btn btn-primary">🧮 Produtos</a>
-            <a href="orcamento.html" class="btn btn-success">📋 Orçamentos</a>
-            <a href="relatorios_estoque.html" class="btn btn-info">📊 Relatórios</a> 
-        </div>
+        <div class="card" style="margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <h1>🏭 Gestão de Estoque</h1>
+    <div style="display: flex; gap: 10px;">
+        <a href="index.html" class="btn btn-secondary">🏠 Início</a>
+        <a href="produtos.html" class="btn btn-primary">🧮 Produtos</a>
+        <a href="orcamento.html" class="btn btn-success">📋 Orçamentos</a>
+        <a href="pedidos.html" class="btn btn-warning">🚚 Pedidos</a> 
+        <a href="relatorios_estoque.html" class="btn btn-info">📊 Relatórios</a> 
     </div>
 </div>
+            </div>
+        </div>
 
         <div class="card">
             <h2 id="formTituloItemPai">➕ Cadastrar Novo Item (Modelo)</h2>
@@ -78,8 +107,23 @@
                     </div>
                     <div class="form-group">
                         <label for="linha">Linha / Série</label>
-                        <select id="linha"></select> </div>
+                        <select id="linha"></select> 
+                    </div>
+                    <div class="form-group">
+                        <label for="precoCusto">Preço de Custo (R$)</label>
+                        <input type="number" step="0.01" id="precoCusto" placeholder="Preço do Item Pai">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantidadeMinima">Qtd. Mínima</label>
+                        <input type="number" step="0.01" id="quantidadeMinima" placeholder="Alerta de estoque">
+                    </div>
                 </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="descricao">Descrição Detalhada</label>
+                    <textarea id="descricao" rows="2" placeholder="Ex: Perfil de alumínio reforçado para janelas X10."></textarea>
+                </div>
+
                 <div class="acoes" style="margin-top: 20px;">
                     <button type="submit" class="btn btn-success" id="btnSalvarItemPai">💾 Salvar Item</button>
                     <button type="button" class="btn btn-secondary hidden" id="btnCancelarEdicao" onclick="limparFormularioItemPai()">Cancelar Edição</button>
@@ -88,9 +132,58 @@
         </div>
 
         <div class="card">
-             <div class="search-box" style="margin-bottom: 20px;">
-                <input type="text" id="pesquisaItens" placeholder="🔍 Pesquisar por nome do item..." onkeyup="carregarItensPai()">
+            <!-- NOVA SEÇÃO DE FILTROS -->
+            <div class="filtros-container">
+                <div class="filtros-header">
+                    <h3 style="margin: 0;">🔍 Filtros de Busca</h3>
+                    <small class="text-muted">Filtre os itens por diferentes critérios</small>
+                </div>
+                
+                <div class="filtros-grid">
+                    <div class="form-group">
+                        <label for="filtroNome">Nome do Item</label>
+                        <input type="text" id="filtroNome" placeholder="Pesquisar por nome..." onkeyup="aplicarFiltros()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtroCategoria">Categoria</label>
+                        <select id="filtroCategoria" onchange="aplicarFiltros()">
+                            <option value="">Todas as categorias</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtroLinha">Linha / Série</label>
+                        <select id="filtroLinha" onchange="aplicarFiltros()">
+                            <option value="">Todas as linhas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filtroUnidadeMedida">Unidade de Medida</label>
+                        <select id="filtroUnidadeMedida" onchange="aplicarFiltros()">
+                            <option value="">Todas as unidades</option>
+                            <option value="m">Metro (m)</option>
+                            <option value="m²">Metro Quadrado (m²)</option>
+                            <option value="un">Unidade (un)</option>
+                            <option value="kg">Quilo (kg)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filtros-acoes">
+                    <button class="btn btn-secondary btn-small" onclick="limparFiltros()">
+                        🗑️ Limpar Filtros
+                    </button>
+                    <button class="btn btn-info btn-small" onclick="expandirTodos()">
+                        📂 Expandir Todos
+                    </button>
+                    <button class="btn btn-info btn-small" onclick="recolherTodos()">
+                        📁 Recolher Todos
+                    </button>
+                </div>
             </div>
+
             <div id="listaItens">
                 <div class="loading">Carregando itens...</div>
             </div>
@@ -136,6 +229,7 @@
     <script>
         // Variáveis globais
         let editandoItemPaiId = null;
+        let todosItens = []; // Armazena todos os itens para filtragem local
 
         // =============================================================================
         // INICIALIZAÇÃO
@@ -143,7 +237,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([
                 popularSelectsPadrao(),
-                carregarItensPai()
+                popularSelectsFiltros(),
+                carregarTodosItens()
             ]);
         });
 
@@ -168,15 +263,69 @@
                 linhas.map(l => `<option value="${l.id}">${l.nome}</option>`).join('');
         }
 
-        async function carregarItensPai() {
-            const filtro = document.getElementById('pesquisaItens').value;
+        async function popularSelectsFiltros() {
+            const [categorias, linhas] = await Promise.all([
+                estoqueFunctions.carregarCategorias(),
+                estoqueFunctions.carregarLinhas()
+            ]);
+
+            // Popular filtro de categorias
+            const filtroCategoria = document.getElementById('filtroCategoria');
+            filtroCategoria.innerHTML = '<option value="">Todas as categorias</option>' + 
+                categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+
+            // Popular filtro de linhas
+            const filtroLinha = document.getElementById('filtroLinha');
+            filtroLinha.innerHTML = '<option value="">Todas as linhas</option>' + 
+                linhas.map(l => `<option value="${l.id}">${l.nome}</option>`).join('');
+        }
+
+        async function carregarTodosItens() {
             const lista = document.getElementById('listaItens');
             lista.innerHTML = '<div class="loading">Carregando...</div>';
             
-            const itens = await estoqueFunctions.carregarItensPai(filtro);
+            todosItens = await estoqueFunctions.carregarItensPai();
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const filtroNome = document.getElementById('filtroNome').value.toLowerCase();
+            const filtroCategoria = document.getElementById('filtroCategoria').value;
+            const filtroLinha = document.getElementById('filtroLinha').value;
+            const filtroUnidadeMedida = document.getElementById('filtroUnidadeMedida').value;
+
+            const itensFiltrados = todosItens.filter(item => {
+                // Filtro por nome
+                if (filtroNome && !item.nome.toLowerCase().includes(filtroNome)) {
+                    return false;
+                }
+                
+                // Filtro por categoria
+                if (filtroCategoria && item.categoria_id != filtroCategoria) {
+                    return false;
+                }
+                
+                // Filtro por linha
+                if (filtroLinha && item.linha_id != filtroLinha) {
+                    return false;
+                }
+                
+                // Filtro por unidade de medida
+                if (filtroUnidadeMedida && item.unidade_medida != filtroUnidadeMedida) {
+                    return false;
+                }
+                
+                return true;
+            });
+
+            exibirItensFiltrados(itensFiltrados);
+        }
+
+        async function exibirItensFiltrados(itens) {
+            const lista = document.getElementById('listaItens');
 
             if (itens.length === 0) {
-                lista.innerHTML = '<div class="muted">Nenhum item modelo encontrado.</div>';
+                lista.innerHTML = '<div class="muted">Nenhum item encontrado com os filtros aplicados.</div>';
                 return;
             }
 
@@ -184,19 +333,32 @@
             for (const item of itens) {
                 const variacoes = await estoqueFunctions.carregarVariacoesDeItem(item.id);
                 const nomeLinha = item.linhas ? item.linhas.nome : 'Sem linha';
+                
+                // Formatação da data de cadastro para melhor visualização
+                const dataCadastro = item.data_cadastro ? new Date(item.data_cadastro).toLocaleDateString('pt-BR') : 'N/A';
+                // Preço de Custo (Se existir, formatar)
+                const precoCustoDisplay = item.preco_custo ? `R$ ${parseFloat(item.preco_custo).toFixed(2)}` : 'N/A';
 
                 html += `
                 <div class="item-pai-card" id="item-pai-${item.id}">
                     <div class="item-pai-header" onclick="toggleVariacoes(${item.id})">
-                        <h4>${item.nome} <small class="text-muted">(${item.categorias.nome} / ${nomeLinha})</small></h4>
+                        <h4>${item.nome} <small class="text-muted">(${item.categorias.nome} / ${nomeLinha} / Unidade: ${item.unidade_medida})</small></h4>
                         <div class="acoes">
                             <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editarItemPai(${item.id})">✏️ Editar Modelo</button>
                             <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); excluirItemPai(${item.id})">🗑️ Desativar</button>
                         </div>
                     </div>
                     <div class="item-pai-content" id="content-${item.id}">
+                        <p><strong>Descrição:</strong> ${item.descricao || 'Sem descrição'}</p>
+                        <p style="margin-top: 10px;">
+                            <strong>Custo:</strong> ${precoCustoDisplay}
+                            | <strong>Qtd. Mínima:</strong> ${item.quantidade_minima || 0} ${item.unidade_medida}
+                            | <strong>Cadastrado em:</strong> ${dataCadastro}
+                        </p>
+                        <hr style="margin-top: 15px; margin-bottom: 15px;">
+
                         <div id="variacoes-lista-${item.id}">
-                            ${renderVariacoes(variacoes)}
+                            ${renderVariacoes(variacoes, item.unidade_medida)}
                         </div>
                         <button class="btn btn-success btn-small" style="margin-top:15px;" onclick="abrirModalVariacao(${item.id})">
                             ➕ Adicionar Variação de Cor
@@ -207,20 +369,62 @@
             lista.innerHTML = html;
         }
 
-        function renderVariacoes(variacoes) {
+        function renderVariacoes(variacoes, unidade_medida) {
             if (variacoes.length === 0) {
                 return '<p class="muted">Nenhuma variação cadastrada.</p>';
             }
-            return variacoes.map(v => `
+            
+            // ALTERAÇÃO: Adicionado cabeçalho de colunas para o grid
+            const headerHtml = `
+                <div class="variacao-linha" style="font-weight: bold; border-bottom: 2px solid #ccc; padding-top: 0; padding-bottom: 5px;">
+                    <span>Cor</span>
+                    <span>SKU/Código</span>
+                    <span>Preço (${unidade_medida})</span>
+                    <span>Qtd. em Estoque</span>
+                    <span>Ações</span>
+                </div>
+            `;
+            
+            const variacoesHtml = variacoes.map(v => `
                 <div class="variacao-linha">
-                    <strong>${v.cores.nome}</strong> <span>R$ ${v.preco_venda.toFixed(2)}</span>
-                    <span>${v.quantidade_estoque} em estoque</span>
+                    <strong>${v.cores.nome}</strong> 
+                    <span>${v.sku || 'S/ SKU'}</span>
+                    <span>R$ ${v.preco_venda.toFixed(2)}</span>
+                    <span>${v.quantidade_estoque} ${unidade_medida}</span>
                     <div class="acoes">
                         <button class="btn btn-warning btn-small" onclick="editarVariacao(${v.id}, ${v.item_id})">✏️</button>
                         <button class="btn btn-danger btn-small" onclick="excluirVariacao(${v.id}, ${v.item_id})">🗑️</button>
                     </div>
                 </div>
             `).join('');
+            
+            return headerHtml + variacoesHtml;
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtroNome').value = '';
+            document.getElementById('filtroCategoria').value = '';
+            document.getElementById('filtroLinha').value = '';
+            document.getElementById('filtroUnidadeMedida').value = '';
+            aplicarFiltros();
+        }
+
+        function expandirTodos() {
+            todosItens.forEach(item => {
+                const content = document.getElementById(`content-${item.id}`);
+                if (content) {
+                    content.style.display = 'block';
+                }
+            });
+        }
+
+        function recolherTodos() {
+            todosItens.forEach(item => {
+                const content = document.getElementById(`content-${item.id}`);
+                if (content) {
+                    content.style.display = 'none';
+                }
+            });
         }
         
         // =============================================================================
@@ -233,23 +437,29 @@
                 nome: document.getElementById('nome').value,
                 categoria_id: document.getElementById('categoria').value,
                 unidade_medida: document.getElementById('unidadeMedida').value,
-                linha_id: document.getElementById('linha').value, // Agora é linha_id
+                linha_id: document.getElementById('linha').value,
+                
+                // NOVOS CAMPOS PARA SALVAR:
+                descricao: document.getElementById('descricao').value,
+                preco_custo: parseFloat(document.getElementById('precoCusto').value) || null,
+                quantidade_minima: parseFloat(document.getElementById('quantidadeMinima').value) || 0,
+
                 ativo: true
             };
 
             try {
+                // A função estoqueFunctions.salvarItemPai (em config.js) foi ajustada para aceitar estes novos campos
                 await estoqueFunctions.salvarItemPai(item);
                 alert('✅ Item modelo salvo com sucesso!');
                 limparFormularioItemPai();
-                await carregarItensPai();
+                await carregarTodosItens(); // Recarrega todos os itens após salvar
             } catch (error) {
                 alert('❌ Erro ao salvar item modelo: ' + error.message);
             }
         }
 
         async function editarItemPai(id) {
-            const itens = await estoqueFunctions.carregarItensPai();
-            const item = itens.find(i => i.id === id);
+            const item = todosItens.find(i => i.id === id);
             if (!item) return;
 
             editandoItemPaiId = id;
@@ -257,7 +467,12 @@
             document.getElementById('nome').value = item.nome;
             document.getElementById('categoria').value = item.categoria_id;
             document.getElementById('unidadeMedida').value = item.unidade_medida;
-            document.getElementById('linha').value = item.linha_id; // Agora é linha_id
+            document.getElementById('linha').value = item.linha_id;
+            
+            // NOVOS CAMPOS PARA EDIÇÃO:
+            document.getElementById('descricao').value = item.descricao || '';
+            document.getElementById('precoCusto').value = item.preco_custo || '';
+            document.getElementById('quantidadeMinima').value = item.quantidade_minima || 0;
 
             document.getElementById('formTituloItemPai').textContent = '✏️ Editando Item (Modelo)';
             document.getElementById('btnCancelarEdicao').classList.remove('hidden');
@@ -269,7 +484,7 @@
             try {
                 await estoqueFunctions.excluirItemPai(id);
                 alert('✅ Item desativado!');
-                await carregarItensPai();
+                await carregarTodosItens();
             } catch(error) {
                 alert('❌ Erro ao desativar: ' + error.message);
             }
@@ -294,8 +509,9 @@
                 await estoqueFunctions.salvarVariacao(variacao);
                 alert('✅ Variação salva com sucesso!');
                 fecharModal();
+                const itemPai = todosItens.find(i => i.id == variacao.item_id);
                 const variacoes = await estoqueFunctions.carregarVariacoesDeItem(variacao.item_id);
-                document.getElementById(`variacoes-lista-${variacao.item_id}`).innerHTML = renderVariacoes(variacoes);
+                document.getElementById(`variacoes-lista-${variacao.item_id}`).innerHTML = renderVariacoes(variacoes, itemPai.unidade_medida);
             } catch(error) {
                 alert('❌ Erro ao salvar variação: ' + error.message);
             }
@@ -314,8 +530,9 @@
             try {
                 await estoqueFunctions.excluirVariacao(variacaoId);
                 alert('✅ Variação excluída!');
+                const itemPai = todosItens.find(i => i.id == itemPaiId);
                 const variacoes = await estoqueFunctions.carregarVariacoesDeItem(itemPaiId);
-                document.getElementById(`variacoes-lista-${itemPaiId}`).innerHTML = renderVariacoes(variacoes);
+                document.getElementById(`variacoes-lista-${itemPaiId}`).innerHTML = renderVariacoes(variacoes, itemPai.unidade_medida);
             } catch (error) {
                 alert('❌ Erro ao excluir variação: ' + error.message);
             }
@@ -356,6 +573,12 @@
             document.getElementById('formItemPai').reset();
             editandoItemPaiId = null;
             document.getElementById('itemId').value = '';
+            
+            // LIMPAR NOVOS CAMPOS
+            document.getElementById('descricao').value = '';
+            document.getElementById('precoCusto').value = '';
+            document.getElementById('quantidadeMinima').value = 0;
+
             document.getElementById('formTituloItemPai').textContent = '➕ Cadastrar Novo Item (Modelo)';
             document.getElementById('btnCancelarEdicao').classList.add('hidden');
         }

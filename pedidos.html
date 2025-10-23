@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Pedidos - Oficina da Familia</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.js"></script>
+    
+    <style>
+        /* Estilos das Abas */
+        .tabs {
+            display: flex;
+            background: #f1f1f1;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            border: 1px solid #e1e5e9;
+            border-bottom: none;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f1f1f1;
+            color: #333;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .tab:hover {
+            background: #e9ecef;
+        }
+        .tab.active {
+            background: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        .tab-content {
+            display: none;
+            padding: 25px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tabela de Pedido */
+        .pedido-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .pedido-table th, .pedido-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .pedido-table th {
+            background: #f8f9fa;
+        }
+        .pedido-table input[type="number"] {
+            width: 100px;
+            padding: 8px;
+        }
+        .pedido-table input[type="text"] {
+            width: 150px;
+            padding: 8px;
+        }
+        .pedido-table .unidade-barra {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Lista de Pedidos Pendentes */
+        .pedido-pendente-card {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pedido-pendente-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
+        }
+        .pedido-pendente-card strong {
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+        
+        /* Modal de Conferência */
+        .modal-content {
+             width: 90%;
+             max-width: 900px; /* Maior para caber a tabela */
+        }
+
+        /* Tabela de Contabilidade */
+        .contabilidade-table {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+        .contabilidade-table th, .contabilidade-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .contabilidade-table th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        .contabilidade-total {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <h1>🚚 Gestão de Pedidos - Oficina da Familia</h1>
+                <div style="display: flex; gap: 10px;">
+                    <a href="index.html" class="btn btn-secondary">🏠 Início</a>
+                    <a href="estoque.html" class="btn btn-primary">📦 Estoque</a>
+                    <a href="orcamento.html" class="btn btn-success">📋 Orçamentos</a>
+                    <a href="relatorios_estoque.html" class="btn btn-info">📊 Relatórios</a> 
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="openTab('novoPedido', event)">1. Fazer Novo Pedido</button>
+            <button class="tab" onclick="openTab('pedidosPendentes', event)">2. Receber Pedidos Pendentes</button>
+            <button class="tab" onclick="openTab('ajusteManual', event)">3. Ajuste Manual</button>
+            <button class="tab" onclick="openTab('valorTotalEstoque', event)">4. Valor Total do Estoque</button>
+        </div>
+
+        <div id="novoPedido" class="tab-content active">
+            <h2>🛒 Novo Pedido de Compra</h2>
+            <form id="formNovoPedido" onsubmit="salvarPedidoPendente(event)">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="fornecedor">Fornecedor</label>
+                        <input type="text" id="fornecedor" placeholder="Nome do fornecedor">
+                    </div>
+                    <div class="form-group">
+                        <label for="notaFiscal">Nº Nota Fiscal (Opcional)</label>
+                        <input type="text" id="notaFiscal" placeholder="123456">
+                    </div>
+                </div>
+
+                <hr style="margin: 20px 0;">
+                
+                <h4>🔍 Filtrar Itens para o Pedido</h4>
+                <div class="grid grid-4">
+                    <div class="form-group">
+                        <label for="filtroCategoriaPedido">Categoria</label>
+                        <select id="filtroCategoriaPedido" onchange="renderListaParaPedido()">
+                            <option value="todos">Todas as Categorias</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filtroStatusEstoque">Status do Estoque</label>
+                        <select id="filtroStatusEstoque" onchange="renderListaParaPedido()">
+                            <option value="todos">Todos</option>
+                            <option value="critico">Crítico (Baixo ou Negativo)</option>
+                            <option value="baixo">Abaixo do Mínimo</option>
+                            <option value="negativo">Negativo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filtroNivelMinimo">Nível Mínimo</label>
+                        <input type="number" id="filtroNivelMinimo" value="5" min="0" onchange="renderListaParaPedido()">
+                    </div>
+                    <div class="form-group">
+                        <label for="filtroItensPedido">Pesquisa (Nome/SKU)</label>
+                        <input type="text" id="filtroItensPedido" placeholder="🔍 Pesquisar..." onkeyup="renderListaParaPedido()">
+                    </div>
+                </div>
+
+                <div style="max-height: 500px; overflow-y: auto; border: 1px solid #e1e5e9; border-radius: 8px;">
+                    <table class="pedido-table">
+                        <thead>
+                            <tr>
+                                <th>Item (Variação)</th>
+                                <th>Cor</th>
+                                <th>Estoque Atual</th>
+                                <th>Unid. Pedido</th>
+                                <th style="width: 120px;">Qtd. a Pedir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaItensPedido">
+                            <tr class="loading"><td colspan="5">Carregando itens...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="acoes" style="margin-top: 25px; justify-content: space-between;">
+                    <button type="button" class="btn btn-info" id="btnGerarPDFPedido" onclick="gerarPDFPedido()">
+                        📄 Gerar PDF do Pedido
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        💾 Salvar Pedido como Pendente
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="pedidosPendentes" class="tab-content">
+            <h2>📥 Pedidos Pendentes de Recebimento</h2>
+            <div id="listaPedidosPendentes">
+                <div class="loading">Carregando pedidos pendentes...</div>
+            </div>
+        </div>
+
+        <div id="ajusteManual" class="tab-content">
+            <h2>🔧 Ajuste Manual de Estoque / Custo</h2>
+            <p class="text-muted">Use esta ferramenta para correções rápidas, perdas ou para atualizar valores fora de um pedido. (Ajustes são sempre na unidade base, ex: metros).</p>
+            
+            <form id="formAjusteManual" onsubmit="aplicarAjusteManual(event)">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="selectAjusteItem">Item (Variação)</label>
+                        <select id="selectAjusteItem" required>
+                            <option value="">Carregando itens...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ajusteQuantidade">Qtd. a Adicionar/Remover (ex: metros)</label>
+                        <input type="number" step="0.01" id="ajusteQuantidade" value="0" required>
+                        <small class="text-muted">Use valores positivos para adicionar (ex: 10) e negativos para remover (ex: -2).</small>
+                    </div>
+                </div>
+                
+                <hr style="margin: 15px 0;">
+                <h4>Atualização de Valores (Opcional)</h4>
+                
+                <div class="form-group">
+                    <label for="ajustePrecoVenda">Novo Custo/Venda da Variação (por unidade base, ex: R$/metro)</label>
+                    <input type="number" step="0.01" id="ajustePrecoVenda" placeholder="Deixe em branco para não alterar">
+                </div>
+
+                <div class="form-group">
+                    <label for="ajusteMotivo">Motivo do Ajuste *</label>
+                    <textarea id="ajusteMotivo" rows="2" placeholder="Ex: Contagem de balanço, perda de material, doação..." required></textarea>
+                </div>
+
+                <div class="acoes" style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-warning">🔩 Aplicar Ajuste</button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="valorTotalEstoque" class="tab-content">
+            <h2>💰 Valor Total do Estoque (Contabilidade)</h2>
+            <p class="text-muted">Calcula o valor total do inventário com base no "Preço de Venda" (seu custo) cadastrado na "Variação do Item". Itens com custo zero ou estoque negativo não são somados.</p>
+            
+            <div class="acoes" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="calcularValorTotalEstoque()">
+                    🔄 Calcular Valor Total
+                </button>
+            </div>
+            
+            <div id="resultadoValorTotal" class="card" style="margin-top: 20px; display: none;">
+                <h3>Resultado do Cálculo</h3>
+                <h2 id="valorTotalDisplay" class="text-success" style="font-size: 2.5em; margin-bottom: 20px;">R$ 0,00</h2>
+                
+                <h4>Valor por Categoria</h4>
+                <table class="contabilidade-table">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Valor em Estoque (Custo)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaValorPorCategoria">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+
+
+    <div class="modal" id="modalConferencia">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTituloConferencia">Conferência de Pedido</h3>
+                <button class="btn btn-danger btn-small" onclick="fecharModalConferencia()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="infoPedidoConferencia" class="info" style="margin-bottom: 20px;"></div>
+                
+                <form id="formConferencia" onsubmit="confirmarEntradaEstoque(event)">
+                    <input type="hidden" id="conferenciaPedidoId">
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="pedido-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Qtd. Pedida</th>
+                                    <th>Qtd. Recebida*</th>
+                                    <th>Novo Custo/Venda (por unidade base)*</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaItensConferencia">
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="acoes" style="margin-top: 25px;">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalConferencia()">Cancelar</button>
+                        <button type="submit" class="btn btn-success">✅ Confirmar Entrada e Atualizar Estoque</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="config.js"></script>
+    <script>
+        // =============================================================================
+        // VARIÁVEIS GLOBAIS
+        // =============================================================================
+        let todosItensVariacao = []; // Armazena todas as variações (para Novo Pedido e Ajuste)
+        let pedidosPendentesCache = []; // Armazena os pedidos pendentes carregados
+        let categoriasCache = []; // Armazena as categorias
+
+        // Lista de categorias a excluir (baseado no seu relatorios_estoque.html)
+        const CATEGORIAS_EXCLUIDAS_NOME = ['Vidro', 'Mão de Obra', 'Serviço'];
+
+        // *** NOVO: Constantes para Perfis ***
+        // ! IMPORTANTE: Verifique o nome exato da sua categoria de perfis no Supabase!
+        const CATEGORIA_PERFIS_NOME = 'perfil'; // Ex: "Perfis", "Alumínio", "Perfis de Alumínio"
+        const COMPRIMENTO_BARRA = 6; // Comprimento padrão da barra em metros
+
+
+        // =============================================================================
+        // INICIALIZAÇÃO E ABAS
+        // =============================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof supabase === 'undefined') {
+                alert("Erro fatal: Supabase (config.js) não foi carregado.");
+                return;
+            }
+            
+            // CORREÇÃO: Verifica a disponibilidade do PDF APÓS o DOM
+            const btnPDF = document.getElementById('btnGerarPDFPedido');
+            if (btnPDF) {
+                // Tenta acessar jspdf.plugin.autotable
+                if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.prototype.autoTable === 'undefined') {
+                    console.warn("Bibliotecas jsPDF ou jsPDF-AutoTable não carregadas ou instaladas incorretamente. PDF desabilitado.");
+                    btnPDF.style.opacity = '0.5';
+                    btnPDF.disabled = true;
+                    btnPDF.textContent = 'Erro no PDF';
+                }
+            }
+            
+            carregarDadosIniciais();
+        });
+
+        async function carregarDadosIniciais() {
+            try {
+                // Carrega em paralelo
+                const [itens, pedidos, categorias] = await Promise.all([
+                    estoqueFunctions.carregarItens(), // Carrega todas as variações
+                    carregarPedidosPendentesDB(),     // Carrega pedidos pendentes
+                    estoqueFunctions.carregarCategorias() // Carrega categorias para filtros
+                ]);
+
+                categoriasCache = categorias;
+                pedidosPendentesCache = pedidos;
+
+                // Filtra os itens ANTES de popular as listas
+                todosItensVariacao = itens.filter(item => {
+                    if (!item.categorias || !item.categorias.nome) {
+                        return true; 
+                    }
+                    return !CATEGORIAS_EXCLUIDAS_NOME.includes(item.categorias.nome);
+                });
+
+                popularFiltrosPedido();
+                renderListaParaPedido();
+                renderSelectAjuste();
+                renderPedidosPendentes();
+
+            } catch (error) {
+                console.error("Erro ao carregar dados iniciais:", error);
+                alert("Erro ao carregar dados: " + error.message);
+            }
+        }
+        
+        function popularFiltrosPedido() {
+            const selectCategoria = document.getElementById('filtroCategoriaPedido');
+            let html = '<option value="todos">Todas as Categorias</option>';
+            
+            const categoriasFiltradas = categoriasCache.filter(c => {
+                return !CATEGORIAS_EXCLUIDAS_NOME.includes(c.nome);
+            });
+
+            html += categoriasFiltradas.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            selectCategoria.innerHTML = html;
+        }
+
+        function openTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(button => button.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // =============================================================================
+        // ABA 1: NOVO PEDIDO (COM FILTROS E LÓGICA DE BARRA)
+        // =============================================================================
+        
+        function renderListaParaPedido() {
+            const tbody = document.getElementById('listaItensPedido');
+            
+            const filtroTexto = document.getElementById('filtroItensPedido').value.toLowerCase();
+            const filtroCategoria = document.getElementById('filtroCategoriaPedido').value;
+            const filtroStatus = document.getElementById('filtroStatusEstoque').value;
+            const nivelMinimo = parseFloat(document.getElementById('filtroNivelMinimo').value) || 0;
+            
+            let html = '';
+            
+            const itensFiltrados = todosItensVariacao.filter(item => {
+                const matchTexto = item.nome.toLowerCase().includes(filtroTexto) || 
+                                   (item.sku && item.sku.toLowerCase().includes(filtroTexto));
+                if (!matchTexto) return false;
+
+                const matchCategoria = (filtroCategoria === 'todos' || String(item.categoria_id) === filtroCategoria);
+                if (!matchCategoria) return false;
+                
+                if (filtroStatus !== 'todos') {
+                    const isNegativo = item.quantidade_estoque < 0;
+                    const isBaixo = item.quantidade_estoque >= 0 && item.quantidade_estoque < nivelMinimo;
+
+                    if (filtroStatus === 'negativo' && !isNegativo) return false;
+                    if (filtroStatus === 'baixo' && !isBaixo) return false;
+                    if (filtroStatus === 'critico' && !(isNegativo || isBaixo)) return false;
+                }
+                
+                return true; 
+            });
+
+            if (itensFiltrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">Nenhum item encontrado com esses filtros.</td></tr>';
+                return;
+            }
+
+            itensFiltrados.forEach(item => {
+                let classeLinha = '';
+                if (item.quantidade_estoque < 0) {
+                    classeLinha = 'estoque-negativo'; 
+                } else if (item.quantidade_estoque < nivelMinimo) {
+                    classeLinha = 'estoque-baixo'; 
+                }
+
+                // *** INÍCIO DA LÓGICA DE BARRA ***
+                const isBarra = (item.categorias.nome === CATEGORIA_PERFIS_NOME);
+                let unidadeMedidaDisplay, inputStep, inputPlaceholder, isBarraData, unidadeData;
+
+                if (isBarra) {
+                    unidadeMedidaDisplay = `<span class="unidade-barra">Barra (${COMPRIMENTO_BARRA}m)</span>`;
+                    inputStep = 1; // Só pode pedir em barras inteiras
+                    inputPlaceholder = "0";
+                    isBarraData = "true";
+                    unidadeData = "Barra(s)"; // Unidade para o PDF
+                } else {
+                    unidadeMedidaDisplay = item.unidade_medida;
+                    inputStep = 0.01; // Padrão para outros itens (ex: kg, un)
+                    inputPlaceholder = "0.00";
+                    isBarraData = "false";
+                    unidadeData = item.unidade_medida;
+                }
+                // *** FIM DA LÓGICA DE BARRA ***
+                
+                html += `
+                    <tr data-variacao-id="${item.id}" class="${classeLinha}">
+                        <td><strong>${item.nome_base}</strong></td>
+                        <td>${item.cor}</td>
+                        <td>${item.quantidade_estoque.toFixed(2)} ${item.unidade_medida}</td>
+                        <td>${unidadeMedidaDisplay}</td>
+                        <td>
+                            <input type="number" step="${inputStep}" min="0" class="input-qtd-pedir" placeholder="${inputPlaceholder}" 
+                                   data-sku="${item.sku || 'N/A'}" 
+                                   data-nome="${item.nome_base}" 
+                                   data-cor="${item.cor}" 
+                                   data-unidade="${unidadeData}"
+                                   data-is-barra="${isBarraData}">
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function salvarPedidoPendente(event) {
+            event.preventDefault();
+            const fornecedor = document.getElementById('fornecedor').value || 'Não informado';
+            const notaFiscal = document.getElementById('notaFiscal').value || null;
+
+            const itensDoPedido = [];
+            const inputs = document.querySelectorAll('.input-qtd-pedir');
+
+            inputs.forEach(input => {
+                const quantidade = parseFloat(input.value);
+                if (quantidade > 0) {
+                    
+                    // *** LÓGICA DE BARRA: Converte barras em metros ANTES de salvar ***
+                    const isBarra = input.dataset.isBarra === 'true';
+                    let qtdParaSalvar = quantidade;
+
+                    if (isBarra) {
+                        qtdParaSalvar = quantidade * COMPRIMENTO_BARRA;
+                    }
+                    // *** FIM DA LÓGICA ***
+
+                    itensDoPedido.push({
+                        variacao_id: input.closest('tr').dataset.variacaoId,
+                        quantidade_pedida: qtdParaSalvar // Salva a quantidade em metros
+                    });
+                }
+            });
+
+            if (itensDoPedido.length === 0) {
+                alert('❌ Adicione pelo menos um item com quantidade maior que zero.');
+                return;
+            }
+
+            try {
+                // A RPC 'salvar_pedido_pendente' já espera a quantidade em metros (ou unidade base)
+                const { data, error } = await supabase.rpc('salvar_pedido_pendente', {
+                    p_fornecedor: fornecedor,
+                    p_nota_fiscal: notaFiscal,
+                    p_itens: itensDoPedido
+                });
+
+                if (error) throw error;
+
+                alert('✅ Pedido salvo como pendente!');
+                document.getElementById('formNovoPedido').reset();
+                renderListaParaPedido(); // Limpa os inputs da tabela
+                
+                pedidosPendentesCache = await carregarPedidosPendentesDB();
+                renderPedidosPendentes();
+                
+                openTab('pedidosPendentes', { currentTarget: document.querySelector('.tab[onclick*="pedidosPendentes"]') });
+
+            } catch (error) {
+                console.error('Erro ao salvar pedido:', error);
+                alert('❌ Erro ao salvar pedido: ' + error.message);
+            }
+        }
+        
+        function gerarPDFPedido() {
+            // Verifica se as bibliotecas estão carregadas (segunda checagem)
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.prototype.autoTable === 'undefined') {
+                alert("Erro: Bibliotecas de PDF não carregadas corretamente."); return;
+            }
+            
+            const fornecedor = document.getElementById('fornecedor').value || '_________________________';
+            const notaFiscal = document.getElementById('notaFiscal').value;
+
+            const itensParaPDF = [];
+            const inputs = document.querySelectorAll('.input-qtd-pedir');
+
+            inputs.forEach(input => {
+                const quantidade = parseFloat(input.value);
+                if (quantidade > 0) {
+                    // *** LÓGICA DE BARRA: Usa a unidade correta (Barra ou un/m/kg) ***
+                    const unidade = input.dataset.unidade; // Pega "Barra(s)" ou "un" etc.
+                    
+                    itensParaPDF.push([
+                        input.dataset.sku,
+                        input.dataset.nome,
+                        input.dataset.cor,
+                        unidade, // Unidade correta (Barra ou m/un/kg)
+                        quantidade.toFixed(2) // Quantidade correta (Nº de Barras ou N_de un/m/kg)
+                    ]);
+                }
+            });
+
+            if (itensParaPDF.length === 0) {
+                alert('❌ Adicione itens ao pedido antes de gerar o PDF.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            gerarPDFBase(doc, fornecedor, notaFiscal, itensParaPDF);
+            
+            // Salvar
+            doc.save(`Pedido_Novo_OficinaFamilia_${fornecedor.replace(/ /g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+        }
+
+        // =============================================================================
+        // ABA 2: PEDIDOS PENDENTES E CONFERÊNCIA (COM LÓGICA DE BARRA)
+        // =============================================================================
+        
+        async function carregarPedidosPendentesDB() {
+            try {
+                // Chama a função RPC (que agora inclui 'categoria_nome')
+                const { data, error } = await supabase.rpc('carregar_pedidos_pendentes');
+                if (error) throw error;
+                return data || [];
+            } catch (error) {
+                console.error('Erro ao carregar pedidos pendentes:', error);
+                document.getElementById('listaPedidosPendentes').innerHTML = '<div class="error">Erro ao carregar pedidos.</div>';
+                return [];
+            }
+        }
+
+        function renderPedidosPendentes() {
+            const container = document.getElementById('listaPedidosPendentes');
+            if (pedidosPendentesCache.length === 0) {
+                container.innerHTML = '<div class="muted">Nenhum pedido pendente.</div>';
+                return;
+            }
+
+            container.innerHTML = pedidosPendentesCache.map(pedido => {
+                const dataPedido = new Date(pedido.data_criacao).toLocaleDateString('pt-BR');
+                // totalItens agora é apenas um contador de tipos de item, não de soma
+                const totalTiposItens = pedido.itens.length; 
+                
+                return `
+                <div class="pedido-pendente-card">
+                    <div onclick="abrirModalConferencia(${pedido.id})" style="flex-grow: 1; cursor: pointer;">
+                        <strong>Fornecedor: ${pedido.fornecedor}</strong>
+                        <div class="text-muted">
+                            Pedido #${pedido.id} • Data: ${dataPedido} • ${totalTiposItens} tipo(s) de item
+                        </div>
+                        <div class="text-muted">
+                            NF: ${pedido.nota_fiscal || 'N/A'}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-info" onclick="event.stopPropagation(); gerarPDFDePedidoPendente(${pedido.id})">
+                            📄 PDF
+                        </button>
+                        <button class="btn btn-success" onclick="event.stopPropagation(); abrirModalConferencia(${pedido.id})">
+                            Receber 📦
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Gera um PDF para um pedido já existente no cache.
+         * @param {number} pedidoId 
+         */
+        function gerarPDFDePedidoPendente(pedidoId) {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined' || typeof window.jspdf.jsPDF.prototype.autoTable === 'undefined') {
+                alert("Erro: Bibliotecas de PDF não carregadas corretamente."); return;
+            }
+            
+            const pedido = pedidosPendentesCache.find(p => p.id === pedidoId);
+            if (!pedido) {
+                alert('Erro: Pedido não encontrado para gerar PDF.');
+                return;
+            }
+
+            const itensParaPDF = [];
+            
+            pedido.itens.forEach(item => {
+                // *** LÓGICA DE BARRA: Converte metros para Barras se for Perfil ***
+                const isBarra = (item.categoria_nome === CATEGORIA_PERFIS_NOME);
+                let quantidadeDisplay;
+                let unidadeDisplay;
+                
+                if (isBarra) {
+                    quantidadeDisplay = (item.quantidade_pedida / COMPRIMENTO_BARRA).toFixed(2);
+                    unidadeDisplay = "Barra(s)";
+                } else {
+                    quantidadeDisplay = item.quantidade_pedida.toFixed(2);
+                    unidadeDisplay = item.unidade_medida;
+                }
+                
+                itensParaPDF.push([
+                    item.sku || 'N/A',
+                    item.nome_base,
+                    item.cor,
+                    unidadeDisplay, 
+                    quantidadeDisplay 
+                ]);
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            gerarPDFBase(doc, pedido.fornecedor, pedido.nota_fiscal, itensParaPDF, pedido.id);
+
+            doc.save(`Pedido_${pedido.id}_OficinaFamilia_${pedido.fornecedor.replace(/ /g, '_')}_${new Date(pedido.data_criacao).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+        }
+        
+        /**
+         * Função centralizada para gerar o conteúdo do PDF, usada por "Novo Pedido" e "Pedido Pendente".
+         * @param {jsPDF} doc - Instância do jsPDF
+         * @param {string} fornecedor - Nome do fornecedor
+         * @param {string | null} notaFiscal - Número da Nota Fiscal
+         * @param {Array<Array<string>>} itensParaPDF - Dados da tabela (SKU, Item, Cor, Unid., Qtd.)
+         * @param {number | null} pedidoId - ID do Pedido (opcional)
+         */
+        function gerarPDFBase(doc, fornecedor, notaFiscal, itensParaPDF, pedidoId = null) {
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+
+            // 1. Cabeçalho da Empresa
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text("Oficina da Familia", 15, 20);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'normal');
+            doc.text("PEDIDO DE COMPRA", 15, 28);
+            
+            doc.setFontSize(10);
+            doc.text(`Data: ${dataAtual}`, 140, 20);
+            if(notaFiscal) {
+                doc.text(`NF: ${notaFiscal}`, 140, 26);
+            }
+            if(pedidoId) {
+                doc.text(`Pedido ID: #${pedidoId}`, 140, 32);
+            }
+
+            // 2. Dados do Fornecedor (Placeholder)
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text("PARA:", 15, 45);
+            doc.setFont(undefined, 'normal');
+            let startY = 51;
+            doc.text(`Fornecedor: ${fornecedor}`, 15, startY); startY += 6;
+            doc.text("CNPJ: _________________________", 15, startY); startY += 6;
+            doc.text("Endereço: _______________________", 15, startY); startY += 6;
+            doc.text("Contato: ________________________", 15, startY); startY += 6;
+            
+            // 3. Tabela de Itens
+            doc.autoTable({
+                startY: startY + 5,
+                head: [['SKU', 'Item', 'Cor', 'Unid.', 'Qtd. Pedida']],
+                body: itensParaPDF,
+                theme: 'striped',
+                headStyles: { fillColor: [44, 62, 80] } // Cor #2c3e50
+            });
+            
+            // 4. Rodapé
+            const finalY = doc.lastAutoTable.finalY + 15;
+            doc.setFontSize(10);
+            doc.text("Observações:", 15, finalY);
+            doc.text("____________________________________________________________________", 15, finalY + 6);
+            doc.text("____________________________________________________________________", 15, finalY + 12);
+        }
+        
+        function fecharModalConferencia() {
+            document.getElementById('modalConferencia').style.display = 'none';
+        }
+
+        function abrirModalConferencia(pedidoId) {
+            const pedido = pedidosPendentesCache.find(p => p.id === pedidoId);
+            if (!pedido) {
+                alert('Erro: Pedido não encontrado no cache.');
+                return;
+            }
+            
+            document.getElementById('conferenciaPedidoId').value = pedidoId;
+            document.getElementById('modalTituloConferencia').textContent = `Conferência Pedido #${pedidoId} (${pedido.fornecedor})`;
+            document.getElementById('infoPedidoConferencia').innerHTML = `
+                <strong>Fornecedor:</strong> ${pedido.fornecedor} <br>
+                <strong>Nota Fiscal:</strong> ${pedido.nota_fiscal || 'N/A'} <br>
+                <strong>Data do Pedido:</strong> ${new Date(pedido.data_criacao).toLocaleString('pt-BR')}
+            `;
+
+            const tbody = document.getElementById('listaItensConferencia');
+            tbody.innerHTML = ''; // Limpa a tabela
+
+            pedido.itens.forEach(item => {
+                // item.* vêm do JOIN na RPC (incluindo item.categoria_nome)
+                const tr = document.createElement('tr');
+                tr.dataset.variacaoId = item.variacao_id;
+
+                // *** INÍCIO DA LÓGICA DE BARRA (RECEBIMENTO) ***
+                const isBarra = (item.categoria_nome === CATEGORIA_PERFIS_NOME);
+                let qtdPedidaDisplay, inputQtdRecebida, inputStep;
+
+                if (isBarra) {
+                    const qtdEmBarras = item.quantidade_pedida / COMPRIMENTO_BARRA;
+                    qtdPedidaDisplay = `<span class="unidade-barra">${qtdEmBarras.toFixed(2)} Barra(s)</span> (${item.quantidade_pedida.toFixed(2)} m)`;
+                    inputQtdRecebida = qtdEmBarras.toFixed(2);
+                    inputStep = 1; // Recebe em barras
+                    tr.dataset.isBarra = "true";
+                } else {
+                    qtdPedidaDisplay = `${item.quantidade_pedida.toFixed(2)} ${item.unidade_medida}`;
+                    inputQtdRecebida = item.quantidade_pedida.toFixed(2);
+                    inputStep = 0.01;
+                    tr.dataset.isBarra = "false";
+                }
+                // *** FIM DA LÓGICA ***
+                
+                tr.innerHTML = `
+                    <td>
+                        <strong>${item.nome_base}</strong><br>
+                        <small class="text-muted">${item.cor} (SKU: ${item.sku || 'N/A'})</small>
+                    </td>
+                    <td>${qtdPedidaDisplay}</td>
+                    <td>
+                        <input type="number" step="${inputStep}" class="input-qtd-recebida" 
+                               value="${inputQtdRecebida}" required>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="input-nova-venda" 
+                               placeholder="${(item.preco_venda || 0.00).toFixed(2)}">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('modalConferencia').style.display = 'flex';
+        }
+
+        async function confirmarEntradaEstoque(event) {
+            event.preventDefault();
+            if (!confirm('Confirmar o recebimento e atualizar o estoque? Esta ação não pode ser desfeita facilmente.')) return;
+
+            const pedidoId = document.getElementById('conferenciaPedidoId').value;
+            const linhas = document.getElementById('listaItensConferencia').rows;
+            const promises = [];
+            
+            try {
+                // 1. Atualizar Estoque e Preços
+                for (const linha of linhas) {
+                    const variacaoId = linha.dataset.variacaoId;
+                    const novaVenda = parseFloat(linha.querySelector('.input-nova-venda').value);
+
+                    // *** LÓGICA DE BARRA: Converte barras recebidas em metros ANTES de salvar ***
+                    const isBarra = linha.dataset.isBarra === 'true';
+                    let qtdRecebida = parseFloat(linha.querySelector('.input-qtd-recebida').value);
+
+                    if (isBarra) {
+                        qtdRecebida = qtdRecebida * COMPRIMENTO_BARRA;
+                    }
+                    // *** FIM DA LÓGICA ***
+
+                    // 1a. Atualizar Estoque (em metros)
+                    if (qtdRecebida > 0) {
+                        promises.push(
+                            supabase.rpc('atualizar_variacao_estoque', {
+                                variacao_id_in: variacaoId,
+                                quantidade_in: qtdRecebida,
+                                operacao_in: 'adicionar'
+                            })
+                        );
+                    }
+
+                    // 1b. Atualizar Preço de Venda (Seu Custo) (por metro)
+                    if (novaVenda > 0) {
+                         promises.push(
+                            supabase.from('item_variacoes')
+                                .update({ preco_venda: novaVenda })
+                                .eq('id', variacaoId)
+                        );
+                    }
+                }
+
+                // 2. Marcar Pedido como Concluído
+                promises.push(
+                    supabase.rpc('marcar_pedido_concluido', { p_pedido_id: pedidoId })
+                );
+
+                const results = await Promise.all(promises);
+                
+                const errors = results.filter(res => res.error);
+                if (errors.length > 0) {
+                    throw new Error('Houve erros ao atualizar: ' + errors.map(e => e.error.message).join(', '));
+                }
+
+                alert('✅ Pedido recebido e estoque atualizado com sucesso!');
+                fecharModalConferencia();
+                
+                // Recarrega tudo
+                await carregarDadosIniciais();
+
+            } catch (error) {
+                console.error('Erro ao confirmar entrada:', error);
+                alert('❌ Erro ao confirmar entrada: ' + error.message);
+            }
+        }
+        
+        // =============================================================================
+        // ABA 3: AJUSTE MANUAL (Ajuste é sempre na unidade base: metros)
+        // =============================================================================
+
+        // FUNÇÃO MODIFICADA PARA ORDENAR E AGRUPAR POR CATEGORIA
+        function renderSelectAjuste() {
+            const select = document.getElementById('selectAjusteItem');
+            
+            if (todosItensVariacao.length === 0) {
+                select.innerHTML = '<option value="">Nenhum item de estoque (sem vidros) encontrado.</option>';
+                return;
+            }
+
+            // 1. Ordenar itens por Nome da Categoria, e secundariamente por Nome do Item (a variação)
+            todosItensVariacao.sort((a, b) => {
+                const catA = a.categorias?.nome || '';
+                const catB = b.categorias?.nome || '';
+                if (catA < catB) return -1;
+                if (catA > catB) return 1;
+                // Critério secundário: nome da variação
+                if (a.nome < b.nome) return -1;
+                if (a.nome > b.nome) return 1;
+                return 0;
+            });
+
+            // 2. Agrupar e renderizar com <optgroup>
+            select.innerHTML = '<option value="">Selecione um item...</option>';
+            let currentCategory = '';
+            let html = '';
+
+            todosItensVariacao.forEach(item => {
+                const categoryName = item.categorias?.nome || 'Sem Categoria';
+                
+                // Iniciar novo optgroup se a categoria mudar
+                if (categoryName !== currentCategory) {
+                    if (currentCategory !== '') {
+                        html += '</optgroup>';
+                    }
+                    html += `<optgroup label="${categoryName}">`;
+                    currentCategory = categoryName;
+                }
+
+                html += `
+                    <option value="${item.id}">
+                        ${item.nome} (Estoque: ${item.quantidade_estoque.toFixed(2)} ${item.unidade_medida})
+                    </option>
+                `;
+            });
+
+            // Fechar o último optgroup
+            if (currentCategory !== '') {
+                html += '</optgroup>';
+            }
+
+            select.innerHTML += html;
+        }
+        
+        async function aplicarAjusteManual(event) {
+            event.preventDefault();
+            
+            const select = document.getElementById('selectAjusteItem');
+            const variacaoId = select.value;
+            if (!variacaoId) {
+                alert('❌ Selecione um item.');
+                return;
+            }
+            
+            // Quantidade em unidade base (metros, un, kg)
+            const quantidade = parseFloat(document.getElementById('ajusteQuantidade').value);
+            const motivo = document.getElementById('ajusteMotivo').value;
+
+            if (quantidade === 0) {
+                alert('❌ A quantidade não pode ser zero.');
+                return;
+            }
+            
+            if (!motivo.trim()) {
+                alert('❌ O motivo é obrigatório.');
+                return;
+            }
+
+            if (!confirm(`Confirma o ajuste de ${quantidade} unidades para o item "${select.options[select.selectedIndex].text}"?`)) {
+                return;
+            }
+
+            // Preço por unidade base (R$/metro, R$/un)
+            const novaVenda = parseFloat(document.getElementById('ajustePrecoVenda').value);
+
+            try {
+                const promises = [];
+                
+                // 1. Ajuste de Estoque (na unidade base)
+                const operacao = (quantidade > 0) ? 'adicionar' : 'subtrair';
+                const qtdAbsoluta = Math.abs(quantidade);
+                
+                promises.push(
+                    supabase.rpc('atualizar_variacao_estoque', {
+                        variacao_id_in: variacaoId,
+                        quantidade_in: qtdAbsoluta,
+                        operacao_in: operacao
+                    })
+                );
+                
+                // 2. Ajuste de Preço de Custo/Venda (Variação)
+                if (novaVenda > 0) {
+                     promises.push(
+                        supabase.from('item_variacoes')
+                            .update({ preco_venda: novaVenda })
+                            .eq('id', variacaoId)
+                    );
+                }
+                
+                const results = await Promise.all(promises);
+                const errors = results.filter(res => res.error);
+
+                if (errors.length > 0) {
+                    throw new Error('Houve erros ao aplicar o ajuste: ' + errors.map(e => e.error.message).join(', '));
+                }
+
+                alert('✅ Ajuste manual aplicado com sucesso!');
+                document.getElementById('formAjusteManual').reset();
+                
+                // Recarrega os dados
+                await carregarDadosIniciais();
+
+            } catch (error) {
+                console.error('Erro no ajuste manual:', error);
+                alert('❌ Erro no ajuste manual: ' + error.message);
+            }
+        }
+        
+        // =============================================================================
+        // ABA 4: VALOR TOTAL DO ESTOQUE (Cálculo é sempre na unidade base: metros)
+        // =============================================================================
+        
+async function calcularValorTotalEstoque() {
+    const resultadoDiv = document.getElementById('resultadoValorTotal');
+    const tbody = document.getElementById('tabelaValorPorCategoria');
+    const btn = document.querySelector('#valorTotalEstoque .btn-primary');
+    
+    btn.disabled = true;
+    btn.textContent = '🔄 Carregando dados recentes...';
+    tbody.innerHTML = '';
+    resultadoDiv.style.display = 'none';
+
+    try {
+        let itensRecentes = await estoqueFunctions.carregarItens();
+
+        // Filtro inicial (exclui Vidros, etc.)
+        todosItensVariacao = itensRecentes.filter(item => {
+            if (!item.categorias || !item.categorias.nome) {
+                return true; 
+            }
+            return !CATEGORIAS_EXCLUIDAS_NOME.includes(item.categorias.nome);
+        });
+
+        btn.textContent = '⏳ Calculando...';
+        
+        let valorTotalGeral = 0;
+        const valorPorCategoria = new Map();
+
+        if (todosItensVariacao.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">Nenhum item de estoque (sem vidros) encontrado.</td></tr>';
+            document.getElementById('valorTotalDisplay').textContent = 'R$ 0,00';
+            resultadoDiv.style.display = 'block';
+            return; 
+        }
+
+        todosItensVariacao.forEach(itemVar => {
+            
+            // --- INÍCIO DA CORREÇÃO FINAL ---
+            // 1. Verifica se a categoria existe E se o nome não é o default 'S/ categoria'
+            if (!itemVar.categorias || !itemVar.categorias.nome || itemVar.categorias.nome === 'S/ categoria') {
+                console.log('Ignorando item sem categoria:', itemVar.nome); // Log para depuração
+                return; // Pula este item completamente
+            }
+            // --- FIM DA CORREÇÃO FINAL ---
+
+            // 2. Ignora itens com estoque zero ou negativo
+            if (itemVar.quantidade_estoque <= 0) {
+                return;
+            }
+            
+            // 3. Pega o preço de custo (que é o preco_venda) DIRETO DA VARIAÇÃO
+            const precoCusto = (itemVar.preco_venda) ? parseFloat(itemVar.preco_venda) : 0;
+
+            // 4. Ignora itens sem preço de custo
+            if (precoCusto <= 0) {
+                return;
+            }
+
+            const valorItem = itemVar.quantidade_estoque * precoCusto;
+            valorTotalGeral += valorItem;
+            
+            // Agora 'catNome' NUNCA será 'S/ categoria'
+            const catNome = itemVar.categorias.nome; 
+            valorPorCategoria.set(catNome, (valorPorCategoria.get(catNome) || 0) + valorItem);
+        });
+        
+        // Renderiza o total geral
+        document.getElementById('valorTotalDisplay').textContent = `R$ ${valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        // Renderiza a tabela por categoria
+        const categoriasOrdenadas = [...valorPorCategoria.keys()].sort();
+        
+        if (categoriasOrdenadas.length === 0 && valorTotalGeral === 0) { // Verifica se realmente não há nada a mostrar
+             tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">Nenhum item com categoria, estoque e custo válidos encontrado.</td></tr>';
+        } else if (categoriasOrdenadas.length === 0 && valorTotalGeral > 0) {
+             tbody.innerHTML = '<tr><td colspan="2" class="text-warning text-center">Erro: Valor total calculado, mas nenhuma categoria encontrada para agrupar. Verifique os dados.</td></tr>';
+        } else {
+            categoriasOrdenadas.forEach(catNome => {
+                const valor = valorPorCategoria.get(catNome);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${catNome}</td>
+                        <td class="text-right">R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        // Adiciona a linha de total na tabela
+        tbody.innerHTML += `
+            <tr style="background: #f8f9fa;">
+                <td style="font-weight: bold;">TOTAL</td>
+                <td class="text-right contabilidade-total">R$ ${valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>
+        `;
+
+        resultadoDiv.style.display = 'block';
+
+    } catch (error) {
+        console.error("Erro ao calcular valor total:", error);
+        alert("Erro ao buscar dados ou calcular: " + error.message);
+    } finally {
+        // Restaura o botão, independente de sucesso ou erro
+        btn.disabled = false;
+        btn.textContent = '🔄 Calcular Valor Total';
+    }
+}
+
+        // =============================================================================
+        // HELPERS MODAL
+        // =============================================================================
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('modalConferencia')) {
+                fecharModalConferencia();
+            }
+        }
+    </script>
+</body>
+</html>
