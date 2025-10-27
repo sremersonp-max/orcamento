@@ -117,9 +117,8 @@
             color: white;
         }
         
-        /* NOVO ESTILO ADICIONADO */
         .btn-info {
-            background: #007bff;
+            background: #17a2b8;
             color: white;
         }
         
@@ -315,14 +314,15 @@
                 <button class="btn btn-primary" onclick="carregarPreview()">
                     👁️ Visualizar Prévia
                 </button>
+                <!-- NOVO BOTÃO ADICIONADO AQUI -->
+                <button class="btn btn-info" onclick="imprimirTermica60Linhas()" id="btnImprimir60" disabled>
+                    📟 60 Linhas (TXT)
+                </button>
                 <button class="btn btn-success" onclick="imprimirTermica()" id="btnImprimir" disabled>
                     🖨️ Imprimir Etiqueta
                 </button>
                 <button class="btn btn-warning" onclick="imprimirPDF()">
                     📄 Gerar PDF
-                </button>
-                <button class="btn btn-info" onclick="imprimirTexto60Col()" id="btnImprimir60Col" disabled>
-                    📄 Gerar TXT (60 Col)
                 </button>
                 <button class="btn btn-danger" onclick="window.close()">
                     ❌ Fechar
@@ -450,18 +450,13 @@
             try {
                 console.log('🗃️ Carregando orçamento do banco:', orcamentoId);
                 
-                // --- INÍCIO DA CORREÇÃO ---
-                // Trocamos o .select('*') por uma seleção explícita
-                // das colunas que esta página realmente precisa, 
-                // para evitar bloqueios do RLS (Row Level Security) do Supabase.
                 const { data, error } = await supabase
                     .from('orcamentos')
                     .select('id, cliente, telefone, localizacao, observacoes, data, status, produtos, total, margem')
                     .eq('id', orcamentoId)
                     .single();
-                // --- FIM DA CORREÇÃO ---
 
-                if (error) throw new Error('Orçamento não encontrado');
+                if (error) throw error;
                 if (!data) throw new Error('Orçamento não encontrado');
 
                 // Converte os dados do banco para o formato esperado
@@ -505,7 +500,7 @@
         }
 
         // =============================================================================
-        // GERAÇÃO DA PRÉVIA (42 COLUNAS)
+        // GERAÇÃO DA PRÉVIA
         // =============================================================================
         function carregarPreview() {
             if (!orcamentoData) {
@@ -516,10 +511,8 @@
             const preview = gerarConteudoTermica();
             document.getElementById('termicaPreview').textContent = preview;
             document.getElementById('previewSection').classList.remove('hidden');
-            
-            // HABILITA OS BOTÕES
             document.getElementById('btnImprimir').disabled = false;
-            document.getElementById('btnImprimir60Col').disabled = false; // LINHA ADICIONADA
+            document.getElementById('btnImprimir60').disabled = false; // Habilita o novo botão também
             
             // Scroll para a prévia
             document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
@@ -535,10 +528,10 @@
 
             let conteudo = '';
             
-            // Cabeçalho (42 Col)
+            // Cabeçalho - MODIFICADO
             conteudo += '═'.repeat(42) + '\n';
-            conteudo += ' '.repeat(8) + '** ORÇAMENTO **' + '\n';
-            conteudo += ' '.repeat(5) + 'ESQUADRIAS & SERVIÇOS' + '\n';
+            conteudo += ' '.repeat(10) + '** OFICINA DA FAMÍLIA **' + '\n';
+            conteudo += ' '.repeat(8) + 'Tel: (42) 99960-8330' + '\n';
             conteudo += '═'.repeat(42) + '\n\n';
             
             // Dados do Cliente
@@ -549,36 +542,36 @@
             conteudo += 'STATUS: ' + (orcamentoData.status || 'rascunho') + '\n';
             conteudo += '─'.repeat(42) + '\n\n';
             
-            // Produtos
+            // Produtos - MODIFICADO
             conteudo += '**PRODUTOS:**\n';
             conteudo += '─'.repeat(42) + '\n';
             
             if (orcamentoData.produtos && orcamentoData.produtos.length > 0) {
                 orcamentoData.produtos.forEach((produto, index) => {
                     let nomeProduto = '';
-                    let detalhes = '';
+                    let descricao = '';
                     
                     if (produto.isAvulso) {
                         nomeProduto = produto.nomeAvulso || 'Item Avulso';
-                        detalhes = `Qtd: ${produto.quantidade} ${produto.unidadeMedida}`;
+                        descricao = `Qtd: ${produto.quantidade} ${produto.unidadeMedida}`;
                     } else {
                         // Tenta obter nome do produto base
-                        nomeProduto = `Produto ${produto.produtoId}`;
-                        detalhes = `Dim: ${produto.largura || 0}m x ${produto.altura || 0}m`;
+                        nomeProduto = produto.descricao || `Produto ${produto.produtoId}`;
+                        descricao = `Dim: ${produto.largura || 0}m x ${produto.altura || 0}m`;
                         if (produto.quantidade > 1) {
-                            detalhes += ` - Qtd: ${produto.quantidade}`;
+                            descricao += ` - Qtd: ${produto.quantidade}`;
                         }
                     }
                     
                     const precoVenda = (produto.preco || 0) * margem;
                     
-                    // Quebra linha longa se necessário (42 col)
+                    // Quebra linha longa se necessário
                     if (nomeProduto.length > 30) {
                         nomeProduto = nomeProduto.substring(0, 30) + '...';
                     }
                     
                     conteudo += `${index + 1}. ${nomeProduto}\n`;
-                    conteudo += `   ${detalhes}\n`;
+                    conteudo += `   ${descricao}\n`;
                     conteudo += `   R$ ${precoVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
                     
                     if (index < orcamentoData.produtos.length - 1) {
@@ -591,10 +584,10 @@
             
             conteudo += '\n' + '─'.repeat(42) + '\n';
             
-            // Totais
+            // Totais - MODIFICADO (mantém cálculo da margem mas oculta a exibição)
             conteudo += 'RESUMO:\n';
             conteudo += `Produtos: ${orcamentoData.produtos?.length || 0}\n`;
-            conteudo += `Margem: ${((margem - 1) * 100).toFixed(0)}%\n`;
+            // REMOVIDA A LINHA DA MARGEM
             conteudo += '─'.repeat(42) + '\n';
             conteudo += 'TOTAL: R$ ' + totalVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '\n';
             conteudo += '═'.repeat(42) + '\n';
@@ -605,13 +598,13 @@
                 conteudo += '─'.repeat(42) + '\n';
             }
             
-            // Rodapé
+            // Rodapé - MODIFICADO
             conteudo += '\n';
             conteudo += ' '.repeat(10) + '**OBRIGADO!**\n';
-            conteudo += ' '.repeat(5) + 'Volte sempre!\n';
+            conteudo += ' '.repeat(8) + 'Volte sempre!\n';
             conteudo += '═'.repeat(42) + '\n';
             conteudo += `Cópia: 1/${copias}\n`;
-            conteudo += '📞 (11) 99999-9999\n\n';
+            conteudo += '📞 (42) 99960-8330\n\n';
             
             // Código de barras simulado
             conteudo += '||||| '.repeat(7) + '\n';
@@ -622,7 +615,165 @@
         }
 
         // =============================================================================
-        // FUNÇÕES DE IMPRESSÃO
+        // NOVA FUNÇÃO: IMPRESSÃO TÉRMICA 60 LINHAS
+        // =============================================================================
+        function imprimirTermica60Linhas() {
+            if (!orcamentoData) {
+                mostrarAlerta('❌ Selecione ou carregue um orçamento primeiro.', 'error');
+                return;
+            }
+
+            try {
+                const conteudo = gerarConteudoTermica60Linhas();
+                const copias = parseInt(document.getElementById('copias').value) || 1;
+                
+                // Criar arquivo de texto para impressão térmica
+                const blob = new Blob([conteudo], { 
+                    type: 'text/plain; charset=utf-8' 
+                });
+                
+                // Criar URL para download
+                const url = URL.createObjectURL(blob);
+                
+                // Criar link de download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `termica_60mm_${orcamentoData.cliente || 'cliente'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.txt`;
+                
+                // Simular clique para download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Liberar memória
+                URL.revokeObjectURL(url);
+                
+                mostrarAlerta(`✅ Arquivo para impressora 60mm gerado! ${copias} cópia(s)`, 'success');
+                
+                // Instruções para o usuário
+                setTimeout(() => {
+                    mostrarAlerta('💡 Dica: Use o arquivo .txt com software de impressão térmica', 'info');
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erro na geração do arquivo 60mm:', error);
+                mostrarAlerta('❌ Erro ao gerar arquivo: ' + error.message, 'error');
+            }
+        }
+
+        function gerarConteudoTermica60Linhas() {
+            if (!orcamentoData) return '';
+            
+            const margem = orcamentoData.margem || 1;
+            const totalVenda = (orcamentoData.total || 0) * margem;
+            const observacoes = document.getElementById('observacoesImpressao').value;
+            const copias = parseInt(document.getElementById('copias').value) || 1;
+
+            let conteudo = '';
+            
+            // Configuração para 60mm (aproximadamente 32 caracteres de largura)
+            const larguraLinha = 32;
+            
+            // Função para centralizar texto
+            const centralizar = (texto) => {
+                const espacos = Math.max(0, larguraLinha - texto.length);
+                const espacosEsquerda = Math.floor(espacos / 2);
+                return ' '.repeat(espacosEsquerda) + texto;
+            };
+            
+            // Função para linha divisória
+            const linhaDivisoria = (caractere = '=') => caractere.repeat(larguraLinha);
+            
+            // Cabeçalho - MODIFICADO
+            conteudo += linhaDivisoria() + '\n';
+            conteudo += centralizar('OFICINA DA FAMÍLIA') + '\n';
+            conteudo += centralizar('(42) 99960-8330') + '\n';
+            conteudo += linhaDivisoria() + '\n\n';
+            
+            // Dados do Cliente
+            conteudo += 'CLIENTE: ' + (orcamentoData.cliente || 'N/I') + '\n';
+            conteudo += 'TEL: ' + (orcamentoData.telefone || 'N/I') + '\n';
+            conteudo += 'LOCAL: ' + (orcamentoData.localizacao || 'N/I') + '\n';
+            conteudo += 'DATA: ' + (orcamentoData.data || new Date().toLocaleDateString('pt-BR')) + '\n';
+            conteudo += 'STATUS: ' + (orcamentoData.status || 'rascunho') + '\n';
+            conteudo += linhaDivisoria('-') + '\n\n';
+            
+            // Produtos (formato compacto para 60mm) - MODIFICADO
+            conteudo += 'PRODUTOS:\n';
+            conteudo += linhaDivisoria('-') + '\n';
+            
+            if (orcamentoData.produtos && orcamentoData.produtos.length > 0) {
+                orcamentoData.produtos.forEach((produto, index) => {
+                    let nomeProduto = '';
+                    let descricao = '';
+                    
+                    if (produto.isAvulso) {
+                        nomeProduto = (produto.nomeAvulso || 'Item Avulso').substring(0, 20);
+                        descricao = `${produto.quantidade}${produto.unidadeMedida || 'un'}`;
+                    } else {
+                        nomeProduto = (produto.descricao || `Prod ${produto.produtoId}`).substring(0, 15);
+                        descricao = `${produto.largura || 0}x${produto.altura || 0}m`;
+                        if (produto.quantidade > 1) {
+                            descricao += ` x${produto.quantidade}`;
+                        }
+                    }
+                    
+                    const precoVenda = (produto.preco || 0) * margem;
+                    
+                    // Formato compacto para 60mm
+                    const linhaProduto = `${index + 1}. ${nomeProduto}`.padEnd(18);
+                    const linhaDescricao = `${descricao}`.padEnd(10);
+                    const linhaPreco = `R$ ${precoVenda.toFixed(2)}`;
+                    
+                    conteudo += linhaProduto + linhaDescricao + linhaPreco + '\n';
+                });
+            } else {
+                conteudo += 'Nenhum produto\n';
+            }
+            
+            conteudo += '\n' + linhaDivisoria('-') + '\n';
+            
+            // Totais compactos - MODIFICADO (mantém cálculo mas oculta margem)
+            conteudo += 'RESUMO:\n';
+            conteudo += `Itens: ${orcamentoData.produtos?.length || 0}\n`;
+            // REMOVIDA A LINHA DA MARGEM
+            conteudo += linhaDivisoria('-') + '\n';
+            conteudo += `TOTAL: R$ ${totalVenda.toFixed(2)}`.padStart(larguraLinha) + '\n';
+            conteudo += linhaDivisoria() + '\n';
+            
+            // Observações (quebrar linha se necessário)
+            if (observacoes) {
+                conteudo += '\nOBS: ';
+                let obsRestante = observacoes;
+                while (obsRestante.length > 0) {
+                    const pedaco = obsRestante.substring(0, larguraLinha - 5);
+                    conteudo += pedaco + '\n';
+                    obsRestante = obsRestante.substring(pedaco.length);
+                    if (obsRestante.length > 0) {
+                        conteudo += '     ';
+                    }
+                }
+                conteudo += linhaDivisoria('-') + '\n';
+            }
+            
+            // Rodapé - MODIFICADO
+            conteudo += '\n';
+            conteudo += centralizar('**OBRIGADO!**') + '\n';
+            conteudo += centralizar('Volte sempre!') + '\n';
+            conteudo += linhaDivisoria() + '\n';
+            conteudo += `Cópia: 1/${copias}`.padStart(larguraLinha) + '\n';
+            conteudo += '(42) 99960-8330\n\n';
+            
+            // Código de barras simulado compacto
+            conteudo += '|'.repeat(larguraLinha) + '\n';
+            conteudo += `COD: ${orcamentoData.id || 'TEMP'}`.padStart(larguraLinha) + '\n';
+            conteudo += '|'.repeat(larguraLinha) + '\n';
+
+            return conteudo;
+        }
+
+        // =============================================================================
+        // FUNÇÕES DE IMPRESSÃO EXISTENTES (MANTIDAS)
         // =============================================================================
         function imprimirTermica() {
             const tipoImpressora = document.getElementById('selectImpressora').value;
@@ -634,7 +785,7 @@
             }
 
             try {
-                const conteudo = gerarConteudoTermica(); // Usa 42 col
+                const conteudo = gerarConteudoTermica();
                 
                 // Criar uma nova janela para impressão
                 const janelaImpressao = window.open('', '_blank');
@@ -681,7 +832,7 @@
 
         function imprimirPDF() {
             try {
-                const conteudo = gerarConteudoTermica(); // Usa 42 col
+                const conteudo = gerarConteudoTermica();
                 const blob = new Blob([conteudo], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 
@@ -700,136 +851,7 @@
         }
 
         // =============================================================================
-        // NOVAS FUNÇÕES - IMPRESSÃO 60 COLUNAS
-        // =============================================================================
-        
-        /**
-         * Gera o conteúdo de texto formatado para 60 colunas.
-         */
-        function gerarConteudoTermica60Col() {
-            if (!orcamentoData) return '';
-            
-            const COL_WIDTH = 60; // Largura definida para 60 colunas
-            const margem = orcamentoData.margem || 1;
-            const totalVenda = (orcamentoData.total || 0) * margem;
-            const observacoes = document.getElementById('observacoesImpressao').value;
-            const copias = parseInt(document.getElementById('copias').value) || 1;
-
-            let conteudo = '';
-            
-            // Cabeçalho (60 col)
-            conteudo += '═'.repeat(COL_WIDTH) + '\n';
-            conteudo += ' '.repeat(Math.floor((COL_WIDTH - 16) / 2)) + '** ORÇAMENTO **' + '\n'; // 16 chars
-            conteudo += ' '.repeat(Math.floor((COL_WIDTH - 22) / 2)) + 'ESQUADRIAS & SERVIÇOS' + '\n'; // 22 chars
-            conteudo += '═'.repeat(COL_WIDTH) + '\n\n';
-            
-            // Dados do Cliente
-            conteudo += 'CLIENTE: ' + (orcamentoData.cliente || 'Não informado') + '\n';
-            conteudo += 'TEL: ' + (orcamentoData.telefone || 'Não informado') + '\n';
-            conteudo += 'LOCAL: ' + (orcamentoData.localizacao || 'Não informado') + '\n';
-            conteudo += 'DATA: ' + (orcamentoData.data || new Date().toLocaleDateString('pt-BR')) + '\n';
-            conteudo += 'STATUS: ' + (orcamentoData.status || 'rascunho') + '\n';
-            conteudo += '─'.repeat(COL_WIDTH) + '\n\n';
-            
-            // Produtos
-            conteudo += '**PRODUTOS:**\n';
-            conteudo += '─'.repeat(COL_WIDTH) + '\n';
-            
-            if (orcamentoData.produtos && orcamentoData.produtos.length > 0) {
-                orcamentoData.produtos.forEach((produto, index) => {
-                    let nomeProduto = '';
-                    let detalhes = '';
-                    
-                    if (produto.isAvulso) {
-                        nomeProduto = produto.nomeAvulso || 'Item Avulso';
-                        detalhes = `Qtd: ${produto.quantidade} ${produto.unidadeMedida}`;
-                    } else {
-                        nomeProduto = `Produto ${produto.produtoId}`;
-                        detalhes = `Dim: ${produto.largura || 0}m x ${produto.altura || 0}m`;
-                        if (produto.quantidade > 1) {
-                            detalhes += ` - Qtd: ${produto.quantidade}`;
-                        }
-                    }
-                    
-                    const precoVenda = (produto.preco || 0) * margem;
-                    
-                    // Quebra linha longa se necessário (Ajustado para 60 col)
-                    if (nomeProduto.length > (COL_WIDTH - 4)) {
-                         nomeProduto = nomeProduto.substring(0, (COL_WIDTH - 7)) + '...';
-                    }
-                    
-                    conteudo += `${index + 1}. ${nomeProduto}\n`;
-                    conteudo += `   ${detalhes}\n`;
-                    conteudo += `   R$ ${precoVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                    
-                    if (index < orcamentoData.produtos.length - 1) {
-                        conteudo += '   ─\n';
-                    }
-                });
-            } else {
-                conteudo += 'Nenhum produto\n';
-            }
-            
-            conteudo += '\n' + '─'.repeat(COL_WIDTH) + '\n';
-            
-            // Totais
-            conteudo += 'RESUMO:\n';
-            conteudo += `Produtos: ${orcamentoData.produtos?.length || 0}\n`;
-            conteudo += `Margem: ${((margem - 1) * 100).toFixed(0)}%\n`;
-            conteudo += '─'.repeat(COL_WIDTH) + '\n';
-            conteudo += 'TOTAL: R$ ' + totalVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '\n';
-            conteudo += '═'.repeat(COL_WIDTH) + '\n';
-            
-            // Observações
-            if (observacoes) {
-                conteudo += '\nOBS: ' + observacoes + '\n';
-                conteudo += '─'.repeat(COL_WIDTH) + '\n';
-            }
-            
-            // Rodapé
-            conteudo += '\n';
-            conteudo += ' '.repeat(Math.floor((COL_WIDTH - 11) / 2)) + '**OBRIGADO!**\n'; // 11 chars
-            conteudo += ' '.repeat(Math.floor((COL_WIDTH - 12) / 2)) + 'Volte sempre!\n'; // 12 chars
-            conteudo += '═'.repeat(COL_WIDTH) + '\n';
-            conteudo += `Cópia: 1/${copias}\n`;
-            conteudo += '📞 (11) 99999-9999\n\n';
-            
-            // Código de barras simulado (Ajustado)
-            conteudo += '||||| '.repeat(Math.floor(COL_WIDTH / 6)) + '\n';
-            conteudo += `COD: ${orcamentoData.id || 'TEMPORARIO'}\n`;
-            conteudo += '||||| '.repeat(Math.floor(COL_WIDTH / 6)) + '\n';
-
-            return conteudo;
-        }
-
-        /**
-         * Gera e baixa um arquivo .txt com o formato de 60 colunas.
-         */
-        function imprimirTexto60Col() {
-            try {
-                // Chama o NOVO gerador de conteúdo (60 col)
-                const conteudo = gerarConteudoTermica60Col(); 
-                const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                // Altera o nome do arquivo para indicar 60 col
-                link.download = `orcamento_60col_${orcamentoData.cliente || 'cliente'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.txt`;
-                link.click();
-                
-                URL.revokeObjectURL(url);
-                mostrarAlerta('✅ TXT (60 Col) gerado e baixado com sucesso!', 'success');
-                
-            } catch (error) {
-                console.error('❌ Erro ao gerar TXT 60 Col:', error);
-                mostrarAlerta('❌ Erro ao gerar TXT (60 Col): ' + error.message, 'error');
-            }
-        }
-
-
-        // =============================================================================
-        // FUNÇÕES AUXILIARES
+        // FUNÇÕES AUXILIARES (MANTIDAS)
         // =============================================================================
         function mostrarAlerta(mensagem, tipo) {
             const container = document.getElementById('alertContainer');

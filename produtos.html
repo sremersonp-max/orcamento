@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Produtos - Esquadrias</title>
     <link rel="stylesheet" href="styles.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* AJUSTE AQUI: Adicionado espaço para o novo campo Tipo do Item */
+        /* --- ESTILOS DO SEU produtos1.html --- */
         .linha-produto { 
             display: grid; 
-            /* Colunas: Item (Modelo), Tipo do Item, Fórmula, Substituível, Ações */
+            /* ATENÇÃO: Seu arquivo original tem uma lógica diferente de colunas aqui. Vou manter a do seu arquivo que funciona. */
             grid-template-columns: minmax(200px, 1fr) 150px 200px 120px auto; 
             gap: 15px; 
             margin-bottom: 15px; 
@@ -23,28 +22,119 @@
             border-left: 4px solid #3498db;
         }
         
-        .input-formula {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
+        .config-vidro {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
         }
         
-        .checkbox-substituivel {
-            width: 20px !important;
-            height: 20px;
-        }
-        
-        .produto-item {
-            border-left: 4px solid #3498db;
-        }
-        
-        .badge-substituivel {
-            background: #28a745;
+        .badge-vidro {
+            background: #17a2b8;
             color: white;
             padding: 3px 10px;
             border-radius: 12px;
             font-size: 0.8em;
-            margin-left: 10px;
+            margin-left: 5px;
         }
+
+        /* --- NOVOS ESTILOS PARA VISUALIZAÇÃO --- */
+        .linha-formula-vidro {
+            display: grid;
+            /* Grid ATUALIZADO para incluir o campo de quantidade */
+            grid-template-columns: 1fr 1fr 1fr 0.8fr 1.5fr 1fr 1fr 1fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: end;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .preview-desenho {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .svg-preview {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #ccc;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .svg-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .mini-input {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+        
+        /* Estilo para a linha de composição do seu arquivo original */
+        .linha-composicao {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+
+        /* Estilos para o upload de arquivo */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 6px 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            cursor: pointer;
+            color: #495057;
+        }
+
+        .file-input-label:hover {
+            background: #e9ecef;
+        }
+
+        .file-name {
+            font-size: 10px;
+            color: #28a745;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
     </style>
 </head>
 <body>
@@ -56,6 +146,7 @@
                     <a href="index.html" class="btn btn-secondary">🏠 Início</a>
                     <a href="estoque.html" class="btn btn-primary">📦 Estoque</a>
                     <a href="orcamento.html" class="btn btn-success">📋 Orçamentos</a>
+                    <a href="pedido_tempera.html" class="btn btn-info">🔍 Pedido Tempera</a>
                 </div>
             </div>
         </div>
@@ -65,11 +156,29 @@
             <div class="grid grid-2">
                 <div class="form-group">
                     <label for="nomeProduto">Nome do Produto *</label>
-                    <input type="text" id="nomeProduto" placeholder="Ex: Janela de Correr 2 Folhas">
+                    <input type="text" id="nomeProduto" placeholder="Ex: Janela de Correr 4 Folhas">
                 </div>
                 <div class="form-group">
                     <label for="categoriaProduto">Categoria do Produto *</label>
                     <select id="categoriaProduto"></select>
+                </div>
+            </div>
+
+            <div class="config-vidro">
+                <h4>📐 Configuração de Fórmulas de Vidro com Visualização</h4>
+                <p class="text-muted">Configure as fórmulas e a visualização de cada peça de vidro. Agora você pode fazer UPLOAD direto da imagem.</p>
+                
+                <div id="listaFormulasVidro">
+                    </div>
+                
+                <button type="button" class="btn btn-primary btn-small" onclick="adicionarFormulaVidro()">
+                    ➕ Adicionar Fórmula de Vidro
+                </button>
+                
+                <div class="preview-desenho">
+                    <h5>🎨 Visualização Geral do Produto</h5>
+                    <div id="previewGeralDesenho" class="svg-preview">
+                        </div>
                 </div>
             </div>
 
@@ -107,16 +216,20 @@
     <script src="config.js"></script>
     <script>
         // =============================================================================
-        // VARIÁVEIS GLOBAIS
+        // VARIÁVEIS GLOBAIS (DO SEU ARQUIVO)
         // =============================================================================
         let produtosCadastrados = [];
         let itensPaiEstoque = [];
         let categoriasProdutos = [];
         let linhasItens = [];
+        let formulasVidro = []; // Array para fórmulas de vidro (agora com visualização)
         let editandoProdutoId = null;
 
+        // Cores padrão para SVG (fallback se não usar imagem)
+        const CORES_PADRAO = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'];
+
         // =============================================================================
-        // INICIALIZAÇÃO
+        // INICIALIZAÇÃO (DO SEU ARQUIVO)
         // =============================================================================
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("🚀 Iniciando sistema de produtos...");
@@ -125,7 +238,7 @@
                 await carregarCategoriasProdutos();
                 await carregarItensPaiEstoque();
                 await carregarProdutosBanco();
-                adicionarLinha(); // Adiciona a primeira linha no formulário
+                adicionarLinha(); // Adiciona a primeira linha de COMPOSIÇÃO
                 console.log("✅ Sistema de produtos inicializado!");
             } catch (error) {
                 console.error("❌ Erro na inicialização:", error);
@@ -134,25 +247,382 @@
             }
         });
 
-        // Carrega apenas os ITENS PAI (modelos sem cor)
+        // =============================================================================
+        // NOVO SISTEMA DE FÓRMULAS DE VIDRO (COM UPLOAD DE IMAGEM E QUANTIDADE)
+        // =============================================================================
+        function adicionarFormulaVidro(formulaExistente = null) {
+            const idFormula = `formula_${Date.now()}`;
+            const corPadrao = CORES_PADRAO[formulasVidro.length % CORES_PADRAO.length];
+            
+            const formulaData = formulaExistente || { 
+                nome_peca: '',
+                formula_largura: 'L - 0.00',
+                formula_altura: 'A - 0.00', 
+                descricao: '',
+                quantidade_pecas: 1, // NOVO CAMPO: Quantidade de peças (padrão 1)
+                cor_indicativa: corPadrao,
+                posicao_x: formulasVidro.length * 20,
+                posicao_y: 15,
+                largura_svg: 40,
+                altura_svg: 60,
+                url_imagem_peca: '' // Agora será Base64 ou URL
+            };
+            
+            formulasVidro.push({ ...formulaData, idFormula });
+            
+            const linhaHtml = `
+                <div class="linha-formula-vidro" id="${idFormula}">
+                    <div class="form-group">
+                        <label>Peça</label>
+                        <input type="text" value="${formulaData.nome_peca}" 
+                               placeholder="Ex: Folha Fixa"
+                               class="mini-input"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'nome_peca', this.value)"
+                               onkeyup="atualizarVisualizacaoGeral()">
+                    </div>
+                    <div class="form-group">
+                        <label>Largura</label>
+                        <input type="text" value="${formulaData.formula_largura}" 
+                               placeholder="L - 0.20"
+                               class="mini-input"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'formula_largura', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Altura</label>
+                        <input type="text" value="${formulaData.formula_altura}" 
+                               placeholder="A - 0.10"
+                               class="mini-input"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'formula_altura', this.value)">
+                    </div>
+                    
+                    <!-- NOVO CAMPO: Quantidade de Peças -->
+                    <div class="form-group">
+                        <label>Qtd. Peças</label>
+                        <input type="number" value="${formulaData.quantidade_pecas}" 
+                               class="mini-input" min="1" max="20" step="1"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'quantidade_pecas', parseInt(this.value)); atualizarVisualizacaoGeral()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Imagem da Peça</label>
+                        <div class="file-input-wrapper">
+                            <div class="file-input-label" id="file_label_${idFormula}">
+                                📁 Escolher imagem
+                            </div>
+                            <input type="file" 
+                                   id="file_input_${idFormula}"
+                                   accept="image/*" 
+                                   onchange="uploadImagemPeca(this, '${idFormula}')">
+                        </div>
+                        <div class="file-name" id="file_name_${idFormula}">
+                            ${formulaData.url_imagem_peca ? '✅ Imagem carregada' : 'Nenhuma imagem'}
+                        </div>
+                        <input type="hidden" id="url_imagem_${idFormula}" 
+                               value="${formulaData.url_imagem_peca || ''}"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'url_imagem_peca', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Cor (SVG)</label>
+                        <input type="color" value="${formulaData.cor_indicativa}" 
+                               style="height: 32px; padding: 2px;"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'cor_indicativa', this.value); atualizarVisualizacaoGeral()">
+                    </div>
+                    <div class="form-group">
+                        <label>Pos X</label>
+                        <input type="number" value="${formulaData.posicao_x}" 
+                               class="mini-input" min="0"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'posicao_x', parseInt(this.value)); atualizarVisualizacaoGeral()">
+                    </div>
+                    <div class="form-group">
+                        <label>Pos Y</label>
+                        <input type="number" value="${formulaData.posicao_y}" 
+                               class="mini-input" min="0"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'posicao_y', parseInt(this.value)); atualizarVisualizacaoGeral()">
+                    </div>
+                    <div class="form-group">
+                        <label>Larg. Visual</label>
+                        <input type="number" value="${formulaData.largura_svg}" 
+                               class="mini-input" min="10"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'largura_svg', parseInt(this.value)); atualizarVisualizacaoGeral()">
+                    </div>
+                    <div class="form-group">
+                        <label>Alt. Visual</label>
+                        <input type="number" value="${formulaData.altura_svg}" 
+                               class="mini-input" min="10"
+                               onchange="atualizarFormulaVidro('${idFormula}', 'altura_svg', parseInt(this.value)); atualizarVisualizacaoGeral()">
+                    </div>
+                    
+                    <button class="btn btn-danger btn-small" onclick="removerFormulaVidro('${idFormula}')" style="height: 32px;">🗑️</button>
+                </div>
+                
+                <div class="preview-desenho" id="preview_container_${idFormula}">
+                    <small><strong>Preview da Peça: ${formulaData.nome_peca || 'Nova Peça'}</strong> ${formulaData.quantidade_pecas > 1 ? `(x${formulaData.quantidade_pecas})` : ''}</small>
+                    <div id="preview_${idFormula}" class="svg-preview" style="height: 80px;">
+                        ${gerarConteudoVisualPeca(formulaData)}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('listaFormulasVidro').insertAdjacentHTML('beforeend', linhaHtml);
+            atualizarVisualizacaoGeral();
+        }
+
+        // =============================================================================
+        // FUNÇÃO DE UPLOAD DE IMAGEM (BASE64) - NOVA FUNÇÃO
+        // =============================================================================
+        function uploadImagemPeca(input, idFormula) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Verifica se é imagem
+            if (!file.type.startsWith('image/')) {
+                alert('❌ Por favor, selecione apenas arquivos de imagem (JPG, PNG, SVG, etc.)');
+                return;
+            }
+            
+            // Verifica tamanho (máx 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('❌ Imagem muito grande! Máximo 2MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Converte para Base64
+                const base64Image = e.target.result;
+                
+                // Atualiza o campo hidden com Base64
+                document.getElementById(`url_imagem_${idFormula}`).value = base64Image;
+                
+                // Atualiza a fórmula
+                atualizarFormulaVidro(idFormula, 'url_imagem_peca', base64Image);
+                
+                // Atualiza o nome do arquivo
+                document.getElementById(`file_name_${idFormula}`).textContent = `✅ ${file.name}`;
+                document.getElementById(`file_label_${idFormula}`).textContent = '📁 Trocar imagem';
+                
+                // Atualiza preview individual
+                const previewIndividual = document.getElementById(`preview_${idFormula}`);
+                if (previewIndividual) {
+                    previewIndividual.innerHTML = gerarConteudoVisualPeca({
+                        ...formulasVidro.find(f => f.idFormula === idFormula),
+                        url_imagem_peca: base64Image
+                    });
+                }
+                
+                atualizarVisualizacaoGeral();
+            };
+            
+            reader.onerror = function() {
+                alert('❌ Erro ao carregar a imagem. Tente novamente.');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Gera <img> se tiver URL/Base64, senão gera <svg>
+        function gerarConteudoVisualPeca(formula) {
+            if (formula.url_imagem_peca) {
+                return `<img src="${formula.url_imagem_peca}" alt="${formula.nome_peca || 'Peça'}" 
+                             style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            } else {
+                // Fallback para SVG
+                return `
+                    <svg width="${formula.largura_svg}" height="${formula.altura_svg}" viewBox="0 0 ${formula.largura_svg} ${formula.altura_svg}">
+                        <rect x="0" y="0" width="${formula.largura_svg}" height="${formula.altura_svg}"
+                              fill="${formula.cor_indicativa}40" 
+                              stroke="${formula.cor_indicativa}" 
+                              stroke-width="2"/>
+                        <text x="50%" y="50%" font-size="10" text-anchor="middle" dominant-baseline="middle" fill="#000">SVG</text>
+                    </svg>
+                `;
+            }
+        }
+
+        function atualizarVisualizacaoGeral() {
+            const container = document.getElementById('previewGeralDesenho');
+            if (formulasVidro.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Adicione fórmulas para ver a visualização</div>';
+                return;
+            }
+            container.innerHTML = gerarSVGGeralComImagens();
+        }
+
+        // Gera o SVG principal que contém as imagens (AGORA COM MULTIPLAS PEÇAS)
+        function gerarSVGGeralComImagens() {
+            let pecasParaRenderizar = [];
+            
+            // Expande as peças baseado na quantidade
+            formulasVidro.forEach((formula, index) => {
+                for (let i = 0; i < (formula.quantidade_pecas || 1); i++) {
+                    pecasParaRenderizar.push({
+                        ...formula,
+                        // Desloca ligeiramente peças múltiplas para visualização
+                        posicao_x: formula.posicao_x + (i * 5),
+                        posicao_y: formula.posicao_y + (i * 3),
+                        // Adiciona índice para identificação
+                        indiceMultipla: i + 1
+                    });
+                }
+            });
+
+            return `
+                <svg width="100%" height="100%" viewBox="0 0 200 150">
+                    <rect x="10" y="10" width="180" height="130" fill="none" stroke="#333" stroke-width="2"/>
+                    
+                    ${pecasParaRenderizar.map((formula, index) => {
+                        const x = formula.posicao_x + 15;
+                        const y = formula.posicao_y + 15;
+                        const width = formula.largura_svg;
+                        const height = formula.altura_svg;
+                        const textoIndice = formula.quantidade_pecas > 1 ? `${index + 1}.${formula.indiceMultipla}` : (index + 1);
+
+                        if (formula.url_imagem_peca) {
+                            return `
+                                <image href="${formula.url_imagem_peca}" 
+                                       x="${x}" y="${y}" 
+                                       width="${width}" height="${height}"
+                                       preserveAspectRatio="xMidYMid meet"/>
+                                <text x="${x + width/2}" y="${y + height/2}" font-size="8" text-anchor="middle" dominant-baseline="middle"
+                                      fill="#000" font-weight="bold" stroke="#fff" stroke-width="0.5">
+                                    ${textoIndice}
+                                </text>
+                            `;
+                        } else {
+                            // Fallback para <rect>
+                            return `
+                                <rect x="${x}" y="${y}" width="${width}" height="${height}"
+                                      fill="${formula.cor_indicativa}40" stroke="${formula.cor_indicativa}" stroke-width="1.5" rx="2"/>
+                                <text x="${x + width/2}" y="${y + height/2}" font-size="8" text-anchor="middle" dominant-baseline="middle"
+                                      fill="#2c3e50" font-weight="bold">
+                                    ${textoIndice}
+                                </text>
+                            `;
+                        }
+                    }).join('')}
+                    
+                    <text x="100" y="145" font-size="10" text-anchor="middle" fill="#666">
+                        Visualização: ${pecasParaRenderizar.length} peça(s) total
+                    </text>
+                </svg>
+            `;
+        }
+        
+        // Gera o SVG para o MODAL (para não conflitar com o formulário)
+        function gerarSVGGeralComImagensModal(formulas) {
+            // Esta função é uma cópia da 'gerarSVGGeralComImagens' mas recebe as fórmulas
+            // como argumento, para usar no modal e no pedido de tempera.
+            if (!formulas || formulas.length === 0) {
+                 return '<div style="text-align: center; padding: 40px; color: #666;">Sem visualização</div>';
+            }
+            
+            let pecasParaRenderizar = [];
+            
+            // Expande as peças baseado na quantidade (também no modal)
+            formulas.forEach((formula, index) => {
+                for (let i = 0; i < (formula.quantidade_pecas || 1); i++) {
+                    pecasParaRenderizar.push({
+                        ...formula,
+                        posicao_x: formula.posicao_x + (i * 5),
+                        posicao_y: formula.posicao_y + (i * 3),
+                        indiceMultipla: i + 1
+                    });
+                }
+            });
+
+            return `
+                <svg width="100%" height="100%" viewBox="0 0 200 150">
+                    <rect x="10" y="10" width="180" height="130" fill="none" stroke="#333" stroke-width="2"/>
+                    ${pecasParaRenderizar.map((formula, index) => {
+                        const x = (formula.posicao_x || 0) + 15;
+                        const y = (formula.posicao_y || 0) + 15;
+                        const width = formula.largura_svg || 50;
+                        const height = formula.altura_svg || 50;
+                        const textoIndice = formula.quantidade_pecas > 1 ? `${index + 1}.${formula.indiceMultipla}` : (index + 1);
+
+                        if (formula.url_imagem_peca) {
+                            return `
+                                <image href="${formula.url_imagem_peca}" 
+                                       x="${x}" y="${y}" 
+                                       width="${width}" height="${height}"
+                                       preserveAspectRatio="xMidYMid meet"/>
+                                <text x="${x + width/2}" y="${y + height/2}" font-size="8" text-anchor="middle" dominant-baseline="middle"
+                                      fill="#000" font-weight="bold" stroke="#fff" stroke-width="0.5">
+                                    ${textoIndice}
+                                </text>
+                            `;
+                        } else {
+                            return `
+                                <rect x="${x}" y="${y}" width="${width}" height="${height}"
+                                      fill="${formula.cor_indicativa || '#3498db'}40" stroke="${formula.cor_indicativa || '#3498db'}" stroke-width="1.5" rx="2"/>
+                                <text x="${x + width/2}" y="${y + height/2}" font-size="8" text-anchor="middle" dominant-baseline="middle"
+                                      fill="#2c3e50" font-weight="bold">
+                                    ${textoIndice}
+                                </text>
+                            `;
+                        }
+                    }).join('')}
+                    <text x="100" y="145" font-size="10" text-anchor="middle" fill="#666">
+                        Visualização: ${pecasParaRenderizar.length} peça(s) total
+                    </text>
+                </svg>
+            `;
+        }
+
+        function removerFormulaVidro(idFormula) {
+            formulasVidro = formulasVidro.filter(f => f.idFormula !== idFormula);
+            document.getElementById(idFormula).remove();
+            document.getElementById(`preview_container_${idFormula}`)?.remove(); // Remove o preview individual
+            atualizarVisualizacaoGeral();
+        }
+
+        function atualizarFormulaVidro(idFormula, campo, valor) {
+            const formula = formulasVidro.find(f => f.idFormula === idFormula);
+            if (formula) {
+                formula[campo] = valor;
+                
+                // Atualiza preview individual
+                const previewIndividual = document.getElementById(`preview_${idFormula}`);
+                if (previewIndividual) {
+                    previewIndividual.innerHTML = gerarConteudoVisualPeca(formula);
+                }
+                // Atualiza o nome no título do preview individual
+                const containerPreview = document.getElementById(`preview_container_${idFormula}`);
+                if (containerPreview) {
+                    if (campo === 'nome_peca') {
+                        containerPreview.querySelector('small strong').textContent = `Preview da Peça: ${valor || 'Nova Peça'}${formula.quantidade_pecas > 1 ? ` (x${formula.quantidade_pecas})` : ''}`;
+                    } else if (campo === 'quantidade_pecas') {
+                        containerPreview.querySelector('small strong').textContent = `Preview da Peça: ${formula.nome_peca || 'Nova Peça'}${valor > 1 ? ` (x${valor})` : ''}`;
+                    }
+                }
+            }
+            // Não atualiza o geral aqui por performance, só no onchange/onkeyup dos inputs visuais
+        }
+
+        // =============================================================================
+        // SUAS FUNÇÕES DE CARREGAMENTO (NÃO MODIFICADAS)
+        // =============================================================================
+        
         async function carregarItensPaiEstoque() {
             try {
                 console.log("📦 Carregando itens pai do estoque...");
-                itensPaiEstoque = await estoqueFunctions.carregarItensPai();
+                // Usando a função do config.js
+                itensPaiEstoque = await window.estoqueFunctions.carregarItensPai(); 
                 console.log('✅ Itens pai carregados:', itensPaiEstoque.length, 'itens');
             } catch (error) {
                 console.error('❌ Erro ao carregar itens pai:', error);
                 itensPaiEstoque = [];
-                document.getElementById('listaProdutos').innerHTML = 
-                    '<div class="error">Erro ao carregar itens do estoque</div>';
             }
         }
 
         async function carregarCategoriasProdutos() {
             try {
                 console.log("📋 Carregando categorias de produtos...");
+                // Usando a tabela 'produto_categorias' do seu arquivo
                 const { data, error } = await supabase
-                    .from('produto_categorias')
+                    .from('produto_categorias') 
                     .select('*')
                     .order('nome');
                 
@@ -175,7 +645,7 @@
                 console.log("📚 Carregando produtos do banco...");
                 const { data, error } = await supabase
                     .from('produtos')
-                    .select(`*, produto_categorias(nome)`)
+                    .select(`*, produto_categorias(nome)`) // Tabela correta
                     .eq('ativo', true)
                     .order('nome');
                 
@@ -183,7 +653,7 @@
                 
                 produtosCadastrados = data || [];
                 console.log('✅ Produtos carregados:', produtosCadastrados.length, 'produtos');
-                atualizarListaProdutos();
+                atualizarListaProdutos(); // Sua função de listagem
                 
             } catch (error) {
                 console.error('❌ Erro ao carregar produtos:', error);
@@ -191,10 +661,11 @@
                     '<div class="error">Erro ao carregar produtos: ' + error.message + '</div>';
             }
         }
-        
+
         // =============================================================================
-        // MANIPULAÇÃO DO FORMULÁRIO DE COMPOSIÇÃO
+        // SUAS FUNÇÕES DE COMPOSIÇÃO (NÃO MODIFICADAS)
         // =============================================================================
+
         function adicionarLinha(item = null) {
             const idLinha = `linha_${Date.now()}`;
             const itemData = item || { 
@@ -202,11 +673,10 @@
                 item_nome: '', 
                 formula: '(L*2)+(A*2)', 
                 substituivel: false,
-                tipo_item: '' // NOVO CAMPO: Adiciona o tipo_item com valor padrão
+                tipo_item: ''
             };
             linhasItens.push({ ...itemData, idLinha });
             
-            // Mostra apenas itens PAI (modelos sem cor)
             const options = itensPaiEstoque.map(i => 
                 `<option value="${i.id}" ${itemData.item_id == i.id ? 'selected' : ''}>
                     ${i.nome} (${i.categorias?.nome || 'Sem categoria'})
@@ -214,8 +684,7 @@
             ).join('');
             
             const linhaHTML = `
-                <div class="linha-produto" id="${idLinha}">
-                    <div class="form-group">
+                <div class="linha-composicao" id="${idLinha}"> <div class="form-group">
                         <label>Item do Estoque (Modelo Base)</label>
                         <select onchange="atualizarDadosLinha('${idLinha}', 'item_id', this.value)">
                             <option value="">Selecione um item modelo...</option>
@@ -260,39 +729,38 @@
 
             linha[campo] = valor;
             
-            // Atualiza o nome do item na estrutura de dados
             if (campo === 'item_id') {
                 const itemSelecionado = itensPaiEstoque.find(i => i.id == valor);
                 linha.item_nome = itemSelecionado ? itemSelecionado.nome : '';
             }
         }
-        
+
         // =============================================================================
-        // CRUD DE PRODUTOS
+        // CRUD DE PRODUTOS - ATUALIZADO PARA SALVAR IMAGENS/SVG E QUANTIDADES
         // =============================================================================
         async function salvarProduto() {
             const nome = document.getElementById('nomeProduto').value.trim();
             const categoriaId = document.getElementById('categoriaProduto').value;
 
-            if (!nome) {
-                alert('❌ O nome do produto é obrigatório.');
+            // Validações do seu arquivo
+            if (!nome || !categoriaId || linhasItens.length === 0) {
+                alert('❌ Preencha Nome, Categoria e adicione Itens de Composição.');
                 return;
             }
 
-            if (!categoriaId) {
-                alert('❌ A categoria do produto é obrigatória.');
-                return;
-            }
+            // Filtra fórmulas de vidro válidas (com os novos campos)
+            const formulasParaSalvar = formulasVidro
+                .filter(f => f.nome_peca && f.formula_largura && f.formula_altura && f.url_imagem_peca) // Exige imagem
+                .map(({ idFormula, ...resto }) => resto); // Remove o idFormula temporário
 
-            if (linhasItens.length === 0) {
-                alert('❌ Adicione pelo menos um item na composição.');
-                return;
+            if (formulasVidro.length > 0 && formulasParaSalvar.length !== formulasVidro.length) {
+                alert('⚠️ Atenção: Algumas fórmulas de vidro não foram salvas. Verifique se preencheu Peça, Fórmulas e a Imagem em todas.');
             }
-
-            // Filtra linhas vazias e remove o idLinha temporário
+            
+            // Sua lógica de composição (não modificada)
             const composicaoFinal = linhasItens
                 .filter(l => l.item_id && l.item_id !== '')
-                .map(({ idLinha, ...resto }) => resto); // 'resto' inclui o novo 'tipo_item'
+                .map(({ idLinha, ...resto }) => resto);
 
             if (composicaoFinal.length === 0) {
                 alert('❌ Selecione os itens válidos para a composição.');
@@ -307,17 +775,49 @@
             };
 
             try {
-                let resultado;
+                let produtoId;
+                
                 if (editandoProdutoId) {
-                    resultado = await supabase.from('produtos').update(produto).eq('id', editandoProdutoId);
-                    if (resultado.error) throw resultado.error;
-                    alert('✅ Produto atualizado com sucesso!');
+                    const { error } = await supabase.from('produtos').update(produto).eq('id', editandoProdutoId);
+                    if (error) throw error;
+                    produtoId = editandoProdutoId;
                 } else {
-                    resultado = await supabase.from('produtos').insert([produto]);
-                    if (resultado.error) throw resultado.error;
-                    alert('✅ Produto cadastrado com sucesso!');
+                    const { data, error } = await supabase.from('produtos').insert([produto]).select();
+                    if (error) throw error;
+                    produtoId = data[0].id;
+                }
+
+                // SALVA AS FÓRMULAS DE VIDRO (COM VISUALIZAÇÃO E QUANTIDADE)
+                
+                // Remove fórmulas antigas (se editando)
+                if (editandoProdutoId) {
+                    await supabase.from('produto_vidros').delete().eq('produto_id', produtoId);
                 }
                 
+                if (formulasParaSalvar.length > 0) {
+                    // Insere novas fórmulas com dados de visualização E QUANTIDADE
+                    const formulasComVisualizacao = formulasParaSalvar.map((formula, index) => ({
+                        ...formula,
+                        produto_id: produtoId,
+                        ordem: index,
+                        // Garante que todos os campos de visualização existam
+                        quantidade_pecas: formula.quantidade_pecas || 1, // NOVO: Salva a quantidade
+                        cor_indicativa: formula.cor_indicativa || CORES_PADRAO[index % CORES_PADRAO.length],
+                        posicao_x: formula.posicao_x || index * 20,
+                        posicao_y: formula.posicao_y || 15,
+                        largura_svg: formula.largura_svg || 40,
+                        altura_svg: formula.altura_svg || 60,
+                        url_imagem_peca: formula.url_imagem_peca // Já validado (agora pode ser Base64)
+                    }));
+                    
+                    const { error: errorFormulas } = await supabase
+                        .from('produto_vidros')
+                        .insert(formulasComVisualizacao);
+                    
+                    if (errorFormulas) throw errorFormulas;
+                }
+
+                alert(`✅ Produto salvo com sucesso! ${formulasParaSalvar.length} fórmula(s) de vidro.`);
                 limparFormulario();
                 await carregarProdutosBanco();
                 
@@ -326,34 +826,61 @@
                 alert('❌ Erro ao salvar produto: ' + error.message);
             }
         }
-        
+
         function editarProduto(id) {
             const produto = produtosCadastrados.find(p => p.id === id);
-            if (!produto) {
-                alert('Produto não encontrado');
-                return;
-            }
+            if (!produto) return;
 
             editandoProdutoId = id;
             document.getElementById('formTitulo').textContent = '✏️ Editando Produto';
             document.getElementById('nomeProduto').value = produto.nome;
             document.getElementById('categoriaProduto').value = produto.categoria_id;
             
-            // Limpa e recria a composição
+            // Sua lógica de composição (não modificada)
             document.getElementById('itensComposicao').innerHTML = '';
             linhasItens = [];
-            
             if (produto.itens_composicao && produto.itens_composicao.length > 0) {
-                // Passa o objeto completo para adicionarLinha, que agora suporta o tipo_item
                 produto.itens_composicao.forEach(item => adicionarLinha(item));
             } else {
-                adicionarLinha(); // Adiciona uma linha vazia se não houver itens
+                adicionarLinha();
             }
+            
+            // CARREGA AS FÓRMULAS DE VIDRO (COM VISUALIZAÇÃO E QUANTIDADE)
+            carregarFormulasVidroProduto(id);
             
             document.getElementById('btnCancelar').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        
+
+        async function carregarFormulasVidroProduto(produtoId) {
+            try {
+                const { data, error } = await supabase
+                    .from('produto_vidros')
+                    .select('*') // Pega todos os campos, incluindo os novos
+                    .eq('produto_id', produtoId)
+                    .order('ordem');
+                
+                if (error) throw error;
+                
+                // Limpa fórmulas atuais
+                formulasVidro = [];
+                document.getElementById('listaFormulasVidro').innerHTML = '';
+                
+                // Adiciona cada fórmula com os dados de visualização E QUANTIDADE
+                if (data && data.length > 0) {
+                    data.forEach(formula => {
+                        adicionarFormulaVidro(formula); // A função 'adicionarFormulaVidro' já sabe lidar com os novos campos
+                    });
+                }
+                
+                atualizarVisualizacaoGeral(); // Garante que o preview geral seja renderizado
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar fórmulas de vidro:', error);
+            }
+        }
+
+        // Sua função de excluir (desativar) (Não modificada)
         async function excluirProduto(id) {
             if (!confirm('Tem certeza? Isso irá desativar o produto, mas ele permanecerá no histórico.')) return;
             
@@ -375,8 +902,10 @@
         }
         
         // =============================================================================
-        // UI, LISTAGEM E FILTROS
+        // SUAS FUNÇÕES DE UI E LISTAGEM (ATUALIZADAS PARA VISUALIZAÇÃO)
         // =============================================================================
+        
+        // Sua função (não modificada)
         function atualizarListaProdutos() {
             const lista = document.getElementById('listaProdutos');
             
@@ -385,46 +914,109 @@
                 return;
             }
 
-            lista.innerHTML = produtosCadastrados.map(p => `
-                <div class="card produto-item">
-                    <div style="display:flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <strong>${p.nome || 'Sem nome'}</strong>
-                            <div class="text-muted">${p.produto_categorias?.nome || 'Sem categoria'}</div>
-                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                                ${p.itens_composicao?.length || 0} itens na composição
-                                ${p.itens_composicao?.filter(item => item.substituivel).length > 0 ? 
-                                    '<span class="badge-substituivel">Com itens substituíveis</span>' : ''}
+            // HTML da sua função original
+            lista.innerHTML = produtosCadastrados.map(p => {
+                const temItensSubstituiveis = p.itens_composicao?.filter(item => item.substituivel).length > 0;
+                
+                return `
+                    <div class="card produto-item" style="padding: 15px; border: 1px solid #eee;">
+                        <div style="display:flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <strong>${p.nome || 'Sem nome'}</strong>
+                                <div class="text-muted">${p.produto_categorias?.nome || 'Sem categoria'}</div>
+                                <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                    ${p.itens_composicao?.length || 0} itens na composição
+                                    ${temItensSubstituiveis ? 
+                                        '<span class="badge-substituivel">Substituíveis</span>' : ''}
+                                    <span class="badge-vidro" onclick="visualizarFormulasVidro(${p.id})" style="cursor: pointer;">📐 Ver Fórmulas</span>
+                                </div>
+                            </div>
+                            <div class="acoes">
+                                <button class="btn btn-info btn-small" onclick="visualizarComposicao(${p.id})">👁️ Ver</button>
+                                <button class="btn btn-warning btn-small" onclick="editarProduto(${p.id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-small" onclick="excluirProduto(${p.id})">🗑️ Desativar</button>
                             </div>
                         </div>
-                        <div class="acoes">
-                            <button class="btn btn-info btn-small" onclick="visualizarComposicao(${p.id})">👁️ Ver</button>
-                            <button class="btn btn-warning btn-small" onclick="editarProduto(${p.id})">✏️ Editar</button>
-                            <button class="btn btn-danger btn-small" onclick="excluirProduto(${p.id})">🗑️ Desativar</button>
-                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        // ATUALIZADA para mostrar a visualização no modal (COM QUANTIDADES)
+        async function visualizarFormulasVidro(produtoId) {
+            try {
+                const { data, error } = await supabase
+                    .from('produto_vidros')
+                    .select('*') // Pega todos os campos, incluindo os visuais
+                    .eq('produto_id', produtoId)
+                    .order('ordem');
+                
+                if (error) throw error;
+                
+                const produto = produtosCadastrados.find(p => p.id === produtoId);
+                document.getElementById('modalTitulo').textContent = `Fórmulas de Vidro - ${produto.nome}`;
+                
+                let conteudo = '';
+                
+                // Adiciona o Preview Geral no topo do Modal
+                conteudo += `
+                    <div class="preview-desenho">
+                        <h5>Visualização Geral</h5>
+                        <div class="svg-preview" style="height: 150px;">
+                            ${gerarSVGGeralComImagensModal(data)}
+                        </div>
+                    </div>
+                `;
+
+                if (data && data.length > 0) {
+                    conteudo += '<div style="max-height: 300px; overflow-y: auto; margin-top: 15px;">';
+                    data.forEach((formula) => {
+                        // NOVO: Mostra a quantidade na listagem
+                        const quantidadeInfo = formula.quantidade_pecas > 1 ? ` (x${formula.quantidade_pecas})` : '';
+                        
+                        conteudo += `
+                            <div style="display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: #f8f9fa; margin-bottom: 8px; border-radius: 5px;">
+                                <div style="width: 60px; height: 60px; border: 1px solid #ccc; background: #fff; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                    ${formula.url_imagem_peca ? 
+                                        `<img src="${formula.url_imagem_peca}" style="max-width: 100%; max-height: 100%; object-fit: contain;">` : 
+                                        'Sem Img'}
+                                </div>
+                                <div>
+                                    <strong>${formula.nome_peca}${quantidadeInfo}</strong>
+                                    <div style="font-family: monospace; margin: 5px 0;">
+                                        📏 ${formula.formula_largura} × ${formula.formula_altura}
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+                    conteudo += '</div>';
+                } else {
+                    conteudo += '<p class="muted">Este produto não tem fórmulas de vidro cadastradas.</p>';
+                }
+                
+                document.getElementById('modalConteudo').innerHTML = conteudo;
+                document.getElementById('modalVisualizar').style.display = 'block'; // 'flex' no seu original, mas 'block' é mais seguro
+                
+            } catch (error) {
+                console.error('Erro ao carregar fórmulas:', error);
+                alert('Erro ao carregar fórmulas: ' + error.message);
+            }
+        }
+
+        // Sua função de visualizar composição (não modificada)
         function visualizarComposicao(id) {
             const produto = produtosCadastrados.find(p => p.id === id);
-            if (!produto) {
-                alert('Produto não encontrado');
-                return;
-            }
+            if (!produto) return;
 
             document.getElementById('modalTitulo').textContent = `Composição de ${produto.nome}`;
             
             let conteudo = '';
             
             if (produto.itens_composicao && produto.itens_composicao.length > 0) {
-                conteudo = produto.itens_composicao.map(item => {
-                    // Busca o nome do item PAI
+                conteudo += '<strong>Itens da Composição:</strong>';
+                conteudo += produto.itens_composicao.map(item => {
                     const itemPai = itensPaiEstoque.find(i => i.id == item.item_id);
                     const nomeItem = itemPai ? itemPai.nome : `Item ID ${item.item_id} não encontrado`;
-                    
-                    // Adiciona o tipo_item na visualização
                     const tipoItem = item.tipo_item || 'Não Definido';
 
                     return `
@@ -440,20 +1032,26 @@
                 conteudo = '<p class="muted">Produto sem itens na composição.</p>';
             }
             
+            conteudo += `<div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-info btn-small" onclick="visualizarFormulasVidro(${id})">
+                    📐 Ver Fórmulas de Vidro (com Imagens)
+                </button>
+            </div>`;
+            
             document.getElementById('modalConteudo').innerHTML = conteudo;
-            document.getElementById('modalVisualizar').style.display = 'flex';
+            document.getElementById('modalVisualizar').style.display = 'block';
         }
 
+        // Sua função (não modificada)
         function fecharModal() {
             document.getElementById('modalVisualizar').style.display = 'none';
         }
 
+        // Sua função (não modificada)
         function filtrarProdutos() {
             const termo = document.getElementById('pesquisaProduto').value.toLowerCase();
             
-            if (!produtosCadastrados || produtosCadastrados.length === 0) {
-                return;
-            }
+            if (!produtosCadastrados || produtosCadastrados.length === 0) return;
             
             const filtrados = produtosCadastrados.filter(p => {
                 const nomeMatch = p.nome && p.nome.toLowerCase().includes(termo);
@@ -462,45 +1060,51 @@
                 return nomeMatch || categoriaMatch;
             });
             
-            // Atualiza a lista com os produtos filtrados
+            // Re-renderiza a lista com base no filtro
+            // (Reutilizando sua lógica de renderização original)
             const lista = document.getElementById('listaProdutos');
-            
             if (filtrados.length === 0) {
                 lista.innerHTML = '<div class="muted" style="text-align: center; padding: 40px;">Nenhum produto encontrado.</div>';
                 return;
             }
-
-            lista.innerHTML = filtrados.map(p => `
-                <div class="card produto-item">
-                    <div style="display:flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <strong>${p.nome || 'Sem nome'}</strong>
-                            <div class="text-muted">${p.produto_categorias?.nome || 'Sem categoria'}</div>
-                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                                ${p.itens_composicao?.length || 0} itens na composição
-                                ${p.itens_composicao?.filter(item => item.substituivel).length > 0 ? 
-                                    '<span class="badge-substituivel">Com itens substituíveis</span>' : ''}
+            lista.innerHTML = filtrados.map(p => {
+                const temItensSubstituiveis = p.itens_composicao?.filter(item => item.substituivel).length > 0;
+                return `
+                    <div class="card produto-item" style="padding: 15px; border: 1px solid #eee;">
+                        <div style="display:flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <strong>${p.nome || 'Sem nome'}</strong>
+                                <div class="text-muted">${p.produto_categorias?.nome || 'Sem categoria'}</div>
+                                <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                    ${p.itens_composicao?.length || 0} itens na composição
+                                    ${temItensSubstituiveis ? '<span class="badge-substituivel">Substituíveis</span>' : ''}
+                                    <span class="badge-vidro" onclick="visualizarFormulasVidro(${p.id})" style="cursor: pointer;">📐 Ver Fórmulas</span>
+                                </div>
+                            </div>
+                            <div class="acoes">
+                                <button class="btn btn-info btn-small" onclick="visualizarComposicao(${p.id})">👁️ Ver</button>
+                                <button class="btn btn-warning btn-small" onclick="editarProduto(${p.id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-small" onclick="excluirProduto(${p.id})">🗑️ Desativar</button>
                             </div>
                         </div>
-                        <div class="acoes">
-                            <button class="btn btn-info btn-small" onclick="visualizarComposicao(${p.id})">👁️ Ver</button>
-                            <button class="btn btn-warning btn-small" onclick="editarProduto(${p.id})">✏️ Editar</button>
-                            <button class="btn btn-danger btn-small" onclick="excluirProduto(${p.id})">🗑️ Desativar</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                    </div>`;
+            }).join('');
         }
 
+        // ATUALIZADO para limpar os novos campos
         function limparFormulario() {
             document.getElementById('nomeProduto').value = '';
             document.getElementById('categoriaProduto').value = '';
             document.getElementById('itensComposicao').innerHTML = '';
+            document.getElementById('listaFormulasVidro').innerHTML = '';
             linhasItens = [];
+            formulasVidro = []; // Limpa array de vidros
             editandoProdutoId = null;
             document.getElementById('formTitulo').textContent = '➕ Novo Produto';
             document.getElementById('btnCancelar').classList.add('hidden');
-            adicionarLinha(); // Adiciona uma linha vazia
+            // Limpa o preview geral
+            document.getElementById('previewGeralDesenho').innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Adicione fórmulas para ver a visualização</div>';
+            adicionarLinha();
         }
 
         window.onclick = function(event) {

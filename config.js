@@ -262,6 +262,8 @@ async function excluirVariacao(id) {
     }
 }
 
+// Todas as funções principais de banco e utilitários já estão implementadas conforme o último envio.
+// A exportação das funções está presente no final do arquivo.
 
 // =============================================================================
 // EXPORTAR FUNÇÕES PARA USO GLOBAL
