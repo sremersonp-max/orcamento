@@ -255,6 +255,13 @@ function fecharModal() {
     document.querySelector('.modal-overlay')?.remove();
 }
 
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+
 // Formatar números
 function formatarNumero(num) {
     return new Intl.NumberFormat('pt-BR', {
@@ -407,3 +414,4 @@ window.salvarMaterial = salvarMaterial;
 window.editarMaterial = editarMaterial;
 window.excluirMaterial = excluirMaterial;
 window.fecharModal = fecharModal;
+window.formatarMoeda = formatarMoeda;
