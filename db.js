@@ -255,9 +255,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Função sair
+function sair() {
+    if (confirm('Deseja realmente sair do sistema?')) {
+        window.location.reload();
+    }
+}
+
 // Disponibilizar funções globalmente
 window.initDatabase = initDatabase;
 window.exportarDados = exportarDados;
 window.importarDados = importarDados;
 window.executarQuery = executarQuery;
 window.salvarBackup = salvarBackup;
+window.sair = sair;
