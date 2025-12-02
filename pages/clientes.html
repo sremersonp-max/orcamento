@@ -1,3 +1,5 @@
+[file name]: pages/clientes.html
+[file content begin]
 <div class="card">
     <div class="card-header">
         <h2 class="card-title"><i class="fas fa-users"></i> Gestão de Clientes</h2>
@@ -192,28 +194,16 @@
 </div>
 
 <script>
-    // CORRIGIDO: Verificar se estamos em pages/ e ajustar caminho
-    const basePath = window.location.pathname.includes('/pages/') ? '..' : '.';
-    
-    // Carregar módulo de clientes
-    (function() {
-        // Se módulo já carregado, inicializar
+    // Script simplificado - O carregamento é feito pelo app.js
+    // Aguardar um momento para garantir que o app.js já processou a página
+    setTimeout(() => {
+        // Verificar se o módulo foi carregado pelo app.js
         if (typeof clientes !== 'undefined' && typeof clientes.init === 'function') {
-            clientes.init();
-            return;
+            console.log('Módulo clientes já carregado pelo app.js');
+        } else {
+            console.log('Aguardando carregamento do módulo clientes...');
+            // O app.js vai carregar via carregarModulo()
         }
-        
-        const script = document.createElement('script');
-        script.src = `${basePath}/modules/clientes.js`;  // ← Caminho relativo correto
-        script.onload = function() {
-            if (typeof clientes !== 'undefined' && typeof clientes.init === 'function') {
-                clientes.init();
-            }
-        };
-        script.onerror = function() {
-            console.error('Falha ao carregar módulo de clientes');
-            alert('Erro ao carregar módulo de clientes. Verifique o console.');
-        };
-        document.head.appendChild(script);
-    })();
+    }, 100);
 </script>
+[file content end]
