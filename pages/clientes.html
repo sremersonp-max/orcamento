@@ -1,5 +1,3 @@
-[file name]: pages/clientes.html
-[file content begin]
 <div class="card">
     <div class="card-header">
         <h2 class="card-title"><i class="fas fa-users"></i> Gestão de Clientes</h2>
@@ -194,16 +192,28 @@
 </div>
 
 <script>
+    // CORRIGIDO: Verificar se estamos em pages/ e ajustar caminho
+    const basePath = window.location.pathname.includes('/pages/') ? '..' : '.';
+    
     // Carregar módulo de clientes
     (function() {
+        // Se módulo já carregado, inicializar
+        if (typeof clientes !== 'undefined' && typeof clientes.init === 'function') {
+            clientes.init();
+            return;
+        }
+        
         const script = document.createElement('script');
-        script.src = 'modules/clientes.js';
+        script.src = `${basePath}/modules/clientes.js`;  // ← Caminho relativo correto
         script.onload = function() {
             if (typeof clientes !== 'undefined' && typeof clientes.init === 'function') {
                 clientes.init();
             }
         };
+        script.onerror = function() {
+            console.error('Falha ao carregar módulo de clientes');
+            alert('Erro ao carregar módulo de clientes. Verifique o console.');
+        };
         document.head.appendChild(script);
     })();
 </script>
-[file content end]
