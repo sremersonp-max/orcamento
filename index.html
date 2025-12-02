@@ -1,293 +1,71 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestão - Esquadrias</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        .hero-section {
-            text-align: center;
-            padding: 60px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            margin-bottom: 40px;
-        }
-        
-        .hero-section h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .hero-section p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 30px;
-        }
-        
-        .feature-card {
-            text-align: center;
-            padding: 30px 20px;
-            border: none;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
-            text-decoration: none;
-            color: inherit;
-        }
-        
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin: 15px 0 10px 0;
-            color: #2c3e50;
-        }
-        
-        .feature-card p {
-            color: #7f8c8d;
-            line-height: 1.5;
-        }
-        
-        .icon-large {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 40px 0;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #3498db;
-            display: block;
-        }
-        
-        .stat-label {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        .quick-actions {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 10px;
-            margin-top: 40px;
-        }
-    </style>
+    <title>OFICINA DA FAMÍLIA - Sistema de Gestão</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <h1>🏭 Sistema de Gestão - Esquadrias</h1>
-            <p>Sistema completo para gestão de estoque, produtos e orçamentos</p>
-        </div>
-
-        <!-- Estatísticas Rápidas -->
-        <div class="stats-grid" id="statsContainer">
-            <div class="stat-card">
-                <span class="stat-number" id="totalProdutos">0</span>
-                <span class="stat-label">Produtos Cadastrados</span>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>OFICINA DA FAMÍLIA</h1>
+                <small>SISTEMA DE GESTÃO v1.0</small>
             </div>
-            <div class="stat-card">
-                <span class="stat-number" id="totalItens">0</span>
-                <span class="stat-label">Itens em Estoque</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number" id="totalOrcamentos">0</span>
-                <span class="stat-label">Orçamentos</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number" id="alertasEstoque">0</span>
-                <span class="stat-label">Alertas de Estoque</span>
-            </div>
-        </div>
-
-        <!-- Módulos do Sistema -->
-        <div class="grid grid-3">
-            <a href="orcamento.html" class="card feature-card">
-                <div class="icon-large">📋</div>
-                <h3>Orçamentos</h3>
-                <p>Crie, edite e gerencie orçamentos para seus clientes com sistema de cálculos automáticos e substituição de itens</p>
-                <div class="text-success" style="margin-top: 15px;">
-                    <small>⚡ Cálculos automáticos • 📊 Substituição de itens • 📄 Gerar PDF</small>
-                </div>
-            </a>
             
-            <a href="produtos.html" class="card feature-card">
-                <div class="icon-large">🧮</div>
-                <h3>Produtos</h3>
-                <p>Gerencie composições de produtos com fórmulas de cálculo e itens substituíveis do estoque</p>
-                <div class="text-success" style="margin-top: 15px;">
-                    <small>🔧 Composições • 📐 Fórmulas • 🔄 Itens substituíveis</small>
+            <nav class="menu">
+                <ul>
+                    <li class="active"><a href="#" onclick="loadPage('home')"><i class="fas fa-home"></i> Início</a></li>
+                    <li><a href="#" onclick="loadPage('orcamentos')"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
+                    <li><a href="#" onclick="loadPage('clientes')"><i class="fas fa-users"></i> Clientes</a></li>
+                    <li><a href="#" onclick="loadPage('estoque')"><i class="fas fa-boxes"></i> Estoque</a></li>
+                    <li><a href="#" onclick="loadPage('projetos')"><i class="fas fa-project-diagram"></i> Projetos</a></li>
+                    <li><a href="#" onclick="loadPage('financas')"><i class="fas fa-chart-line"></i> Finanças</a></li>
+                    <li><a href="#" onclick="loadPage('config')"><i class="fas fa-cog"></i> Configurações</a></li>
+                </ul>
+                
+                <div class="user-area">
+                    <div class="user-info">
+                        <i class="fas fa-store"></i>
+                        <span>Oficina da Família</span>
+                    </div>
+                    <button class="btn-logout" onclick="sair()"><i class="fas fa-sign-out-alt"></i> Sair</button>
                 </div>
-            </a>
-            
-            <a href="estoque.html" class="card feature-card">
-                <div class="icon-large">📦</div>
-                <h3>Estoque</h3>
-                <p>Controle completo de itens em estoque com alertas de quantidade mínima e variações de cores</p>
-                <div class="text-success" style="margin-top: 15px;">
-                    <small>📈 Controle • ⚠️ Alertas • 🎨 Variações</small>
-                </div>
-            </a>
+            </nav>
         </div>
 
-        <!-- Ações Rápidas -->
-        <div class="quick-actions">
-            <h3 class="text-center mb-4">🚀 Ações Rápidas</h3>
-            <div class="grid grid-4">
-                <button class="btn btn-primary" onclick="window.open('orcamento.html', '_blank')">
-                    ➕ Novo Orçamento
-                </button>
-                <button class="btn btn-success" onclick="window.open('produtos.html', '_blank')">
-                    🧮 Ver Produtos
-                </button>
-                <button class="btn btn-info" onclick="window.open('estoque.html', '_blank')">
-                    📦 Ver Estoque
-                </button>
-                <button class="btn btn-warning" onclick="verAlertas()">
-                    ⚠️ Ver Alertas
-                </button>
-            </div>
-        </div>
-
-        <!-- Últimos Orçamentos -->
-        <div class="card mt-5">
-            <h3>📋 Últimos Orçamentos</h3>
-            <div id="ultimosOrcamentos">
-                <div class="loading">Carregando...</div>
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div id="page-content">
+                <!-- Conteúdo será carregado aqui -->
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando sistema...
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Incluir Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="db.js"></script>
+    <script src="app.js"></script>
     
     <script>
-        // Estatísticas em tempo real
-        async function carregarEstatisticas() {
-            try {
-                // Carregar totais
-                const [produtos, itens, orcamentos, alertas] = await Promise.all([
-                    carregarTotalProdutos(),
-                    carregarTotalItens(),
-                    carregarTotalOrcamentos(),
-                    carregarAlertasEstoque()
-                ]);
-
-                document.getElementById('totalProdutos').textContent = produtos;
-                document.getElementById('totalItens').textContent = itens;
-                document.getElementById('totalOrcamentos').textContent = orcamentos;
-                document.getElementById('alertasEstoque').textContent = alertas;
-
-                // Carregar últimos orçamentos
-                await carregarUltimosOrcamentos();
-                
-            } catch (error) {
-                console.error('Erro ao carregar estatísticas:', error);
-            }
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker registrado'))
+                .catch(err => console.log('SW erro:', err));
         }
-
-        async function carregarTotalProdutos() {
-            const { data, error } = await supabase
-                .from('produtos')
-                .select('id', { count: 'exact' })
-                .eq('ativo', true);
-            
-            return error ? 0 : data.length;
-        }
-
-        async function carregarTotalItens() {
-            const { data, error } = await supabase
-                .from('itens')
-                .select('id', { count: 'exact' })
-                .eq('ativo', true);
-            
-            return error ? 0 : data.length;
-        }
-
-        async function carregarTotalOrcamentos() {
-            const { data, error } = await supabase
-                .from('orcamentos')
-                .select('id', { count: 'exact' });
-            
-            return error ? 0 : data.length;
-        }
-
-        async function carregarAlertasEstoque() {
-            const { data, error } = await supabase
-                .from('itens')
-                .select('quantidade_estoque, quantidade_minima')
-                .eq('ativo', true);
-            
-            if (error) return 0;
-            
-            return data.filter(item => item.quantidade_estoque <= item.quantidade_minima).length;
-        }
-
-        async function carregarUltimosOrcamentos() {
-            const { data, error } = await supabase
-                .from('orcamentos')
-                .select('*')
-                .order('data_criacao', { ascending: false })
-                .limit(5);
-
-            const container = document.getElementById('ultimosOrcamentos');
-            
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<div class="text-muted text-center">Nenhum orçamento encontrado</div>';
-                return;
-            }
-
-            container.innerHTML = data.map(orcamento => `
-                <div class="produto-item" style="margin: 10px 0; padding: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${orcamento.cliente || 'Cliente não informado'}</strong>
-                            <div style="font-size: 0.9em; color: #666;">
-                                📅 ${new Date(orcamento.data_criacao).toLocaleDateString('pt-BR')}
-                                • R$ ${(orcamento.total || 0).toFixed(2)}
-                                • ${(orcamento.produtos || []).length} produtos
-                            </div>
-                        </div>
-                        <span class="status-badge status-${orcamento.status || 'rascunho'}">
-                            ${orcamento.status || 'rascunho'}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function verAlertas() {
-            window.open('estoque.html#alertas', '_blank');
-        }
-
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', function() {
-            carregarEstatisticas();
-            
-            // Atualizar estatísticas a cada 30 segundos
-            setInterval(carregarEstatisticas, 30000);
+        
+        // Carregar página inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPage('home');
         });
     </script>
 </body>
