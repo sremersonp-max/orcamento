@@ -29,14 +29,23 @@ function loadPage(pageName, event = null) {
                         mostrarMensagem('Erro ao carregar módulo de clientes', 'error');
                     });
                     break;
-                case 'estoque':
-                    // Carregar módulo estoque se existir
-                    if (typeof initEstoque === 'function') {
-                        initEstoque();
-                    } else {
-                        console.log('Módulo estoque não carregado');
-                    }
-                    break;
+               case 'estoque':
+    // Inicializar módulo de estoque
+    if (typeof initEstoque === 'function') {
+        // Pequeno delay para garantir que o DOM esteja pronto
+        setTimeout(() => {
+            try {
+                initEstoque();
+            } catch (error) {
+                console.error('Erro ao inicializar estoque:', error);
+                mostrarMensagem('Erro ao carregar módulo de estoque', 'error');
+            }
+        }, 50);
+    } else {
+        mostrarMensagem('Módulo de estoque não carregado. Recarregue a página.', 'error');
+        console.error('initEstoque não encontrado');
+    }
+    break;
                 default:
                     console.log(`Página ${pageName} carregada`);
             }
