@@ -1,3 +1,5 @@
+[file name]: app.js
+[file content begin]
 // Carregar página
 function loadPage(pageName, event = null) {
     // Ativar item do menu
@@ -23,6 +25,12 @@ function loadPage(pageName, event = null) {
                 case 'home':
                     initHome();
                     break;
+                case 'clientes':
+                    carregarModulo('clientes').catch(error => {
+                        console.error('Erro ao carregar módulo clientes:', error);
+                        mostrarMensagem('Erro ao carregar módulo de clientes', 'error');
+                    });
+                    break;
                 case 'estoque':
                     // Carregar módulo estoque se existir
                     if (typeof initEstoque === 'function') {
@@ -45,6 +53,43 @@ function loadPage(pageName, event = null) {
                 </div>
             `;
         });
+}
+
+// Função para carregar módulos dinamicamente
+function carregarModulo(nomeModulo) {
+    return new Promise((resolve, reject) => {
+        // Converter nome para formato correto (ex: "clientes" -> "clientes")
+        const moduloNome = nomeModulo.toLowerCase();
+        
+        // Verificar se módulo já está carregado
+        if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
+            window[moduloNome].init();
+            resolve();
+            return;
+        }
+        
+        // Carregar módulo dinamicamente
+        const script = document.createElement('script');
+        script.src = `modules/${moduloNome}.js`;
+        
+        script.onload = function() {
+            // Pequeno delay para garantir que o módulo foi inicializado
+            setTimeout(() => {
+                if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
+                    window[moduloNome].init();
+                    resolve();
+                } else {
+                    reject(new Error(`Módulo ${nomeModulo} carregado mas não possui função init()`));
+                }
+            }, 50);
+        };
+        
+        script.onerror = function() {
+            reject(new Error(`Falha ao carregar módulo ${nomeModulo}`));
+        };
+        
+        document.head.appendChild(script);
+    });
 }
 
 // Inicializar página inicial
@@ -167,3 +212,5 @@ document.head.appendChild(estiloMensagem);
 // Disponibilizar funções globalmente
 window.loadPage = loadPage;
 window.mostrarMensagem = mostrarMensagem;
+window.carregarModulo = carregarModulo;
+[file content end]
