@@ -2,7 +2,7 @@
 
 let db = null;
 const DB_NAME = 'oficina_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Aumentei para versão 2 para garantir atualização
 
 // Interface compatível com SQL
 window.db = {
@@ -16,6 +16,12 @@ window.db = {
     
     getRowsModified: function() {
         return 1;
+    },
+    
+    // Adicionar métodos diretos do IndexedDB
+    transaction: function(stores, mode) {
+        if (!db) throw new Error('Banco não inicializado');
+        return db.transaction(stores, mode);
     }
 };
 
@@ -73,6 +79,13 @@ async function initDatabase() {
                 materiaisStore.createIndex('codigo', 'codigo', { unique: true });
                 materiaisStore.createIndex('grupo', 'grupo', { unique: false });
                 materiaisStore.createIndex('descricao', 'descricao', { unique: false });
+            } else {
+                // Se já existe, garantir que tem índice único no código
+                const transaction = event.currentTarget.transaction;
+                const materiaisStore = transaction.objectStore('materiais');
+                if (!materiaisStore.indexNames.contains('codigo')) {
+                    materiaisStore.createIndex('codigo', 'codigo', { unique: true });
+                }
             }
             
             // Orçamentos
@@ -106,7 +119,7 @@ async function initDatabase() {
                 projetosStore.createIndex('categoria', 'categoria', { unique: false });
             }
             
-            console.log('Estrutura do banco criada');
+            console.log('Estrutura do banco criada/atualizada');
         };
     });
 }
@@ -119,8 +132,8 @@ async function verificarDadosIniciais() {
             return;
         }
         
-        const transaction = db.transaction(['clientes'], 'readonly');
-        const store = transaction.objectStore('clientes');
+        const transaction = db.transaction(['materiais'], 'readonly');
+        const store = transaction.objectStore('materiais');
         const countRequest = store.count();
         
         countRequest.onsuccess = function() {
@@ -128,13 +141,13 @@ async function verificarDadosIniciais() {
                 console.log('Criando dados iniciais...');
                 criarDadosIniciais().then(resolve).catch(reject);
             } else {
-                console.log('Banco já possui dados:', countRequest.result, 'clientes');
+                console.log('Banco já possui dados:', countRequest.result, 'materiais');
                 resolve();
             }
         };
         
         countRequest.onerror = function(event) {
-            console.error('Erro ao contar clientes:', event.target.error);
+            console.error('Erro ao contar materiais:', event.target.error);
             resolve(); // Continuar mesmo com erro
         };
     });
@@ -177,6 +190,7 @@ async function criarDadosIniciais() {
         materiais.forEach(material => {
             materiaisStore.add({
                 ...material,
+                observacoes: 'Material inicial do sistema',
                 data_cadastro: new Date().toISOString()
             });
         });
@@ -252,6 +266,73 @@ async function executarQuery(sql, params = []) {
                 resolve([{
                     columns: ['total'],
                     values: [[request.result]]
+                }]);
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // SELECT * FROM materiais ORDER BY descricao ASC
+        if (sqlUpper.includes('SELECT * FROM MATERIAIS') && sqlUpper.includes('ORDER BY DESCRICAO')) {
+            const transaction = db.transaction(['materiais'], 'readonly');
+            const store = transaction.objectStore('materiais');
+            const request = store.getAll();
+            
+            request.onsuccess = function() {
+                const materiais = request.result;
+                
+                // Ordenar por descrição (case insensitive)
+                const ordenados = materiais.sort((a, b) => 
+                    (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
+                );
+                
+                resolve([{
+                    columns: ['id', 'codigo', 'descricao', 'grupo', 'unidade_medida', 'valor_unitario', 'quantidade', 'observacoes', 'data_cadastro'],
+                    values: ordenados.map(material => [
+                        material.id,
+                        material.codigo || '',
+                        material.descricao || '',
+                        material.grupo || '',
+                        material.unidade_medida || '',
+                        material.valor_unitario || 0,
+                        material.quantidade || 0,
+                        material.observacoes || '',
+                        material.data_cadastro || ''
+                    ])
+                }]);
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // SELECT * FROM materiais (sem ORDER BY)
+        if (sqlUpper.includes('SELECT * FROM MATERIAIS')) {
+            const transaction = db.transaction(['materiais'], 'readonly');
+            const store = transaction.objectStore('materiais');
+            const request = store.getAll();
+            
+            request.onsuccess = function() {
+                const materiais = request.result;
+                
+                resolve([{
+                    columns: ['id', 'codigo', 'descricao', 'grupo', 'unidade_medida', 'valor_unitario', 'quantidade', 'observacoes', 'data_cadastro'],
+                    values: materiais.map(material => [
+                        material.id,
+                        material.codigo || '',
+                        material.descricao || '',
+                        material.grupo || '',
+                        material.unidade_medida || '',
+                        material.valor_unitario || 0,
+                        material.quantidade || 0,
+                        material.observacoes || '',
+                        material.data_cadastro || ''
+                    ])
                 }]);
             };
             
@@ -365,10 +446,89 @@ async function executarComando(sql, params = []) {
             return;
         }
         
+        // INSERT INTO materiais (codigo, descricao, grupo, unidade_medida, valor_unitario, quantidade, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)
+        if (sqlUpper.includes('INSERT INTO MATERIAIS')) {
+            const transaction = db.transaction(['materiais'], 'readwrite');
+            const store = transaction.objectStore('materiais');
+            
+            const material = {
+                codigo: params[0] || '',
+                descricao: params[1] || '',
+                grupo: params[2] || '',
+                unidade_medida: params[3] || '',
+                valor_unitario: params[4] || 0,
+                quantidade: params[5] || 0,
+                observacoes: params[6] || '',
+                data_cadastro: new Date().toISOString()
+            };
+            
+            const request = store.add(material);
+            
+            request.onsuccess = function() {
+                salvarBackup();
+                resolve();
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // DELETE FROM materiais WHERE id = ?
+        if (sqlUpper.includes('DELETE FROM MATERIAIS')) {
+            const transaction = db.transaction(['materiais'], 'readwrite');
+            const store = transaction.objectStore('materiais');
+            const id = params[0];
+            
+            const request = store.delete(parseInt(id));
+            
+            request.onsuccess = function() {
+                salvarBackup();
+                resolve();
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
         // Comando não suportado
         console.warn('Comando não implementado:', sql);
         resolve();
     });
+}
+
+// Função auxiliar para mostrar mensagens
+function mostrarMensagem(texto, tipo = 'info') {
+    // Verificar se a função existe no app.js
+    if (window.mostrarMensagem && typeof window.mostrarMensagem === 'function') {
+        window.mostrarMensagem(texto, tipo);
+    } else {
+        // Fallback básico
+        const mensagem = document.createElement('div');
+        mensagem.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background: ${tipo === 'error' ? '#f8d7da' : tipo === 'success' ? '#d4edda' : '#d1ecf1'};
+            color: ${tipo === 'error' ? '#721c24' : tipo === 'success' ? '#155724' : '#0c5460'};
+            border-left: 4px solid ${tipo === 'error' ? '#e74c3c' : tipo === 'success' ? '#27ae60' : '#3498db'};
+            border-radius: 6px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        `;
+        mensagem.textContent = texto;
+        document.body.appendChild(mensagem);
+        
+        setTimeout(() => {
+            if (mensagem.parentElement) {
+                mensagem.remove();
+            }
+        }, 5000);
+    }
 }
 
 // Salvar backup simplificado
@@ -386,28 +546,49 @@ async function exportarDados() {
             return;
         }
         
-        // Exportar todos os clientes
-        const transaction = db.transaction(['clientes'], 'readonly');
-        const store = transaction.objectStore('clientes');
-        const request = store.getAll();
+        const transaction = db.transaction(['clientes', 'materiais', 'orcamentos', 'projetos'], 'readonly');
         
-        request.onsuccess = function() {
-            const dados = {
-                clientes: request.result,
-                export_date: new Date().toISOString(),
-                total: request.result.length
+        const dados = {
+            clientes: [],
+            materiais: [],
+            orcamentos: [],
+            projetos: [],
+            export_date: new Date().toISOString()
+        };
+        
+        let promises = [];
+        
+        // Clientes
+        const clientesPromise = new Promise((res, rej) => {
+            const store = transaction.objectStore('clientes');
+            const request = store.getAll();
+            request.onsuccess = () => {
+                dados.clientes = request.result;
+                res();
             };
-            
+            request.onerror = rej;
+        });
+        promises.push(clientesPromise);
+        
+        // Materiais
+        const materiaisPromise = new Promise((res, rej) => {
+            const store = transaction.objectStore('materiais');
+            const request = store.getAll();
+            request.onsuccess = () => {
+                dados.materiais = request.result;
+                res();
+            };
+            request.onerror = rej;
+        });
+        promises.push(materiaisPromise);
+        
+        // Aguardar todas as promessas
+        Promise.all(promises).then(() => {
             const blob = new Blob([JSON.stringify(dados, null, 2)], { 
                 type: 'application/json' 
             });
-            
             resolve(URL.createObjectURL(blob));
-        };
-        
-        request.onerror = function(event) {
-            reject(event.target.error);
-        };
+        }).catch(reject);
     });
 }
 
@@ -416,41 +597,62 @@ async function importarDados(jsonString) {
     try {
         const dados = JSON.parse(jsonString);
         
-        if (!dados.clientes || !Array.isArray(dados.clientes)) {
+        if (!dados.materiais || !Array.isArray(dados.materiais)) {
             throw new Error('Formato de dados inválido');
         }
         
-        const transaction = db.transaction(['clientes'], 'readwrite');
-        const store = transaction.objectStore('clientes');
+        const transaction = db.transaction(['materiais', 'clientes'], 'readwrite');
+        const materiaisStore = transaction.objectStore('materiais');
+        const clientesStore = transaction.objectStore('clientes');
         
-        // Limpar clientes existentes
-        const clearRequest = store.clear();
+        // Limpar dados existentes
+        materiaisStore.clear();
+        if (dados.clientes) {
+            clientesStore.clear();
+        }
         
-        clearRequest.onsuccess = function() {
-            // Adicionar novos clientes
-            dados.clientes.forEach(cliente => {
-                store.add(cliente);
+        // Adicionar novos materiais
+        if (dados.materiais) {
+            dados.materiais.forEach(material => {
+                // Garantir que tenha data_cadastro
+                if (!material.data_cadastro) {
+                    material.data_cadastro = new Date().toISOString();
+                }
+                materiaisStore.add(material);
             });
-            
+        }
+        
+        // Adicionar novos clientes
+        if (dados.clientes) {
+            dados.clientes.forEach(cliente => {
+                // Garantir que tenha data_cadastro
+                if (!cliente.data_cadastro) {
+                    cliente.data_cadastro = new Date().toISOString();
+                }
+                clientesStore.add(cliente);
+            });
+        }
+        
+        return new Promise((resolve, reject) => {
             transaction.oncomplete = function() {
                 mostrarMensagem('Dados importados com sucesso!', 'success');
                 salvarBackup();
-                window.location.reload(); // Recarregar para aplicar
+                setTimeout(() => {
+                    window.location.reload(); // Recarregar para aplicar
+                }, 1500);
+                resolve(true);
             };
-        };
+            
+            transaction.onerror = function(event) {
+                mostrarMensagem('Erro ao importar dados: ' + event.target.error.message, 'error');
+                reject(event.target.error);
+            };
+        });
         
-        return true;
     } catch (error) {
         console.error('Erro ao importar dados:', error);
         mostrarMensagem('Erro ao importar dados: ' + error.message, 'error');
         return false;
-    }
-}
-
-// Função sair
-function sair() {
-    if (confirm('Deseja realmente sair do sistema?')) {
-        window.location.reload();
     }
 }
 
@@ -482,4 +684,4 @@ window.initDatabase = initDatabase;
 window.exportarDados = exportarDados;
 window.importarDados = importarDados;
 window.salvarBackup = salvarBackup;
-window.sair = sair;
+window.mostrarMensagem = mostrarMensagem;
