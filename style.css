@@ -1,3 +1,5 @@
+[file name]: style.css
+[file content begin]
 /* OFICINA DA FAMÍLIA - Sistema de Gestão */
 :root {
     --primary-color: #1a472a;
@@ -7,6 +9,8 @@
     --light-color: #ecf0f1;
     --dark-color: #2c3e50;
     --sidebar-width: 280px;
+    --info-color: #3498db;
+    --warning-color: #f1c40f;
 }
 
 * {
@@ -310,6 +314,403 @@ body {
     border-color: #ced4da;
 }
 
+/* ==================== */
+/* ESTILOS PARA CLIENTES */
+/* ==================== */
+
+/* Filtros */
+.card-filtros {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.filtro-item label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.filtro-item input,
+.filtro-item select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.filtro-item input:focus,
+.filtro-item select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+/* Estatísticas */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card-estatistica {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.card-estatistica:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.estatistica-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), #163923);
+}
+
+.bg-info {
+    background: linear-gradient(135deg, var(--info-color), #2980b9);
+}
+
+.bg-success {
+    background: linear-gradient(135deg, var(--secondary-color), #27ae60);
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, var(--warning-color), #f39c12);
+}
+
+.estatistica-content h3 {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.estatistica-valor {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    line-height: 1;
+}
+
+/* Tabelas */
+.tabela-responsive {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    background: white;
+}
+
+.tabela-dados {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabela-dados thead {
+    background: #f8f9fa;
+}
+
+.tabela-dados th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    white-space: nowrap;
+}
+
+.tabela-dados tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.tabela-dados tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.tabela-dados td {
+    padding: 15px 20px;
+    vertical-align: middle;
+}
+
+.tabela-vazia {
+    padding: 60px 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.tabela-vazia i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.tabela-vazia p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Informações do cliente na tabela */
+.cliente-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cliente-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #163923);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.cliente-nome {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 3px;
+}
+
+.cliente-empresa {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.cliente-contato div {
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.cliente-contato small {
+    display: block;
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+    margin-top: 3px;
+}
+
+/* Ações na tabela */
+.acoes-tabela {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-icone {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icone:hover {
+    background: #f8f9fa;
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.btn-icone-info:hover {
+    background: #d1ecf1;
+    color: var(--info-color);
+}
+
+.btn-icone-danger:hover {
+    background: #f8d7da;
+    color: var(--danger-color);
+}
+
+/* Modais */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-sm .modal-content {
+    max-width: 400px;
+}
+
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.3rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #6c757d;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: var(--danger-color);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.icone-alerta {
+    font-size: 3rem;
+    color: var(--danger-color);
+    margin-bottom: 20px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+/* Formulários */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Animações */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilidades */
+.text-center {
+    text-align: center;
+}
+
 /* RESPONSIVO */
 @media (max-width: 1024px) {
     .sidebar {
@@ -355,5 +756,77 @@ body {
     .user-area {
         display: none;
     }
+    
+    /* Clientes responsivo */
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tabela-dados {
+        font-size: 0.9rem;
+    }
+    
+    .tabela-dados th,
+    .tabela-dados td {
+        padding: 10px 15px;
+    }
+    
+    .cliente-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .cliente-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        margin: 10px;
+    }
+    
+    .acoes-tabela {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-icone {
+        width: 32px;
+        height: 32px;
+    }
 }
 
+@media (max-width: 480px) {
+    .card {
+        padding: 20px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+    }
+}
+[file content end]
