@@ -46,60 +46,82 @@ function carregarMateriais() {
         return;
     }
     
-    try {
-        const resultados = db.exec(`
-            SELECT * FROM materiais 
-            ORDER BY descricao ASC
-        `);
-        
-        if (!resultados || resultados.length === 0) {
-            document.getElementById('lista-materiais').innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
-                        <i class="fas fa-box-open fa-2x" style="margin-bottom: 15px;"></i><br>
-                        Nenhum material cadastrado
-                    </td>
-                </tr>
-            `;
+    // Usar a API específica do IndexedDB do db.js
+    carregarMateriaisIndexedDB();
+}
+
+function carregarMateriaisIndexedDB() {
+    return new Promise((resolve, reject) => {
+        if (!db || !db.transaction) {
+            mostrarMensagem('Banco de dados não disponível', 'error');
+            reject('Banco não disponível');
             return;
         }
         
-        const materiais = resultados[0].values;
-        const colunas = resultados[0].columns;
-        
-        let html = '';
-        materiais.forEach((linha, index) => {
-            const material = {};
-            colunas.forEach((col, i) => {
-                material[col] = linha[i];
-            });
+        try {
+            const transaction = db.transaction(['materiais'], 'readonly');
+            const store = transaction.objectStore('materiais');
+            const request = store.getAll();
             
-            html += `
-                <tr>
-                    <td><strong>${material.codigo}</strong></td>
-                    <td>${material.descricao}</td>
-                    <td><span class="grupo-badge">${material.grupo}</span></td>
-                    <td>${material.unidade_medida}</td>
-                    <td class="text-right">${formatarMoeda(material.valor_unitario)}</td>
-                    <td class="text-right">${formatarNumero(material.quantidade)}</td>
-                    <td>
-                        <button onclick="editarMaterial(${material.id})" class="btn-action" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="excluirMaterial(${material.id})" class="btn-action btn-danger" title="Excluir">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        document.getElementById('lista-materiais').innerHTML = html;
-        
-    } catch (error) {
-        console.error('Erro ao carregar materiais:', error);
-        mostrarMensagem('Erro ao carregar estoque', 'error');
-    }
+            request.onsuccess = function() {
+                const materiais = request.result;
+                
+                if (!materiais || materiais.length === 0) {
+                    document.getElementById('lista-materiais').innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
+                                <i class="fas fa-box-open fa-2x" style="margin-bottom: 15px;"></i><br>
+                                Nenhum material cadastrado
+                            </td>
+                        </tr>
+                    `;
+                    resolve([]);
+                    return;
+                }
+                
+                // Ordenar por descrição
+                const ordenados = materiais.sort((a, b) => 
+                    (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
+                );
+                
+                let html = '';
+                ordenados.forEach(material => {
+                    html += `
+                        <tr>
+                            <td><strong>${material.codigo || ''}</strong></td>
+                            <td>${material.descricao || ''}</td>
+                            <td><span class="grupo-badge">${material.grupo || ''}</span></td>
+                            <td>${material.unidade_medida || ''}</td>
+                            <td class="text-right">${formatarMoeda(material.valor_unitario || 0)}</td>
+                            <td class="text-right">${formatarNumero(material.quantidade || 0)}</td>
+                            <td>
+                                <button onclick="editarMaterial(${material.id})" class="btn-action" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="excluirMaterial(${material.id})" class="btn-action btn-danger" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('lista-materiais').innerHTML = html;
+                resolve(ordenados);
+            };
+            
+            request.onerror = function(event) {
+                console.error('Erro ao carregar materiais:', event.target.error);
+                mostrarMensagem('Erro ao carregar estoque: ' + event.target.error.message, 'error');
+                reject(event.target.error);
+            };
+            
+        } catch (error) {
+            console.error('Erro ao carregar materiais:', error);
+            mostrarMensagem('Erro ao carregar estoque', 'error');
+            reject(error);
+        }
+    });
 }
 
 function abrirCadastroMaterial() {
@@ -185,7 +207,7 @@ function abrirCadastroMaterial() {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
-function salvarMaterial() {
+async function salvarMaterial() {
     const material = {
         codigo: document.getElementById('codigo').value,
         descricao: document.getElementById('descricao').value,
@@ -203,20 +225,15 @@ function salvarMaterial() {
     }
     
     try {
-        db.run(
-            `INSERT INTO materiais (codigo, descricao, grupo, unidade_medida, valor_unitario, quantidade, observacoes)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [material.codigo, material.descricao, material.grupo, material.unidade_medida, 
-             material.valor_unitario, material.quantidade, material.observacoes]
-        );
+        // Usar a API direta do IndexedDB
+        await salvarMaterialIndexedDB(material);
         
-        salvarBackup();
         mostrarMensagem('Material cadastrado com sucesso!', 'success');
         fecharModal();
         carregarMateriais();
         
     } catch (error) {
-        if (error.message.includes('UNIQUE')) {
+        if (error.message.includes('constraint') || error.message.includes('duplicate') || error.message.includes('UNIQUE')) {
             mostrarMensagem('Código já existe! Use outro código.', 'error');
         } else {
             mostrarMensagem('Erro ao salvar: ' + error.message, 'error');
@@ -224,21 +241,66 @@ function salvarMaterial() {
     }
 }
 
-function editarMaterial(id) {
-    mostrarMensagem('Edição em desenvolvimento...', 'info');
+function salvarMaterialIndexedDB(material) {
+    return new Promise((resolve, reject) => {
+        if (!db || !db.transaction) {
+            reject(new Error('Banco de dados não disponível'));
+            return;
+        }
+        
+        const transaction = db.transaction(['materiais'], 'readwrite');
+        const store = transaction.objectStore('materiais');
+        
+        // Adicionar data de cadastro
+        material.data_cadastro = new Date().toISOString();
+        
+        const request = store.add(material);
+        
+        request.onsuccess = function() {
+            salvarBackup();
+            resolve();
+        };
+        
+        request.onerror = function(event) {
+            reject(event.target.error);
+        };
+    });
 }
 
 function excluirMaterial(id) {
     if (!confirm('Tem certeza que deseja excluir este material?')) return;
     
-    try {
-        db.run('DELETE FROM materiais WHERE id = ?', [id]);
-        salvarBackup();
-        mostrarMensagem('Material excluído!', 'success');
-        carregarMateriais();
-    } catch (error) {
-        mostrarMensagem('Erro ao excluir: ' + error.message, 'error');
-    }
+    excluirMaterialIndexedDB(id);
+}
+
+function excluirMaterialIndexedDB(id) {
+    return new Promise((resolve, reject) => {
+        if (!db || !db.transaction) {
+            mostrarMensagem('Banco de dados não disponível', 'error');
+            return;
+        }
+        
+        const transaction = db.transaction(['materiais'], 'readwrite');
+        const store = transaction.objectStore('materiais');
+        
+        const request = store.delete(parseInt(id));
+        
+        request.onsuccess = function() {
+            salvarBackup();
+            mostrarMensagem('Material excluído!', 'success');
+            carregarMateriais();
+            resolve();
+        };
+        
+        request.onerror = function(event) {
+            mostrarMensagem('Erro ao excluir: ' + event.target.error.message, 'error');
+            reject(event.target.error);
+        };
+    });
+}
+
+function editarMaterial(id) {
+    mostrarMensagem('Edição em desenvolvimento...', 'info');
 }
 
 function buscarMaterial(event) {
