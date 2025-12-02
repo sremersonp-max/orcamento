@@ -1,0 +1,209 @@
+[file name]: pages/clientes.html
+[file content begin]
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-users"></i> Gestão de Clientes</h2>
+        <div>
+            <button class="btn btn-acao" onclick="clientes.toggleFiltros()">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            <button class="btn btn-primary" onclick="clientes.abrirModalNovo()">
+                <i class="fas fa-plus"></i> Novo Cliente
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div id="clientes-filtros" class="card-filtros" style="display: none;">
+        <div class="filtros-grid">
+            <div class="filtro-item">
+                <label><i class="fas fa-search"></i> Buscar</label>
+                <input type="text" id="clientes-busca" placeholder="Nome, empresa, CPF/CNPJ..." 
+                       onkeyup="clientes.filtrar()">
+            </div>
+            <div class="filtro-item">
+                <label><i class="fas fa-sort"></i> Ordenar por</label>
+                <select id="clientes-ordenar" onchange="clientes.filtrar()">
+                    <option value="nome">Nome (A-Z)</option>
+                    <option value="data_desc">Mais recentes</option>
+                    <option value="data_asc">Mais antigos</option>
+                    <option value="empresa">Empresa (A-Z)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="cards-grid">
+        <div class="card-estatistica">
+            <div class="estatistica-icon bg-primary">
+                <i class="fas fa-user-friends"></i>
+            </div>
+            <div class="estatistica-content">
+                <h3>Total de Clientes</h3>
+                <span id="clientes-total" class="estatistica-valor">0</span>
+            </div>
+        </div>
+        <div class="card-estatistica">
+            <div class="estatistica-icon bg-info">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="estatistica-content">
+                <h3>Clientes Empresa</h3>
+                <span id="clientes-empresa" class="estatistica-valor">0</span>
+            </div>
+        </div>
+        <div class="card-estatistica">
+            <div class="estatistica-icon bg-success">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="estatistica-content">
+                <h3>Clientes Pessoa</h3>
+                <span id="clientes-pessoa" class="estatistica-valor">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Clientes -->
+    <div class="tabela-responsive">
+        <table class="tabela-dados">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Documento</th>
+                    <th>Contato</th>
+                    <th>Endereço</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="clientes-lista">
+                <!-- Clientes serão carregados aqui -->
+                <tr>
+                    <td colspan="5" class="text-center tabela-vazia">
+                        <i class="fas fa-user-clock"></i>
+                        <p>Nenhum cliente cadastrado</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Cliente -->
+<div id="cliente-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-edit"></i> <span id="cliente-modal-titulo">Novo Cliente</span></h3>
+            <button class="modal-close" onclick="clientes.fecharModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="cliente-form" onsubmit="return clientes.salvar(event)">
+                <input type="hidden" id="cliente-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cliente-nome"><i class="fas fa-user"></i> Nome Completo *</label>
+                        <input type="text" id="cliente-nome" required 
+                               placeholder="Digite o nome completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliente-tipo"><i class="fas fa-id-card"></i> Tipo</label>
+                        <select id="cliente-tipo" onchange="clientes.alterarTipo()">
+                            <option value="pessoa">Pessoa Física</option>
+                            <option value="empresa">Pessoa Jurídica</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group" id="cliente-cpf-group">
+                        <label for="cliente-cpf"><i class="fas fa-id-card"></i> CPF *</label>
+                        <input type="text" id="cliente-cpf" 
+                               placeholder="000.000.000-00"
+                               data-mask="999.999.999-99">
+                    </div>
+                    
+                    <div class="form-group" id="cliente-cnpj-group" style="display: none;">
+                        <label for="cliente-cnpj"><i class="fas fa-building"></i> CNPJ *</label>
+                        <input type="text" id="cliente-cnpj" 
+                               placeholder="00.000.000/0000-00"
+                               data-mask="99.999.999/9999-99">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliente-empresa"><i class="fas fa-building"></i> Empresa</label>
+                        <input type="text" id="cliente-empresa" 
+                               placeholder="Nome da empresa (opcional)">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cliente-telefone"><i class="fas fa-phone"></i> Telefone *</label>
+                        <input type="tel" id="cliente-telefone" required
+                               placeholder="(11) 99999-9999"
+                               data-mask="(99) 99999-9999">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliente-email"><i class="fas fa-envelope"></i> E-mail</label>
+                        <input type="email" id="cliente-email" 
+                               placeholder="email@exemplo.com">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cliente-endereco"><i class="fas fa-map-marker-alt"></i> Endereço</label>
+                    <textarea id="cliente-endereco" rows="2" 
+                              placeholder="Rua, número, bairro, cidade..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cliente-observacoes"><i class="fas fa-sticky-note"></i> Observações</label>
+                    <textarea id="cliente-observacoes" rows="3" 
+                              placeholder="Informações adicionais..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-acao" onclick="clientes.fecharModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmação -->
+<div id="cliente-confirm-modal" class="modal modal-sm">
+    <div class="modal-content">
+        <div class="modal-body text-center">
+            <i class="fas fa-exclamation-triangle icone-alerta"></i>
+            <h3>Confirmar Exclusão</h3>
+            <p id="cliente-confirm-msg">Tem certeza que deseja excluir este cliente?</p>
+            <div class="modal-actions">
+                <button class="btn btn-acao" onclick="clientes.fecharConfirmModal()">Cancelar</button>
+                <button class="btn btn-danger" onclick="clientes.confirmarExclusao()">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Carregar módulo de clientes
+    (function() {
+        const script = document.createElement('script');
+        script.src = 'modules/clientes.js';
+        script.onload = function() {
+            if (typeof clientes !== 'undefined' && typeof clientes.init === 'function') {
+                clientes.init();
+            }
+        };
+        document.head.appendChild(script);
+    })();
+</script>
+[file content end]
