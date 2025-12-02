@@ -1,5 +1,3 @@
-[file name]: app.js
-[file content begin]
 // Carregar página
 function loadPage(pageName, event = null) {
     // Ativar item do menu
@@ -213,4 +211,3 @@ document.head.appendChild(estiloMensagem);
 window.loadPage = loadPage;
 window.mostrarMensagem = mostrarMensagem;
 window.carregarModulo = carregarModulo;
-[file content end]
