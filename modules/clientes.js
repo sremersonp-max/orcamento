@@ -1,479 +1,235 @@
-[file name]: modules/clientes.js
-[file content begin]
-// Módulo de Gestão de Clientes
-const clientes = (function() {
-    let dados = [];
-    let idParaExcluir = null;
+// Carregar página
+function loadPage(pageName, event = null) {
+    // Ativar item do menu
+    document.querySelectorAll('.menu li').forEach(li => {
+        li.classList.remove('active');
+    });
     
-    // Inicializar módulo
-    function init() {
-        console.log('Inicializando módulo de clientes...');
-        carregarDados();
-        configurarEventos();
-        configurarMascaras();
+    if (event && event.target.closest('li')) {
+        event.target.closest('li').classList.add('active');
     }
     
-    // Carregar clientes do banco de dados
-    function carregarDados() {
-        try {
-            if (!window.db) {
-                throw new Error('Banco de dados não inicializado');
-            }
+    // Carregar conteúdo da página
+    fetch(`pages/${pageName}.html`)
+        .then(response => {
+            if (!response.ok) throw new Error('Página não encontrada');
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('page-content').innerHTML = html;
             
-            const resultado = window.db.exec(`
-                SELECT * FROM clientes 
-                ORDER BY nome COLLATE NOCASE ASC
-            `);
-            
-            if (resultado.length > 0) {
-                dados = resultado[0].values.map(row => {
-                    const cliente = {};
-                    resultado[0].columns.forEach((col, index) => {
-                        cliente[col] = row[index];
+            // Inicializar módulo específico
+            switch(pageName) {
+                case 'home':
+                    initHome();
+                    break;
+                case 'clientes':
+                    // Carregar módulo clientes dinamicamente
+                    carregarModulo('clientes').then(() => {
+                        if (window.clientes && typeof window.clientes.init === 'function') {
+                            window.clientes.init();
+                        }
+                    }).catch(error => {
+                        console.error('Erro ao carregar módulo clientes:', error);
+                        mostrarMensagem('Erro ao carregar módulo de clientes', 'error');
                     });
-                    return cliente;
-                });
-            } else {
-                dados = [];
+                    break;
+                case 'estoque':
+                    // Carregar módulo estoque se existir
+                    if (typeof initEstoque === 'function') {
+                        initEstoque();
+                    } else {
+                        console.log('Módulo estoque não carregado');
+                    }
+                    break;
+                default:
+                    console.log(`Página ${pageName} carregada`);
             }
-            
-            atualizarEstatisticas();
-            renderizarLista();
-            
-        } catch (error) {
-            console.error('Erro ao carregar clientes:', error);
-            mostrarMensagem('Erro ao carregar clientes: ' + error.message, 'error');
-            dados = [];
-            renderizarLista();
-        }
-    }
-    
-    // Atualizar cards de estatísticas
-    function atualizarEstatisticas() {
-        document.getElementById('clientes-total').textContent = dados.length;
-        
-        const clientesEmpresa = dados.filter(c => c.empresa && c.empresa.trim() !== '').length;
-        document.getElementById('clientes-empresa').textContent = clientesEmpresa;
-        
-        const clientesPessoa = dados.length - clientesEmpresa;
-        document.getElementById('clientes-pessoa').textContent = clientesPessoa;
-    }
-    
-    // Renderizar lista na tabela
-    function renderizarLista(lista = dados) {
-        const tbody = document.getElementById('clientes-lista');
-        
-        if (lista.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center tabela-vazia">
-                        <i class="fas fa-user-clock"></i>
-                        <p>Nenhum cliente encontrado</p>
-                    </td>
-                </tr>
+        })
+        .catch(error => {
+            console.error('Erro ao carregar página:', error);
+            document.getElementById('page-content').innerHTML = `
+                <div class="card">
+                    <h2>Erro ao carregar página</h2>
+                    <p>${error.message}</p>
+                    <p>Verifique se a pasta "pages/" existe e tem o arquivo ${pageName}.html</p>
+                </div>
             `;
+        });
+}
+
+// Função para carregar módulos dinamicamente
+function carregarModulo(nomeModulo) {
+    return new Promise((resolve, reject) => {
+        const moduloNome = nomeModulo.toLowerCase();
+        
+        // Se já está carregado e tem init, executar
+        if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
+            setTimeout(() => {
+                try {
+                    window[moduloNome].init();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }, 100);
             return;
         }
         
-        let html = '';
-        
-        lista.forEach(cliente => {
-            const primeiraLetra = cliente.nome.charAt(0).toUpperCase();
-            const telefoneFormatado = formatarTelefone(cliente.telefone);
-            const documento = formatarDocumento(cliente.cpf_cnpj);
-            const enderecoResumo = cliente.endereco ? 
-                cliente.endereco.substring(0, 40) + (cliente.endereco.length > 40 ? '...' : '') : 
-                'Não informado';
-            
-            html += `
-                <tr data-id="${cliente.id}">
-                    <td>
-                        <div class="cliente-info">
-                            <div class="cliente-avatar">${primeiraLetra}</div>
-                            <div>
-                                <div class="cliente-nome">${cliente.nome}</div>
-                                <div class="cliente-empresa">${cliente.empresa || 'Cliente avulso'}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${documento || 'Não informado'}</td>
-                    <td>
-                        <div class="cliente-contato">
-                            <div>${telefoneFormatado}</div>
-                            ${cliente.email ? `<small>${cliente.email}</small>` : ''}
-                        </div>
-                    </td>
-                    <td>${enderecoResumo}</td>
-                    <td class="text-center">
-                        <div class="acoes-tabela">
-                            <button class="btn-icone" onclick="clientes.editar(${cliente.id})" 
-                                    title="Editar cliente">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-icone btn-icone-info" onclick="clientes.verOrcamentos(${cliente.id})" 
-                                    title="Ver orçamentos">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                            </button>
-                            <button class="btn-icone btn-icone-danger" onclick="clientes.excluir(${cliente.id})" 
-                                    title="Excluir cliente">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        tbody.innerHTML = html;
-    }
-    
-    // Filtrar e ordenar clientes
-    function filtrar() {
-        const busca = document.getElementById('clientes-busca').value.toLowerCase();
-        const ordenacao = document.getElementById('clientes-ordenar').value;
-        
-        let filtrados = [...dados];
-        
-        // Aplicar busca
-        if (busca) {
-            filtrados = filtrados.filter(cliente => 
-                cliente.nome.toLowerCase().includes(busca) ||
-                (cliente.empresa && cliente.empresa.toLowerCase().includes(busca)) ||
-                (cliente.cpf_cnpj && cliente.cpf_cnpj.includes(busca)) ||
-                (cliente.email && cliente.email.toLowerCase().includes(busca))
-            );
-        }
-        
-        // Aplicar ordenação
-        switch(ordenacao) {
-            case 'nome':
-                filtrados.sort((a, b) => a.nome.localeCompare(b.nome));
-                break;
-            case 'data_desc':
-                filtrados.sort((a, b) => new Date(b.data_cadastro) - new Date(a.data_cadastro));
-                break;
-            case 'data_asc':
-                filtrados.sort((a, b) => new Date(a.data_cadastro) - new Date(b.data_cadastro));
-                break;
-            case 'empresa':
-                filtrados.sort((a, b) => {
-                    const empresaA = a.empresa || '';
-                    const empresaB = b.empresa || '';
-                    return empresaA.localeCompare(empresaB);
-                });
-                break;
-        }
-        
-        renderizarLista(filtrados);
-    }
-    
-    // Alternar visibilidade dos filtros
-    function toggleFiltros() {
-        const filtros = document.getElementById('clientes-filtros');
-        filtros.style.display = filtros.style.display === 'none' ? 'block' : 'none';
-    }
-    
-    // Abrir modal para novo cliente
-    function abrirModalNovo() {
-        document.getElementById('cliente-modal-titulo').textContent = 'Novo Cliente';
-        document.getElementById('cliente-form').reset();
-        document.getElementById('cliente-id').value = '';
-        alterarTipo(); // Resetar tipo para padrão
-        document.getElementById('cliente-modal').style.display = 'flex';
-        document.getElementById('cliente-nome').focus();
-    }
-    
-    // Editar cliente existente
-    function editar(id) {
-        const cliente = dados.find(c => c.id === id);
-        if (!cliente) return;
-        
-        document.getElementById('cliente-modal-titulo').textContent = 'Editar Cliente';
-        document.getElementById('cliente-id').value = cliente.id;
-        document.getElementById('cliente-nome').value = cliente.nome || '';
-        document.getElementById('cliente-empresa').value = cliente.empresa || '';
-        document.getElementById('cliente-telefone').value = cliente.telefone || '';
-        document.getElementById('cliente-email').value = cliente.email || '';
-        document.getElementById('cliente-endereco').value = cliente.endereco || '';
-        document.getElementById('cliente-observacoes').value = cliente.observacoes || '';
-        
-        // Determinar tipo pelo documento
-        const documento = cliente.cpf_cnpj || '';
-        if (documento.length === 14) {
-            document.getElementById('cliente-tipo').value = 'empresa';
-            alterarTipo();
-            document.getElementById('cliente-cnpj').value = formatarCNPJ(documento);
-        } else {
-            document.getElementById('cliente-tipo').value = 'pessoa';
-            alterarTipo();
-            document.getElementById('cliente-cpf').value = formatarCPF(documento);
-        }
-        
-        document.getElementById('cliente-modal').style.display = 'flex';
-    }
-    
-    // Alterar tipo de cliente (Pessoa/Empresa)
-    function alterarTipo() {
-        const tipo = document.getElementById('cliente-tipo').value;
-        const cpfGroup = document.getElementById('cliente-cpf-group');
-        const cnpjGroup = document.getElementById('cliente-cnpj-group');
-        
-        if (tipo === 'empresa') {
-            cpfGroup.style.display = 'none';
-            cnpjGroup.style.display = 'block';
-            cnpjGroup.querySelector('input').required = true;
-            cpfGroup.querySelector('input').required = false;
-            cpfGroup.querySelector('input').value = '';
-        } else {
-            cpfGroup.style.display = 'block';
-            cnpjGroup.style.display = 'none';
-            cpfGroup.querySelector('input').required = true;
-            cnpjGroup.querySelector('input').required = false;
-            cnpjGroup.querySelector('input').value = '';
-        }
-    }
-    
-    // Salvar cliente (create/update)
-    function salvar(event) {
-        event.preventDefault();
-        
-        const id = document.getElementById('cliente-id').value;
-        const tipo = document.getElementById('cliente-tipo').value;
-        
-        // Obter CPF/CNPJ sem formatação
-        let documento = '';
-        if (tipo === 'empresa') {
-            documento = document.getElementById('cliente-cnpj').value.replace(/\D/g, '');
-        } else {
-            documento = document.getElementById('cliente-cpf').value.replace(/\D/g, '');
-        }
-        
-        const cliente = {
-            nome: document.getElementById('cliente-nome').value.trim(),
-            empresa: document.getElementById('cliente-empresa').value.trim(),
-            cpf_cnpj: documento,
-            telefone: document.getElementById('cliente-telefone').value,
-            email: document.getElementById('cliente-email').value.trim(),
-            endereco: document.getElementById('cliente-endereco').value.trim(),
-            observacoes: document.getElementById('cliente-observacoes').value.trim()
-        };
-        
-        // Validações
-        if (!validarCliente(cliente, tipo)) {
-            return false;
-        }
-        
-        try {
-            if (id) {
-                // Atualizar
-                window.db.run(
-                    `UPDATE clientes SET 
-                        nome = ?, empresa = ?, cpf_cnpj = ?, telefone = ?, 
-                        email = ?, endereco = ?, observacoes = ? 
-                     WHERE id = ?`,
-                    [cliente.nome, cliente.empresa, cliente.cpf_cnpj, cliente.telefone,
-                     cliente.email, cliente.endereco, cliente.observacoes, id]
-                );
-                mostrarMensagem('Cliente atualizado com sucesso!', 'success');
-            } else {
-                // Inserir
-                window.db.run(
-                    `INSERT INTO clientes (nome, empresa, cpf_cnpj, telefone, email, endereco, observacoes)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [cliente.nome, cliente.empresa, cliente.cpf_cnpj, cliente.telefone,
-                     cliente.email, cliente.endereco, cliente.observacoes]
-                );
-                mostrarMensagem('Cliente cadastrado com sucesso!', 'success');
-            }
-            
-            // Salvar backup e recarregar
-            if (typeof salvarBackup === 'function') salvarBackup();
-            carregarDados();
-            fecharModal();
-            
-        } catch (error) {
-            console.error('Erro ao salvar cliente:', error);
-            mostrarMensagem('Erro ao salvar cliente: ' + error.message, 'error');
-        }
-        
-        return false;
-    }
-    
-    // Validar dados do cliente
-    function validarCliente(cliente, tipo) {
-        if (!cliente.nome) {
-            mostrarMensagem('O nome do cliente é obrigatório', 'error');
-            return false;
-        }
-        
-        if (!cliente.telefone) {
-            mostrarMensagem('O telefone do cliente é obrigatório', 'error');
-            return false;
-        }
-        
-        if (tipo === 'pessoa' && cliente.cpf_cnpj && cliente.cpf_cnpj.length !== 11) {
-            mostrarMensagem('CPF inválido (deve ter 11 dígitos)', 'error');
-            return false;
-        }
-        
-        if (tipo === 'empresa' && cliente.cpf_cnpj && cliente.cpf_cnpj.length !== 14) {
-            mostrarMensagem('CNPJ inválido (deve ter 14 dígitos)', 'error');
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Excluir cliente (abrir confirmação)
-    function excluir(id) {
-        const cliente = dados.find(c => c.id === id);
-        if (!cliente) return;
-        
-        idParaExcluir = id;
-        document.getElementById('cliente-confirm-msg').textContent = 
-            `Tem certeza que deseja excluir o cliente "${cliente.nome}"?`;
-        document.getElementById('cliente-confirm-modal').style.display = 'flex';
-    }
-    
-    // Confirmar exclusão
-    function confirmarExclusao() {
-        if (!idParaExcluir) return;
-        
-        try {
-            // Verificar se tem orçamentos
-            const orcamentos = window.db.exec(
-                'SELECT COUNT(*) as total FROM orcamentos WHERE cliente_id = ?',
-                [idParaExcluir]
-            );
-            
-            const temOrcamentos = orcamentos.length > 0 && orcamentos[0].values[0][0] > 0;
-            
-            if (temOrcamentos) {
-                if (!confirm('Este cliente possui orçamentos. Deseja excluir mesmo assim?')) {
-                    fecharConfirmModal();
-                    return;
-                }
-            }
-            
-            window.db.run('DELETE FROM clientes WHERE id = ?', [idParaExcluir]);
-            
-            if (typeof salvarBackup === 'function') salvarBackup();
-            mostrarMensagem('Cliente excluído com sucesso!', 'success');
-            carregarDados();
-            
-        } catch (error) {
-            console.error('Erro ao excluir cliente:', error);
-            mostrarMensagem('Erro ao excluir cliente: ' + error.message, 'error');
-        }
-        
-        fecharConfirmModal();
-    }
-    
-    // Ver orçamentos do cliente
-    function verOrcamentos(clienteId) {
-        // Implementar quando módulo de orçamentos estiver pronto
-        mostrarMensagem('Módulo de orçamentos em desenvolvimento', 'info');
-    }
-    
-    // Fechar modais
-    function fecharModal() {
-        document.getElementById('cliente-modal').style.display = 'none';
-    }
-    
-    function fecharConfirmModal() {
-        document.getElementById('cliente-confirm-modal').style.display = 'none';
-        idParaExcluir = null;
-    }
-    
-    // Configurar eventos
-    function configurarEventos() {
-        // Fechar modal ao clicar fora
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    if (this.id === 'cliente-modal') fecharModal();
-                    if (this.id === 'cliente-confirm-modal') fecharConfirmModal();
-                }
-            });
-        });
-    }
-    
-    // Configurar máscaras de entrada
-    function configurarMascaras() {
-        document.querySelectorAll('[data-mask]').forEach(input => {
-            input.addEventListener('input', function(e) {
-                const mask = this.getAttribute('data-mask');
-                let value = this.value.replace(/\D/g, '');
-                let maskedValue = '';
-                let maskIndex = 0;
+        // Tentar carregar script se existir
+        fetch(`modules/${moduloNome}.js`)
+            .then(response => {
+                if (!response.ok) throw new Error('Módulo não encontrado');
+                return response.text();
+            })
+            .then(scriptContent => {
+                // Executar o script
+                const script = document.createElement('script');
+                script.textContent = scriptContent;
+                document.head.appendChild(script);
                 
-                for (let i = 0; i < mask.length && value.length > 0; i++) {
-                    if (mask[i] === '9') {
-                        maskedValue += value[0];
-                        value = value.substring(1);
+                // Verificar se módulo foi carregado
+                setTimeout(() => {
+                    if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
+                        window[moduloNome].init();
+                        resolve();
                     } else {
-                        maskedValue += mask[i];
+                        reject(new Error(`Módulo ${nomeModulo} não possui init()`));
                     }
-                }
-                
-                this.value = maskedValue;
+                }, 100);
+            })
+            .catch(error => {
+                reject(error);
             });
-        });
-    }
-    
-    // Funções auxiliares de formatação
-    function formatarDocumento(documento) {
-        if (!documento) return '';
-        
-        documento = documento.replace(/\D/g, '');
-        if (documento.length === 11) {
-            return formatarCPF(documento);
-        } else if (documento.length === 14) {
-            return formatarCNPJ(documento);
-        }
-        return documento;
-    }
-    
-    function formatarCPF(cpf) {
-        cpf = cpf.replace(/\D/g, '');
-        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    
-    function formatarCNPJ(cnpj) {
-        cnpj = cnpj.replace(/\D/g, '');
-        return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    }
-    
-    function formatarTelefone(telefone) {
-        if (!telefone) return '';
-        telefone = telefone.replace(/\D/g, '');
-        if (telefone.length === 11) {
-            return telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-        } else if (telefone.length === 10) {
-            return telefone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-        }
-        return telefone;
-    }
-    
-    // Retornar API pública do módulo
-    return {
-        init,
-        carregarDados,
-        filtrar,
-        toggleFiltros,
-        abrirModalNovo,
-        editar,
-        alterarTipo,
-        salvar,
-        excluir,
-        confirmarExclusao,
-        verOrcamentos,
-        fecharModal,
-        fecharConfirmModal
-    };
-})();
+    });
+}
 
-// Expor módulo globalmente
-window.clientes = clientes;
-[file content end]
+// Inicializar página inicial
+function initHome() {
+    console.log('Inicializando home...');
+    
+    // Carregar dados financeiros
+    carregarDadosFinanceiros();
+    
+    // Adicionar eventos aos botões
+    document.querySelectorAll('.btn-acao').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const acao = this.dataset.acao;
+            executarAcaoInicio(acao);
+        });
+    });
+}
+
+function carregarDadosFinanceiros() {
+    // Valores fixos por enquanto
+    const entradas = 0;
+    const saidas = 0;
+    const lucro = 0;
+    
+    // Atualizar cards
+    document.getElementById('lucro-mes').textContent = formatarMoeda(lucro);
+    document.getElementById('entradas-mes').textContent = formatarMoeda(entradas);
+    document.getElementById('saidas-mes').textContent = formatarMoeda(saidas);
+}
+
+function executarAcaoInicio(acao) {
+    alert(`Ação: ${acao} (em desenvolvimento)`);
+}
+
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+
+// Carregar página inicial por padrão
+document.addEventListener('DOMContentLoaded', () => {
+    // Verificar se estamos na página correta
+    if (document.getElementById('page-content')) {
+        loadPage('home');
+    }
+});
+
+// Funções auxiliares
+function mostrarMensagem(texto, tipo = 'info') {
+    const mensagem = document.createElement('div');
+    mensagem.className = `mensagem mensagem-${tipo}`;
+    mensagem.innerHTML = `
+        <span>${texto}</span>
+        <button onclick="this.parentElement.remove()">&times;</button>
+    `;
+    
+    document.querySelector('.main-content').prepend(mensagem);
+    
+    setTimeout(() => {
+        if (mensagem.parentElement) {
+            mensagem.remove();
+        }
+    }, 5000);
+}
+
+// Estilos para mensagens
+const estiloMensagem = document.createElement('style');
+estiloMensagem.textContent = `
+    .mensagem {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .mensagem-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-left: 4px solid #3498db;
+    }
+    
+    .mensagem-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 4px solid #27ae60;
+    }
+    
+    .mensagem-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #e74c3c;
+    }
+    
+    .mensagem button {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: inherit;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(estiloMensagem);
+
+// Disponibilizar funções globalmente
+window.loadPage = loadPage;
+window.mostrarMensagem = mostrarMensagem;
+window.carregarModulo = carregarModulo;
+window.sair = sair;
+
+// Adicionar função sair global
+function sair() {
+    if (confirm('Deseja realmente sair do sistema?')) {
+        window.location.reload();
+    }
+}
