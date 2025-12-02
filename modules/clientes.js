@@ -11,14 +11,13 @@ const clientes = (function() {
         configurarMascaras();
     }
     
-    // Carregar clientes do banco de dados - ASYNC
+    // Carregar clientes do banco de dados
     async function carregarDados() {
         try {
             if (!window.db) {
                 throw new Error('Banco de dados não inicializado');
             }
             
-            // Usar await para queries assíncronas
             const resultado = await window.db.exec(`
                 SELECT * FROM clientes 
                 ORDER BY nome COLLATE NOCASE ASC
@@ -177,7 +176,7 @@ const clientes = (function() {
         document.getElementById('cliente-modal-titulo').textContent = 'Novo Cliente';
         document.getElementById('cliente-form').reset();
         document.getElementById('cliente-id').value = '';
-        alterarTipo(); // Resetar tipo para padrão
+        alterarTipo();
         document.getElementById('cliente-modal').style.display = 'flex';
         document.getElementById('cliente-nome').focus();
     }
@@ -196,7 +195,6 @@ const clientes = (function() {
         document.getElementById('cliente-endereco').value = cliente.endereco || '';
         document.getElementById('cliente-observacoes').value = cliente.observacoes || '';
         
-        // Determinar tipo pelo documento
         const documento = cliente.cpf_cnpj || '';
         if (documento.length === 14) {
             document.getElementById('cliente-tipo').value = 'empresa';
@@ -230,14 +228,13 @@ const clientes = (function() {
         }
     }
     
-    // Salvar cliente (create/update) - ASYNC
+    // Salvar cliente (create/update)
     async function salvar(event) {
         event.preventDefault();
         
         const id = document.getElementById('cliente-id').value;
         const tipo = document.getElementById('cliente-tipo').value;
         
-        // Obter CPF/CNPJ sem formatação
         let documento = '';
         if (tipo === 'empresa') {
             documento = document.getElementById('cliente-cnpj').value.replace(/\D/g, '');
@@ -255,7 +252,6 @@ const clientes = (function() {
             observacoes: document.getElementById('cliente-observacoes').value.trim()
         };
         
-        // Validações - APENAS NOME OBRIGATÓRIO
         if (!cliente.nome || cliente.nome.trim() === '') {
             mostrarMensagem('O nome do cliente é obrigatório', 'error');
             document.getElementById('cliente-nome').focus();
@@ -264,7 +260,6 @@ const clientes = (function() {
         
         try {
             if (id) {
-                // Atualizar
                 await window.db.run(
                     `UPDATE clientes SET 
                         nome = ?, empresa = ?, cpf_cnpj = ?, telefone = ?, 
@@ -275,7 +270,6 @@ const clientes = (function() {
                 );
                 mostrarMensagem('Cliente atualizado com sucesso!', 'success');
             } else {
-                // Inserir
                 await window.db.run(
                     `INSERT INTO clientes (nome, empresa, cpf_cnpj, telefone, email, endereco, observacoes)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -285,7 +279,6 @@ const clientes = (function() {
                 mostrarMensagem('Cliente cadastrado com sucesso!', 'success');
             }
             
-            // Salvar backup e recarregar
             if (typeof salvarBackup === 'function') salvarBackup();
             await carregarDados();
             fecharModal();
@@ -309,12 +302,11 @@ const clientes = (function() {
         document.getElementById('cliente-confirm-modal').style.display = 'flex';
     }
     
-    // Confirmar exclusão - ASYNC
+    // Confirmar exclusão
     async function confirmarExclusao() {
         if (!idParaExcluir) return;
         
         try {
-            // Verificar se tem orçamentos
             const orcamentos = await window.db.exec(
                 'SELECT COUNT(*) as total FROM orcamentos WHERE cliente_id = ?',
                 [idParaExcluir]
@@ -360,7 +352,6 @@ const clientes = (function() {
     
     // Configurar eventos
     function configurarEventos() {
-        // Fechar modal ao clicar fora
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
             modal.addEventListener('click', function(e) {
@@ -379,7 +370,6 @@ const clientes = (function() {
                 const mask = this.getAttribute('data-mask');
                 let value = this.value.replace(/\D/g, '');
                 let maskedValue = '';
-                let maskIndex = 0;
                 
                 for (let i = 0; i < mask.length && value.length > 0; i++) {
                     if (mask[i] === '9') {
@@ -449,3 +439,8 @@ const clientes = (function() {
 
 // Expor módulo globalmente
 window.clientes = clientes;
+
+// Debug
+console.log('=== CLIENTES.JS CARREGADO ===');
+console.log('Módulo clientes:', typeof window.clientes);
+console.log('Função init:', window.clientes && typeof window.clientes.init);
