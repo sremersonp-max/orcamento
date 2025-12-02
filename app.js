@@ -56,40 +56,61 @@ function loadPage(pageName, event = null) {
 // Função para carregar módulos dinamicamente
 function carregarModulo(nomeModulo) {
     return new Promise((resolve, reject) => {
-        // Converter nome para formato correto (ex: "clientes" -> "clientes")
         const moduloNome = nomeModulo.toLowerCase();
         
-        // Verificar se módulo já está carregado
+        // Se já está carregado e tem init, executar
         if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
-            window[moduloNome].init();
-            resolve();
+            console.log(`Módulo ${moduloNome} já carregado, inicializando...`);
+            try {
+                window[moduloNome].init();
+                resolve();
+            } catch (error) {
+                console.error(`Erro ao inicializar módulo ${moduloNome}:`, error);
+                reject(error);
+            }
             return;
         }
         
-        // Carregar módulo dinamicamente
-        const script = document.createElement('script');
-        script.src = `modules/${moduloNome}.js`;
-        
-        script.onload = function() {
-            // Pequeno delay para garantir que o módulo foi inicializado
-            setTimeout(() => {
-                if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
-                    window[moduloNome].init();
-                    resolve();
-                } else {
-                    reject(new Error(`Módulo ${nomeModulo} carregado mas não possui função init()`));
-                }
-            }, 50);
-        };
-        
-        script.onerror = function() {
-            reject(new Error(`Falha ao carregar módulo ${nomeModulo}`));
-        };
-        
-        document.head.appendChild(script);
+        // Tentar carregar script se existir
+        fetch(`modules/${moduloNome}.js`)
+            .then(response => {
+                if (!response.ok) throw new Error('Módulo não encontrado');
+                return response.text();
+            })
+            .then(scriptContent => {
+                // Executar o script
+                const script = document.createElement('script');
+                script.textContent = scriptContent;
+                document.head.appendChild(script);
+                
+                // Verificar se módulo foi carregado
+                setTimeout(() => {
+                    if (window[moduloNome] && typeof window[moduloNome].init === 'function') {
+                        console.log(`Módulo ${moduloNome} carregado com sucesso`);
+                        try {
+                            window[moduloNome].init();
+                            resolve();
+                        } catch (error) {
+                            reject(new Error(`Erro ao inicializar módulo ${moduloNome}: ` + error.message));
+                        }
+                    } else {
+                        console.warn(`Módulo ${moduloNome} não possui init(), tentando carregar direto`);
+                        // Tentar usar mesmo sem init
+                        if (window[moduloNome]) {
+                            resolve();
+                        } else {
+                            reject(new Error(`Módulo ${nomeModulo} não carregado corretamente`));
+                        }
+                    }
+                }, 150);
+            })
+            .catch(error => {
+                console.error(`Erro ao carregar módulo ${moduloNome}:`, error);
+                mostrarMensagem(`Erro ao carregar módulo ${moduloNome}`, 'error');
+                reject(error);
+            });
     });
 }
-
 // Inicializar página inicial
 function initHome() {
     console.log('Inicializando home...');
