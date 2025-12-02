@@ -30,21 +30,11 @@ function loadPage(pageName, event = null) {
                     });
                     break;
                 case 'estoque':
-                    // Inicializar módulo de estoque
-                    if (typeof initEstoque === 'function') {
-                        // Pequeno delay para garantir que o DOM esteja pronto
-                        setTimeout(() => {
-                            try {
-                                initEstoque();
-                            } catch (error) {
-                                console.error('Erro ao inicializar estoque:', error);
-                                mostrarMensagem('Erro ao carregar módulo de estoque', 'error');
-                            }
-                        }, 50);
-                    } else {
-                        mostrarMensagem('Módulo de estoque não carregado. Recarregue a página.', 'error');
-                        console.error('initEstoque não encontrado');
-                    }
+                    // CORREÇÃO AQUI: Agora força o carregamento do módulo estoque
+                    carregarModulo('estoque').catch(error => {
+                        console.error('Erro ao carregar módulo estoque:', error);
+                        mostrarMensagem('Erro ao carregar módulo de estoque', 'error');
+                    });
                     break;
                 default:
                     console.log(`Página ${pageName} carregada`);
@@ -103,12 +93,15 @@ function carregarModulo(nomeModulo) {
                             reject(new Error(`Erro ao inicializar módulo ${moduloNome}: ` + error.message));
                         }
                     } else {
-                        console.warn(`Módulo ${moduloNome} não possui init(), tentando carregar direto`);
-                        // Tentar usar mesmo sem init
+                        // Tenta inicializar se o objeto existir, mesmo sem o init explícito no window
                         if (window[moduloNome]) {
+                            if(typeof window[moduloNome].init === 'function') {
+                                window[moduloNome].init();
+                            }
                             resolve();
                         } else {
-                            reject(new Error(`Módulo ${nomeModulo} não carregado corretamente`));
+                            // Fallback para caso o script apenas defina funções globais (não recomendado, mas possível)
+                            resolve();
                         }
                     }
                 }, 150);
@@ -120,14 +113,12 @@ function carregarModulo(nomeModulo) {
             });
     });
 }
+
 // Inicializar página inicial
 function initHome() {
     console.log('Inicializando home...');
-    
-    // Carregar dados financeiros
     carregarDadosFinanceiros();
     
-    // Adicionar eventos aos botões
     document.querySelectorAll('.btn-acao').forEach(btn => {
         btn.addEventListener('click', function() {
             const acao = this.dataset.acao;
@@ -137,15 +128,17 @@ function initHome() {
 }
 
 function carregarDadosFinanceiros() {
-    // Valores fixos por enquanto
     const entradas = 0;
     const saidas = 0;
     const lucro = 0;
     
-    // Atualizar cards
-    document.getElementById('lucro-mes').textContent = formatarMoeda(lucro);
-    document.getElementById('entradas-mes').textContent = formatarMoeda(entradas);
-    document.getElementById('saidas-mes').textContent = formatarMoeda(saidas);
+    const elLucro = document.getElementById('lucro-mes');
+    const elEntradas = document.getElementById('entradas-mes');
+    const elSaidas = document.getElementById('saidas-mes');
+
+    if(elLucro) elLucro.textContent = formatarMoeda(lucro);
+    if(elEntradas) elEntradas.textContent = formatarMoeda(entradas);
+    if(elSaidas) elSaidas.textContent = formatarMoeda(saidas);
 }
 
 function executarAcaoInicio(acao) {
@@ -159,14 +152,6 @@ function formatarMoeda(valor) {
     }).format(valor);
 }
 
-// Carregar página inicial por padrão
-document.addEventListener('DOMContentLoaded', () => {
-    // Verificar se estamos na página correta
-    if (document.getElementById('page-content')) {
-        loadPage('home');
-    }
-});
-
 // Funções auxiliares
 function mostrarMensagem(texto, tipo = 'info') {
     const mensagem = document.createElement('div');
@@ -176,7 +161,8 @@ function mostrarMensagem(texto, tipo = 'info') {
         <button onclick="this.parentElement.remove()">&times;</button>
     `;
     
-    document.querySelector('.main-content').prepend(mensagem);
+    const mainContent = document.querySelector('.main-content');
+    if(mainContent) mainContent.prepend(mensagem);
     
     setTimeout(() => {
         if (mensagem.parentElement) {
@@ -188,54 +174,21 @@ function mostrarMensagem(texto, tipo = 'info') {
 // Estilos para mensagens
 const estiloMensagem = document.createElement('style');
 estiloMensagem.textContent = `
-    .mensagem {
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .mensagem-info {
-        background-color: #d1ecf1;
-        color: #0c5460;
-        border-left: 4px solid #3498db;
-    }
-    
-    .mensagem-success {
-        background-color: #d4edda;
-        color: #155724;
-        border-left: 4px solid #27ae60;
-    }
-    
-    .mensagem-error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border-left: 4px solid #e74c3c;
-    }
-    
-    .mensagem button {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: inherit;
-    }
-    
-    @keyframes slideIn {
-        from {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
+    .mensagem { padding: 15px; margin-bottom: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.3s ease-out; z-index: 1000; position: relative; }
+    .mensagem-info { background-color: #d1ecf1; color: #0c5460; border-left: 4px solid #3498db; }
+    .mensagem-success { background-color: #d4edda; color: #155724; border-left: 4px solid #27ae60; }
+    .mensagem-error { background-color: #f8d7da; color: #721c24; border-left: 4px solid #e74c3c; }
+    .mensagem button { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: inherit; }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 `;
 document.head.appendChild(estiloMensagem);
+
+// Carregar página inicial por padrão
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('page-content')) {
+        loadPage('home');
+    }
+});
 
 // Disponibilizar funções globalmente
 window.loadPage = loadPage;
