@@ -1,288 +1,223 @@
-// OFICINA DA FAMÍLIA - Banco de Dados SQLite Local
+// OFICINA DA FAMÍLIA - Banco de Dados IndexedDB
 
 let db = null;
-let SQL = null;
+const DB_NAME = 'oficina_db';
+const DB_VERSION = 1;
 
-// Inicializar banco de dados
+// Interface compatível com SQL
+window.db = {
+    exec: async function(sql, params = []) {
+        return executarQuery(sql, params);
+    },
+    
+    run: async function(sql, params = []) {
+        return executarComando(sql, params);
+    },
+    
+    getRowsModified: function() {
+        return 1;
+    }
+};
+
+// Inicializar IndexedDB
 async function initDatabase() {
-    try {
-        console.log('Iniciando banco de dados SQLite local...');
+    return new Promise((resolve, reject) => {
+        console.log('Inicializando IndexedDB...');
         
-        // Carregar SQL.js LOCALMENTE
-        SQL = await initSqlJs({
-            locateFile: file => `assets/${file}`  // Arquivos locais na pasta assets
-        });
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
         
-        console.log('SQL.js carregado localmente');
+        request.onerror = function(event) {
+            console.error('Erro ao abrir IndexedDB:', event.target.error);
+            mostrarMensagem('Erro ao inicializar banco de dados', 'error');
+            reject(event.target.error);
+        };
         
-        // Tentar carregar backup do localStorage
-        const backup = localStorage.getItem('oficina_db_backup');
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log('IndexedDB aberto com sucesso');
+            
+            // Verificar e criar dados iniciais
+            verificarDadosIniciais().then(() => {
+                mostrarMensagem('Banco de dados pronto!', 'success');
+                resolve(db);
+            }).catch(error => {
+                console.error('Erro ao verificar dados:', error);
+                resolve(db);
+            });
+        };
         
-        if (backup) {
-            try {
-                // Carregar do backup
-                const byteArray = new Uint8Array(JSON.parse(backup));
-                db = new SQL.Database(byteArray);
-                console.log('Banco carregado do backup');
-            } catch (backupError) {
-                console.warn('Erro ao carregar backup, criando novo banco:', backupError);
-                db = new SQL.Database();
-                criarTabelas();
-                criarDadosIniciais();
+        request.onupgradeneeded = function(event) {
+            console.log('Criando/atualizando estrutura do banco...');
+            const db = event.target.result;
+            
+            // Criar Object Stores (tabelas)
+            
+            // Clientes
+            if (!db.objectStoreNames.contains('clientes')) {
+                const clientesStore = db.createObjectStore('clientes', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                clientesStore.createIndex('nome', 'nome', { unique: false });
+                clientesStore.createIndex('cpf_cnpj', 'cpf_cnpj', { unique: false });
+                clientesStore.createIndex('empresa', 'empresa', { unique: false });
+                clientesStore.createIndex('data_cadastro', 'data_cadastro', { unique: false });
             }
-        } else {
-            // Criar novo banco
-            db = new SQL.Database();
-            criarTabelas();
-            criarDadosIniciais();
-            console.log('Novo banco criado');
+            
+            // Materiais
+            if (!db.objectStoreNames.contains('materiais')) {
+                const materiaisStore = db.createObjectStore('materiais', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                materiaisStore.createIndex('codigo', 'codigo', { unique: true });
+                materiaisStore.createIndex('grupo', 'grupo', { unique: false });
+                materiaisStore.createIndex('descricao', 'descricao', { unique: false });
+            }
+            
+            // Orçamentos
+            if (!db.objectStoreNames.contains('orcamentos')) {
+                const orcamentosStore = db.createObjectStore('orcamentos', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                orcamentosStore.createIndex('cliente_id', 'cliente_id', { unique: false });
+                orcamentosStore.createIndex('status', 'status', { unique: false });
+                orcamentosStore.createIndex('data_emissao', 'data_emissao', { unique: false });
+            }
+            
+            // Orçamento Itens
+            if (!db.objectStoreNames.contains('orcamento_itens')) {
+                const itensStore = db.createObjectStore('orcamento_itens', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                itensStore.createIndex('orcamento_id', 'orcamento_id', { unique: false });
+                itensStore.createIndex('material_id', 'material_id', { unique: false });
+            }
+            
+            // Projetos
+            if (!db.objectStoreNames.contains('projetos')) {
+                const projetosStore = db.createObjectStore('projetos', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                projetosStore.createIndex('codigo', 'codigo', { unique: true });
+                projetosStore.createIndex('categoria', 'categoria', { unique: false });
+            }
+            
+            console.log('Estrutura do banco criada');
+        };
+    });
+}
+
+// Verificar e criar dados iniciais
+async function verificarDadosIniciais() {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            resolve();
+            return;
         }
         
-        // Tornar db disponível globalmente com métodos síncronos para compatibilidade
-        window.db = {
-            exec: function(sql, params = []) {
-                try {
-                    if (!db) {
-                        throw new Error('Banco de dados não inicializado');
-                    }
-                    
-                    // Se tiver parâmetros, usar statement preparado
-                    if (params && params.length > 0) {
-                        const stmt = db.prepare(sql);
-                        stmt.bind(params);
-                        const results = [];
-                        
-                        while (stmt.step()) {
-                            results.push(stmt.get());
-                        }
-                        
-                        stmt.free();
-                        
-                        // Retornar no formato esperado pelo código existente
-                        if (sql.trim().toUpperCase().startsWith('SELECT')) {
-                            const columns = stmt.getColumnNames ? stmt.getColumnNames() : [];
-                            return [{
-                                columns: columns,
-                                values: results
-                            }];
-                        }
-                    } else {
-                        // Sem parâmetros, exec direto
-                        return db.exec(sql);
-                    }
-                    
-                    return [];
-                } catch (error) {
-                    console.error('Erro na execução SQL:', error, 'SQL:', sql);
-                    throw error;
-                }
-            },
-            
-            run: function(sql, params = []) {
-                try {
-                    if (!db) {
-                        throw new Error('Banco de dados não inicializado');
-                    }
-                    
-                    if (params && params.length > 0) {
-                        const stmt = db.prepare(sql);
-                        stmt.bind(params);
-                        stmt.step();
-                        stmt.free();
-                    } else {
-                        db.run(sql);
-                    }
-                    
-                    salvarBackup();
-                } catch (error) {
-                    console.error('Erro na execução SQL:', error, 'SQL:', sql);
-                    throw error;
-                }
-            },
-            
-            getRowsModified: function() {
-                return db ? db.getRowsModified() : 0;
+        const transaction = db.transaction(['clientes'], 'readonly');
+        const store = transaction.objectStore('clientes');
+        const countRequest = store.count();
+        
+        countRequest.onsuccess = function() {
+            if (countRequest.result === 0) {
+                console.log('Criando dados iniciais...');
+                criarDadosIniciais().then(resolve).catch(reject);
+            } else {
+                console.log('Banco já possui dados:', countRequest.result, 'clientes');
+                resolve();
             }
         };
         
-        // Salvar backup periodicamente
-        setInterval(salvarBackup, 30000); // A cada 30 segundos
-        
-        mostrarMensagem('Banco de dados SQLite local pronto!', 'success');
-        return db;
-        
-    } catch (error) {
-        console.error('Erro ao iniciar banco de dados local:', error);
-        mostrarMensagem('Erro no banco de dados. Tentando modo emergência...', 'error');
-        
-        // Modo emergência com localStorage
-        return iniciarModoEmergencia();
-    }
-}
-
-// Criar tabelas
-function criarTabelas() {
-    if (!db) return;
-    
-    console.log('Criando tabelas...');
-    
-    const queries = [
-        // Clientes
-        `CREATE TABLE IF NOT EXISTS clientes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            empresa TEXT,
-            telefone TEXT,
-            email TEXT,
-            endereco TEXT,
-            cpf_cnpj TEXT,
-            observacoes TEXT,
-            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`,
-        
-        // Materiais (para estoque)
-        `CREATE TABLE IF NOT EXISTS materiais (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            codigo TEXT UNIQUE NOT NULL,
-            descricao TEXT NOT NULL,
-            grupo TEXT NOT NULL,
-            unidade_medida TEXT NOT NULL,
-            valor_unitario REAL NOT NULL,
-            quantidade REAL DEFAULT 0,
-            imagem TEXT,
-            observacoes TEXT,
-            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`,
-        
-        // Projetos
-        `CREATE TABLE IF NOT EXISTS projetos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            codigo TEXT UNIQUE,
-            categoria TEXT NOT NULL,
-            descricao TEXT,
-            imagem TEXT,
-            personalizado BOOLEAN DEFAULT 0,
-            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`,
-        
-        // Orçamentos
-        `CREATE TABLE IF NOT EXISTS orcamentos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cliente_id INTEGER,
-            projeto_id INTEGER,
-            codigo TEXT UNIQUE,
-            status TEXT DEFAULT 'aberto',
-            custo_total REAL DEFAULT 0,
-            margem REAL DEFAULT 0,
-            desconto REAL DEFAULT 0,
-            valor_total REAL DEFAULT 0,
-            observacoes TEXT,
-            data_emissao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            data_validade DATE,
-            FOREIGN KEY (cliente_id) REFERENCES clientes(id),
-            FOREIGN KEY (projeto_id) REFERENCES projetos(id)
-        )`,
-        
-        // Itens do Orçamento
-        `CREATE TABLE IF NOT EXISTS orcamento_itens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            orcamento_id INTEGER NOT NULL,
-            material_id INTEGER NOT NULL,
-            quantidade REAL NOT NULL,
-            valor_unitario REAL NOT NULL,
-            total REAL NOT NULL,
-            observacoes TEXT,
-            FOREIGN KEY (orcamento_id) REFERENCES orcamentos(id),
-            FOREIGN KEY (material_id) REFERENCES materiais(id)
-        )`
-    ];
-    
-    queries.forEach(query => {
-        try {
-            db.run(query);
-        } catch (error) {
-            console.error('Erro criando tabela:', error, 'Query:', query);
-        }
+        countRequest.onerror = function(event) {
+            console.error('Erro ao contar clientes:', event.target.error);
+            resolve(); // Continuar mesmo com erro
+        };
     });
-    
-    console.log('Tabelas criadas com sucesso');
 }
 
 // Criar dados iniciais
-function criarDadosIniciais() {
-    if (!db) return;
-    
-    console.log('Criando dados iniciais...');
-    
-    // Cliente de exemplo
-    try {
-        db.run(
-            `INSERT INTO clientes (nome, empresa, telefone, email) 
-             VALUES ('Cliente Avulso', '', '', '')`
-        );
-        console.log('Cliente inicial criado');
-    } catch (error) {
-        console.error('Erro ao criar cliente inicial:', error);
-    }
-    
-    // Materiais de exemplo
-    const materiais = [
-        ['ESP3', 'Espelho 3 mm', 'Vidro', 'M²', 155.18, 1000],
-        ['ESP4', 'Espelho 4 mm Bisotado', 'Vidro', 'M²', 183.15, 1000],
-        ['ESP6', 'Espelho 6 mm Bisotado', 'Vidro', 'M²', 355.20, 1000],
-        ['P10', 'P-10 Cavalinho 10mm', 'Ferragem', 'un', 6.20, 500],
-        ['SIL', 'Silicone Transparente', 'Acessórios', 'un', 31.90, 200]
-    ];
-    
-    materiais.forEach((m, index) => {
-        try {
-            db.run(
-                `INSERT INTO materiais (codigo, descricao, grupo, unidade_medida, valor_unitario, quantidade) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                m
-            );
-        } catch (error) {
-            console.error(`Erro ao criar material ${m[0]}:`, error);
+async function criarDadosIniciais() {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            resolve();
+            return;
         }
+        
+        const transaction = db.transaction(['clientes', 'materiais'], 'readwrite');
+        
+        // Cliente inicial
+        const clientesStore = transaction.objectStore('clientes');
+        const clienteInicial = {
+            nome: 'Cliente Avulso',
+            empresa: '',
+            telefone: '',
+            email: '',
+            endereco: '',
+            cpf_cnpj: '',
+            observacoes: 'Cliente padrão do sistema',
+            data_cadastro: new Date().toISOString()
+        };
+        clientesStore.add(clienteInicial);
+        
+        // Materiais iniciais
+        const materiaisStore = transaction.objectStore('materiais');
+        const materiais = [
+            { codigo: 'ESP3', descricao: 'Espelho 3 mm', grupo: 'Vidro', unidade_medida: 'M²', valor_unitario: 155.18, quantidade: 1000 },
+            { codigo: 'ESP4', descricao: 'Espelho 4 mm Bisotado', grupo: 'Vidro', unidade_medida: 'M²', valor_unitario: 183.15, quantidade: 1000 },
+            { codigo: 'ESP6', descricao: 'Espelho 6 mm Bisotado', grupo: 'Vidro', unidade_medida: 'M²', valor_unitario: 355.20, quantidade: 1000 },
+            { codigo: 'P10', descricao: 'P-10 Cavalinho 10mm', grupo: 'Ferragem', unidade_medida: 'un', valor_unitario: 6.20, quantidade: 500 },
+            { codigo: 'SIL', descricao: 'Silicone Transparente', grupo: 'Acessórios', unidade_medida: 'un', valor_unitario: 31.90, quantidade: 200 }
+        ];
+        
+        materiais.forEach(material => {
+            materiaisStore.add({
+                ...material,
+                data_cadastro: new Date().toISOString()
+            });
+        });
+        
+        transaction.oncomplete = function() {
+            console.log('Dados iniciais criados com sucesso');
+            resolve();
+        };
+        
+        transaction.onerror = function(event) {
+            console.error('Erro ao criar dados iniciais:', event.target.error);
+            reject(event.target.error);
+        };
     });
-    
-    console.log('Dados iniciais criados com sucesso');
 }
 
-// Salvar backup no localStorage
-function salvarBackup() {
-    if (!db) return;
-    
-    try {
-        const data = db.export();
-        const array = Array.from(new Uint8Array(data));
-        localStorage.setItem('oficina_db_backup', JSON.stringify(array));
-        console.log('Backup salvo');
-    } catch (error) {
-        console.error('Erro ao salvar backup:', error);
-    }
-}
-
-// Modo emergência (se SQLite.js falhar)
-function iniciarModoEmergencia() {
-    console.log('Iniciando modo emergência com localStorage');
-    
-    window.db = {
-        exec: function(sql, params = []) {
-            console.log('Modo emergência exec:', sql);
+// Executar query SELECT
+async function executarQuery(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Banco de dados não inicializado'));
+            return;
+        }
+        
+        const sqlUpper = sql.toUpperCase();
+        
+        // SELECT * FROM clientes ORDER BY nome
+        if (sqlUpper.includes('SELECT * FROM CLIENTES') && sqlUpper.includes('ORDER BY NOME')) {
+            const transaction = db.transaction(['clientes'], 'readonly');
+            const store = transaction.objectStore('clientes');
+            const request = store.getAll();
             
-            // Simular SELECT de clientes
-            if (sql.toUpperCase().includes('SELECT') && sql.toUpperCase().includes('CLIENTES')) {
-                const clientesData = localStorage.getItem('clientes_emergencia') || '[]';
-                const clientes = JSON.parse(clientesData);
+            request.onsuccess = function() {
+                const clientes = request.result;
                 
-                // Ordenar por nome
+                // Ordenar por nome (case insensitive)
                 const ordenados = clientes.sort((a, b) => 
-                    a.nome.localeCompare(b.nome, undefined, { sensitivity: 'base' })
+                    a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
                 );
                 
-                return [{
+                resolve([{
                     columns: ['id', 'nome', 'empresa', 'telefone', 'email', 'endereco', 'cpf_cnpj', 'observacoes', 'data_cadastro'],
                     values: ordenados.map(cliente => [
                         cliente.id,
@@ -293,154 +228,224 @@ function iniciarModoEmergencia() {
                         cliente.endereco || '',
                         cliente.cpf_cnpj || '',
                         cliente.observacoes || '',
-                        cliente.data_cadastro || new Date().toISOString()
+                        cliente.data_cadastro || ''
                     ])
-                }];
-            }
+                }]);
+            };
             
-            // COUNT para orçamentos
-            if (sql.toUpperCase().includes('COUNT') && sql.toUpperCase().includes('ORCAMENTOS')) {
-                return [{
-                    columns: ['total'],
-                    values: [[0]] // Sem orçamentos no modo emergência
-                }];
-            }
-            
-            return [];
-        },
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
         
-        run: function(sql, params = []) {
-            console.log('Modo emergência run:', sql);
+        // SELECT COUNT(*) as total FROM orcamentos WHERE cliente_id = ?
+        if (sqlUpper.includes('SELECT COUNT(*)') && sqlUpper.includes('ORCAMENTOS') && sqlUpper.includes('CLIENTE_ID')) {
+            const transaction = db.transaction(['orcamentos'], 'readonly');
+            const store = transaction.objectStore('orcamentos');
+            const index = store.index('cliente_id');
+            const clienteId = params[0];
             
-            // INSERT em clientes
-            if (sql.toUpperCase().includes('INSERT INTO CLIENTES')) {
-                const clientesData = localStorage.getItem('clientes_emergencia') || '[]';
-                const clientes = JSON.parse(clientesData);
-                
-                const novoId = clientes.length > 0 ? 
-                    Math.max(...clientes.map(c => c.id || 0)) + 1 : 1;
-                
-                const novoCliente = {
-                    id: novoId,
-                    nome: params[0] || '',
-                    empresa: params[1] || '',
-                    cpf_cnpj: params[2] || '',
-                    telefone: params[3] || '',
-                    email: params[4] || '',
-                    endereco: params[5] || '',
-                    observacoes: params[6] || '',
-                    data_cadastro: new Date().toISOString()
-                };
-                
-                clientes.push(novoCliente);
-                localStorage.setItem('clientes_emergencia', JSON.stringify(clientes));
-                return;
-            }
+            const request = index.count(IDBKeyRange.only(clienteId));
             
-            // UPDATE em clientes
-            if (sql.toUpperCase().includes('UPDATE CLIENTES')) {
-                const clientesData = localStorage.getItem('clientes_emergencia') || '[]';
-                const clientes = JSON.parse(clientesData);
-                const id = params[params.length - 1];
-                
-                const index = clientes.findIndex(c => c.id == id);
-                if (index !== -1) {
-                    clientes[index] = {
-                        ...clientes[index],
-                        nome: params[0] || clientes[index].nome,
-                        empresa: params[1] || clientes[index].empresa,
-                        cpf_cnpj: params[2] || clientes[index].cpf_cnpj,
-                        telefone: params[3] || clientes[index].telefone,
-                        email: params[4] || clientes[index].email,
-                        endereco: params[5] || clientes[index].endereco,
-                        observacoes: params[6] || clientes[index].observacoes
+            request.onsuccess = function() {
+                resolve([{
+                    columns: ['total'],
+                    values: [[request.result]]
+                }]);
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // Query não suportada
+        console.warn('Query não implementada:', sql);
+        resolve([]);
+    });
+}
+
+// Executar comandos INSERT/UPDATE/DELETE
+async function executarComando(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Banco de dados não inicializado'));
+            return;
+        }
+        
+        const sqlUpper = sql.toUpperCase();
+        
+        // INSERT INTO clientes (nome, empresa, cpf_cnpj, telefone, email, endereco, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)
+        if (sqlUpper.includes('INSERT INTO CLIENTES')) {
+            const transaction = db.transaction(['clientes'], 'readwrite');
+            const store = transaction.objectStore('clientes');
+            
+            const cliente = {
+                nome: params[0] || '',
+                empresa: params[1] || '',
+                cpf_cnpj: params[2] || '',
+                telefone: params[3] || '',
+                email: params[4] || '',
+                endereco: params[5] || '',
+                observacoes: params[6] || '',
+                data_cadastro: new Date().toISOString()
+            };
+            
+            const request = store.add(cliente);
+            
+            request.onsuccess = function() {
+                salvarBackup();
+                resolve();
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // UPDATE clientes SET nome = ?, empresa = ?, cpf_cnpj = ?, telefone = ?, email = ?, endereco = ?, observacoes = ? WHERE id = ?
+        if (sqlUpper.includes('UPDATE CLIENTES')) {
+            const transaction = db.transaction(['clientes'], 'readwrite');
+            const store = transaction.objectStore('clientes');
+            const id = params[params.length - 1];
+            
+            const getRequest = store.get(parseInt(id));
+            
+            getRequest.onsuccess = function() {
+                const cliente = getRequest.result;
+                if (cliente) {
+                    cliente.nome = params[0] || cliente.nome;
+                    cliente.empresa = params[1] || cliente.empresa;
+                    cliente.cpf_cnpj = params[2] || cliente.cpf_cnpj;
+                    cliente.telefone = params[3] || cliente.telefone;
+                    cliente.email = params[4] || cliente.email;
+                    cliente.endereco = params[5] || cliente.endereco;
+                    cliente.observacoes = params[6] || cliente.observacoes;
+                    
+                    const updateRequest = store.put(cliente);
+                    
+                    updateRequest.onsuccess = function() {
+                        salvarBackup();
+                        resolve();
                     };
                     
-                    localStorage.setItem('clientes_emergencia', JSON.stringify(clientes));
+                    updateRequest.onerror = function(event) {
+                        reject(event.target.error);
+                    };
+                } else {
+                    reject(new Error('Cliente não encontrado'));
                 }
-                return;
-            }
+            };
             
-            // DELETE em clientes
-            if (sql.toUpperCase().includes('DELETE FROM CLIENTES')) {
-                const clientesData = localStorage.getItem('clientes_emergencia') || '[]';
-                let clientes = JSON.parse(clientesData);
-                const id = params[0];
-                
-                clientes = clientes.filter(c => c.id != id);
-                localStorage.setItem('clientes_emergencia', JSON.stringify(clientes));
-                return;
-            }
-        },
-        
-        getRowsModified: function() {
-            return 1;
+            getRequest.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
         }
-    };
-    
-    // Criar dados iniciais se não existirem
-    if (!localStorage.getItem('clientes_emergencia')) {
-        const clientesIniciais = [{
-            id: 1,
-            nome: 'Cliente Avulso',
-            empresa: '',
-            telefone: '',
-            email: '',
-            endereco: '',
-            cpf_cnpj: '',
-            observacoes: 'Cliente padrão do sistema',
-            data_cadastro: new Date().toISOString()
-        }];
-        localStorage.setItem('clientes_emergencia', JSON.stringify(clientesIniciais));
-    }
-    
-    mostrarMensagem('Sistema rodando em modo emergência (localStorage)', 'warning');
-    return null;
+        
+        // DELETE FROM clientes WHERE id = ?
+        if (sqlUpper.includes('DELETE FROM CLIENTES')) {
+            const transaction = db.transaction(['clientes'], 'readwrite');
+            const store = transaction.objectStore('clientes');
+            const id = params[0];
+            
+            const request = store.delete(parseInt(id));
+            
+            request.onsuccess = function() {
+                salvarBackup();
+                resolve();
+            };
+            
+            request.onerror = function(event) {
+                reject(event.target.error);
+            };
+            return;
+        }
+        
+        // Comando não suportado
+        console.warn('Comando não implementado:', sql);
+        resolve();
+    });
+}
+
+// Salvar backup simplificado
+function salvarBackup() {
+    // IndexedDB já persiste automaticamente
+    // Podemos apenas marcar data do último backup
+    localStorage.setItem('db_last_backup', new Date().toISOString());
 }
 
 // Exportar dados
-function exportarDados() {
-    try {
-        const backup = localStorage.getItem('oficina_db_backup');
-        if (backup) {
-            const blob = new Blob([backup], { type: 'application/octet-stream' });
-            return URL.createObjectURL(blob);
+async function exportarDados() {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Banco não inicializado'));
+            return;
         }
-        return null;
-    } catch (error) {
-        console.error('Erro ao exportar dados:', error);
-        return null;
-    }
+        
+        // Exportar todos os clientes
+        const transaction = db.transaction(['clientes'], 'readonly');
+        const store = transaction.objectStore('clientes');
+        const request = store.getAll();
+        
+        request.onsuccess = function() {
+            const dados = {
+                clientes: request.result,
+                export_date: new Date().toISOString(),
+                total: request.result.length
+            };
+            
+            const blob = new Blob([JSON.stringify(dados, null, 2)], { 
+                type: 'application/json' 
+            });
+            
+            resolve(URL.createObjectURL(blob));
+        };
+        
+        request.onerror = function(event) {
+            reject(event.target.error);
+        };
+    });
 }
 
 // Importar dados
-function importarDados(arrayBuffer) {
+async function importarDados(jsonString) {
     try {
-        if (!SQL) return false;
+        const dados = JSON.parse(jsonString);
         
-        const data = new Uint8Array(arrayBuffer);
-        if (db) db.close();
+        if (!dados.clientes || !Array.isArray(dados.clientes)) {
+            throw new Error('Formato de dados inválido');
+        }
         
-        db = new SQL.Database(data);
-        salvarBackup();
-        window.location.reload(); // Recarregar para aplicar novo banco
+        const transaction = db.transaction(['clientes'], 'readwrite');
+        const store = transaction.objectStore('clientes');
+        
+        // Limpar clientes existentes
+        const clearRequest = store.clear();
+        
+        clearRequest.onsuccess = function() {
+            // Adicionar novos clientes
+            dados.clientes.forEach(cliente => {
+                store.add(cliente);
+            });
+            
+            transaction.oncomplete = function() {
+                mostrarMensagem('Dados importados com sucesso!', 'success');
+                salvarBackup();
+                window.location.reload(); // Recarregar para aplicar
+            };
+        };
         
         return true;
     } catch (error) {
         console.error('Erro ao importar dados:', error);
+        mostrarMensagem('Erro ao importar dados: ' + error.message, 'error');
         return false;
     }
 }
-
-// Inicializar quando a página carregar
-document.addEventListener('DOMContentLoaded', async () => {
-    await initDatabase();
-    
-    // Notificar que o banco está pronto
-    if (typeof atualizarDashboard === 'function') {
-        atualizarDashboard();
-    }
-});
 
 // Função sair
 function sair() {
@@ -448,6 +453,29 @@ function sair() {
         window.location.reload();
     }
 }
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await initDatabase();
+        
+        // Notificar que o banco está pronto
+        if (typeof atualizarDashboard === 'function') {
+            atualizarDashboard();
+        }
+        
+        // Aguardar um pouco antes de carregar a página inicial
+        setTimeout(() => {
+            if (typeof loadPage === 'function') {
+                loadPage('home');
+            }
+        }, 300);
+        
+    } catch (error) {
+        console.error('Erro fatal ao inicializar banco:', error);
+        mostrarMensagem('Erro crítico no banco de dados. Recarregue a página.', 'error');
+    }
+});
 
 // Disponibilizar funções globalmente
 window.initDatabase = initDatabase;
