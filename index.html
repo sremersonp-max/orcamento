@@ -51,22 +51,29 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
-    <script src="db.js"></script>
     <script src="app.js"></script>
-    
     <script>
-        // Registrar Service Worker
+        // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('Service Worker registrado'))
+                .then(reg => console.log('Service Worker registrado:', reg))
                 .catch(err => console.log('SW erro:', err));
         }
         
-        // Carregar página inicial
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPage('home');
-        });
+        // Verificar se o DOM já carregou
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof loadPage === 'function') {
+                    loadPage('home');
+                }
+            });
+        } else {
+            // DOM já carregado
+            if (typeof loadPage === 'function') {
+                loadPage('home');
+            }
+        }
     </script>
 </body>
 </html>
+
