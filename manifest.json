@@ -2,11 +2,15 @@
   "name": "Oficina da Família",
   "short_name": "OficinaApp",
   "description": "Sistema de gestão para marcenaria e esquadrias",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#1a472a",
   "theme_color": "#2ecc71",
   "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "assets/icons/icon-72x72.png",
@@ -46,7 +50,23 @@
     {
       "src": "assets/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Painel de controle"
     }
   ]
 }
