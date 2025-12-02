@@ -3,13 +3,41 @@
 function initEstoque() {
     console.log('Inicializando módulo de estoque...');
     
+    // Verificar se o banco de dados está pronto
+    if (!window.db) {
+        console.error('Banco de dados não está disponível');
+        mostrarMensagem('Banco de dados não carregado. Aguarde...', 'error');
+        
+        // Tentar novamente após 1 segundo
+        setTimeout(() => {
+            if (window.db) {
+                initEstoque();
+            }
+        }, 1000);
+        return;
+    }
+    
     // Carregar materiais
     carregarMateriais();
     
-    // Configurar eventos
-    document.getElementById('btn-cadastrar-material')?.addEventListener('click', abrirCadastroMaterial);
-    document.getElementById('btn-filtrar')?.addEventListener('click', abrirFiltros);
-    document.getElementById('buscar-material')?.addEventListener('input', buscarMaterial);
+    // Configurar eventos - garantir que os elementos existam
+    setTimeout(() => {
+        const btnCadastrar = document.getElementById('btn-cadastrar-material');
+        const btnFiltrar = document.getElementById('btn-filtrar');
+        const inputBuscar = document.getElementById('buscar-material');
+        
+        if (btnCadastrar) {
+            btnCadastrar.addEventListener('click', abrirCadastroMaterial);
+        }
+        
+        if (btnFiltrar) {
+            btnFiltrar.addEventListener('click', abrirFiltros);
+        }
+        
+        if (inputBuscar) {
+            inputBuscar.addEventListener('input', buscarMaterial);
+        }
+    }, 100);
 }
 
 function carregarMateriais() {
