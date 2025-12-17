@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFICINA DA FAMÍLIA - Sistema de Gestão</title>
+    
+    <!-- Meta tags para PWA -->
+    <meta name="application-name" content="Oficina App">
+    <meta name="apple-mobile-web-app-title" content="Oficina App">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#4a00e0">
+    <meta name="theme-color" content="#4a00e0">
+    <meta name="msapplication-config" content="none">
+    
+    <!-- Ícones para iOS/Apple -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjYwIiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik02Ni4yNSA0Mi41SDQ4LjI1Vjk0LjVINjYuMjVWNDIuNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik04MS45NTc1IDcxLjVDODIuNDU1IDcwLjE4NSA4Mi43NSA2OC43ODEzIDgyLjc1IDY3LjMwNjNDODIuNzUgNTYuMzI0OSA3Mi45MjU2IDQ3LjUgNjEuMjUgNDcuNUM0OS41NzQ0IDQ3LjUgMzkuNzUgNTYuMzI0OSAzOS43NSA2Ny4zMDYzQzM5Ljc1IDY4Ljc4MTMgNDAuMDQ1IDcwLjE4NSA0MC41NDI1IDcxLjVIMjVDMjEuMzM1IDcxLjUgMTguNSA3NC4zMzUgMTguNSA3OEMxOC41IDgxLjY2NSAyMS4zMzUgODQuNSAyNSA4NC41SDYySDYzSDY0SDg5LjVDOTMuMTY1IDg0LjUgOTYgODEuNjY1IDk2IDc4Qzk2IDc0LjMzNSA5My4xNjUgNzEuNSA4OS41IDcxLjVIODEuOTU3NVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNSA1MEMyOC44NjUgNTAgMzIgNDYuODY1IDMyIDQzQzMyIDM5LjEzNSAyOC44NjUgMzYgMjUgMzZDMjEuMTM1IDM2IDE4IDM5LjEzNSAxOCA0M0MxOCA0Ni44NjUgMjEuMTM1IDUwIDI1IDUwWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==">
+    <link rel="apple-touch-icon" sizes="152x152" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUyIiBoZWlnaHQ9IjE1MiIgdmlld0JveD0iMCAwIDE1MiAxNTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9Ijc2IiBjeT0iNzYiIHI9Ijc2IiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik04NC4yNSA0Ny41SDY2LjI1Vjk5LjVIODQuMjVWNDcuNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik05OS45NTc1IDc2LjVDMTAwLjQ1NSA3NS4xODUgMTAwLjc1IDczLjc4MTMgMTAwLjc1IDcyLjMwNjNDMTAwLjc1IDYxLjMyNDkgOTAuOTI1NiA1Mi41IDc5LjI1IDUyLjVDNjcuNTc0NCA1Mi41IDU3Ljc1IDYxLjMyNDkgNTcuNzUgNzIuMzA2M0M1Ny43NSA3My43ODEzIDU4LjA0NSA3NS4xODUgNTguNTQyNSA3Ni41SDQzQzM5LjMzNSA3Ni41IDM2LjUgNzkuMzM1IDM2LjUgODNDMzYuNSA4Ni42NjUgMzkuMzM1IDg5LjUgNDMgODkuNUg4MEg4MUg4MkgxMDkuNUMxMTMuMTY1IDg5LjUgMTE2IDg2LjY2NSAxMTYgODNDMTE2IDc5LjMzNSAxMTMuMTY1IDc2LjUgMTA5LjUgNzYuNUg5OS45NTc1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTQzIDU5LjVDNDYuODY1IDU5LjUgNTAgNTYuMzY1IDUwIDUyLjVDNTAgNDguNjM1IDQ2Ljg2NSA0NS41IDQzIDQ1LjVDMzkuMTM1IDQ1LjUgMzYgNDguNjM1IDM2IDUyLjVDMzYgNTYuMzY1IDM5LjEzNSA1OS41IDQzIDU5LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjkwIiBjeT0iOTAiIHI9IjkwIiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik0xMDAuMjUgNTdIODIuMjVWMTA5LjVIMTAwLjI1VjU3WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTExOS45NTc1IDg2QzEyMC40NTUgODQuNjg1IDEyMC43NSA4My4yODEzIDEyMC43NSA4MS44MDYzQzEyMC43NSA3MC44MjQ5IDExMC45MjYgNjIgOTkuMjUgNjJDODcuNTc0NCA2MiA3Ny43NSA3MC44MjQ5IDc3Ljc1IDgxLjgwNjNDNzcuNzUgODMuMjgxMyA3OC4wNDUgODQuNjg1IDc4LjU0MjUgODZINjFDNTcuMzM1IDg2IDU0LjUgODguODM1IDU0LjUgOTIuNUM1NC41IDk2LjE2NSA1Ny4zMzUgOTkgNjEgOTlIODhIOTlIMTAwSDExOS41QzEyMy4xNjUgOTkgMTI2IDk2LjE2NSAxMjYgOTIuNUMxMjYgODguODM1IDEyMy4xNjUgODYgMTE5LjUgODZIMTE5Ljk1NzVaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNjEgNjguNUM2NC44NjUgNjguNSA2OCA2NS4zNjUgNjggNjEuNUM2OCA1Ny42MzUgNjQuODY1IDU0LjUgNjEgNTQuNUM1Ny4xMzUgNTQuNSA1NCA1Ny42MzUgNTQgNjEuNUM1NCA2NS4zNjUgNTcuMTM1IDY4LjUgNjEgNjguNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a00e0;
+            --secondary-color: #8e2de2;
+            --accent-color: #00c6ff;
+            --danger-color: #ff416c;
+            --success-color: #2ecc71;
+            --light-color: #f8f9fa;
+            --dark-color: #1a1a2e;
+            --sidebar-width: 280px;
+            --info-color: #3498db;
+            --warning-color: #f1c40f;
+            --menu-bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        /* RESET E BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Roboto', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+
+        /* LAYOUT PRINCIPAL */
+        .app-container {
+            display: flex; min-height: 100vh; max-width: 1800px; margin: 20px auto;
+            box-shadow: 0 0 60px rgba(0,0,0,0.3); background: white; border-radius: 20px;
+            overflow: hidden; position: relative;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width); background: var(--menu-bg); color: white;
+            display: flex; flex-direction: column; height: auto; min-height: 100vh;
+            z-index: 100; border-right: 4px solid var(--accent-color);
+        }
+
+        .main-content { flex: 1; padding: 35px; background-color: #f5f7fa; overflow-y: auto; max-height: 100vh; }
+
+        /* LOGO E MENU */
+        .logo { padding: 30px 25px; text-align: left; border-bottom: 2px solid rgba(0, 198, 255, 0.3); background: rgba(26, 26, 46, 0.9); }
+        .logo h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; background: linear-gradient(90deg, #8e2de2, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+        .logo small { color: var(--accent-color); font-weight: 600; opacity: 0.9; font-size: 0.75rem; text-transform: uppercase; }
+
+        .menu { flex: 1; padding: 25px 15px; overflow-y: auto; }
+        .menu ul { list-style: none; }
+        .menu li { margin-bottom: 12px; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu li a { display: flex; align-items: center; padding: 16px 20px; color: rgba(255, 255, 255, 0.85); text-decoration: none; transition: all 0.3s; font-weight: 600; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 198, 255, 0.1); }
+        .menu li i { width: 28px; font-size: 1.2rem; margin-right: 15px; color: var(--accent-color); }
+        .menu li:hover { transform: translateX(8px); }
+        .menu li.active { background: linear-gradient(135deg, #8e2de2, #4a00e0); border: 2px solid var(--accent-color); }
+        .menu li.active a { background: transparent; color: white; border: none; }
+
+        .user-area { padding: 25px; border-top: 2px solid rgba(0, 198, 255, 0.2); background: rgba(26, 26, 46, 0.9); }
+        .btn-logout { width: 100%; padding: 14px; background: linear-gradient(90deg, #ff416c, #ff4b2b); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+        /* COMPONENTES CARDS */
+        .card { background: white; border-radius: 18px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .card-title { font-size: 1.5rem; color: var(--primary-color); margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+
+        /* FORMULÁRIOS */
+        .form-container { background: #fafafa; padding: 25px; border-radius: 15px; margin-bottom: 35px; border: 1px solid #f0f0f0; }
+        .form-section-title { margin-bottom: 15px; color: var(--primary-color); border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.85rem; }
+        .form-control { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; transition: border-color 0.3s; outline: none; font-size: 0.9rem; }
+        .form-control:focus { border-color: var(--accent-color); }
+        .col-span-2 { grid-column: span 2; }
+
+        /* BOTÕES */
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-primary { background: var(--primary-color); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--secondary-color); transform: scale(1.02); }
+        .btn-outline { background: transparent; border: 2px solid #ddd; padding: 12px 25px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .btn-dashed { border-style: dashed; width: 100%; margin-top: 15px; }
+
+        /* TABELAS */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 12px; overflow: hidden; }
+        .data-table th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 700; color: var(--primary-color); border-bottom: 2px solid #eee; }
+        .data-table td { padding: 15px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .text-right { text-align: right; }
+
+        /* ELEMENTOS AUXILIARES */
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: inline-block; }
+        .badge-outline { border: 1px solid #ddd; color: #666; background: #fff; }
+        .badge-success { background: #2ecc71; color: white; }
+        .badge-warning { background: #f1c40f; color: white; }
+        .badge-danger { background: #ff416c; color: white; }
+        .cursor-pointer { cursor: pointer; }
+        .empty-msg { text-align: center; padding: 20px; color: #999; }
+
+        /* GRADE E RECEITA */
+        .color-rows-container, .recipe-container { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-top: 10px; }
+        .color-row, .recipe-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: end; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .color-row { grid-template-columns: 2fr 1fr 1fr 1fr 50px; }
+        .recipe-row { grid-template-columns: 1fr 2fr 2fr 50px; }
+
+        /* DASHBOARD E ABAS */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .stat-card { padding: 25px; border-radius: 18px; color: white; margin-bottom: 0; transition: transform 0.3s; }
+        .bg-primary-grad { background: linear-gradient(45deg, #4a00e0, #8e2de2); }
+        .bg-danger-grad { background: linear-gradient(45deg, #ff416c, #ff4b2b); }
+        .settings-tabs { display: flex; gap: 5px; border-bottom: 2px solid #eee; margin-bottom: 25px; overflow-x: auto; }
+        .tab-btn { padding: 12px 15px; border: none; background: none; cursor: pointer; font-weight: 600; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; white-space: nowrap; }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; color: black !important; background: white !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>OFICINA DA FAMÍLIA</h1>
+                <small>SISTEMA DE GESTÃO v1.0</small>
+            </div>
+            
+            <nav class="menu">
+                <ul id="main-menu">
+                    <li class="active" data-page="home"><a href="#" onclick="loadPage('home', event)"><i class="fas fa-home"></i> Início</a></li>
+                    <li data-page="modelos"><a href="#" onclick="loadPage('modelos', event)"><i class="fas fa-layer-group"></i> Modelos (Fórmulas)</a></li>
+                    <li data-page="orcamentos"><a href="#" onclick="loadPage('orcamentos', event)"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
+                    <li data-page="clientes"><a href="#" onclick="loadPage('clientes', event)"><i class="fas fa-users"></i> Contatos</a></li>
+                    <li data-page="estoque"><a href="#" onclick="loadPage('estoque', event)"><i class="fas fa-boxes"></i> Estoque</a></li>
+                    <li data-page="financeiro"><a href="#" onclick="loadPage('financeiro', event)"><i class="fas fa-hand-holding-usd"></i> Financeiro</a></li>
+                    <li data-page="configuracoes"><a href="#" onclick="loadPage('configuracoes', event)"><i class="fas fa-cog"></i> Configurações</a></li>
+                </ul>
+                
+                <div class="user-area">
+                    <button class="btn-logout" onclick="sair()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Botão de instalação PWA (aparece apenas quando pode instalar) -->
+            <div id="pwa-install-button" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;">
+                <button onclick="showInstallPrompt()" style="background: var(--success-color); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-download"></i> Instalar App
+                </button>
+            </div>
+            
+            <div id="page-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- PWA: MANIFEST ---
+        const manifest = {
+            "name": "Oficina da Família - Sistema",
+            "short_name": "Oficina App",
+            "description": "Sistema de gestão para serralheria e vidraçaria",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#1a1a2e",
+            "theme_color": "#4a00e0",
+            "orientation": "portrait-primary",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iOTYiIHI9Ijk2IiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWxfMTYwXzIwMjYpIi8+CjxwYXRoIGQ9Ik0xMDUgNjhIODdWMTI0SDEwNVY2OFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzEuMTI2IDExMkMxMzEuMzc2IDExMS4xNDggMTMxLjUgMTEwLjI0NSAxMzEuNSAxMDkuMjlDMTMxLjUgMTAyLjExOSAxMjUuNjgxIDk2LjI1IDExOC41IDk2LjI1QzExMS4zMTkgOTYuMjUgMTA1LjUgMTAyLjExOSAxMDUuNSAxMDkuMjlDMTA1LjUgMTEwLjI0NSAxMDUuNjI0IDExMS4xNDggMTA1Ljg3NCAxMTJINzVDNzEuMTM0IDExMiA2OCAxMTUuMTM0IDY4IDExOUM2OCAxMjIuODY2IDcxLjEzNCAxMjYgNzUgMTI2SDE0MUgxNDVIMTQ5SDE3N0MxODAuODY2IDEyNiAxODQgMTIyLjg2NiAxODQgMTE5QzE4NCAxMTUuMTM0IDE4MC44NjYgMTEyIDE3NyAxMTJIMTMxLjEyNloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03NSA4MEM3OC44NjYgODAgODIgNzYuODY2IDgyIDczQzgyIDY5LjEzNCA3OC44NjYgNjYgNzUgNjZDNzEuMTM0IDY2IDY4IDY5LjEzNCA2OCA3M0M2OCA3Ni44NjYgNzEuMTM0IDgwIDc1IDgwWiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxmaWx0ZXIgaWQ9ImZpbHRlcjBfZCIgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHg9IjAiIHk9IjAiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiI+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjM4Ii8+CjwvZmlsdGVyPgo8cmFkaWFsR3JhZGllbnQgaWQ9InBhaW50MF9yYWRpYWxfMTYwXzIwMjYiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYgOTYpIHNjYWxlKDE0Ny45OTYpIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzRhMDBlMCIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM4ZTJkZTIiLz4KPC9yYWRpYWxHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                },
+                {
+                    "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMjU2IiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWxfMjIwXzIwODIpIi8+CjxwYXRoIGQ9Ik0yODAgMTc4SDIzMlYzMzBIMjgwVjE3OFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0zNDkuNjY3IDMwMkMzNTAuMzM3IDI5OC4wMjggMzUwLjY2NyAyOTMuOTg3IDM1MC42NjcgMjg5Ljg2N0MzNTAuNjY3IDI3Mi4zMTggMzM1LjE0OSAyNTggMzE2IDI1OEMyOTYuODUxIDI1OCAyODEuMzMzIDI3Mi4zMTggMjgxLjMzMyAyODkuODY3QzI4MS4zMzMgMjkzLjk4NyAyODEuNjYzIDI5OC4wMjggMjgyLjMzMyAzMDJIMjAwQzE4OS43MzMgMzAyIDE4MS4zMzMgMzEwLjQgMTgxLjMzMyAzMjAuNjY3QzE4MS4zMzMgMzMwLjkzMyAxODkuNzMzIDMzOS4zMzMgMjAwIDMzOS4zMzNIMzc2SDM4NkgzOTZINDcyQzQ4Mi4yNjcgMzM5LjMzMyA0OTAuNjY3IDMzMC45MzMgNDkwLjY2NyAzMjAuNjY3QzQ5MC42NjcgMzEwLjQgNDgyLjI2NyAzMDIgNDcyIDMwMkgzNDkuNjY3WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTIwMCAyMTMuMzMzQzIxMy44NTkgMjEzLjMzMyAyMjUuMzMzIDIwMS44NTkgMjI1LjMzMyAxODcuOTk5QzIyNS4zMzMgMTc0LjE0IDEyMTMuODU5IDE2Mi42NjcgMjAwIDE2Mi42NjdDMTg2LjE0MSAxNjIuNjY3IDE3NC42NjcgMTc0LjE0IDE3NC42NjcgMTg3Ljk5OUMxNzQuNjY3IDIwMS44NTkgMTg2LjE0MSAyMTMuMzMzIDIwMCAyMTMuMzMzWiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxmaWx0ZXIgaWQ9ImZpbHRlcjBfZCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHg9IjAiIHk9IjAiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiI+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjM4Ii8+CjwvZmlsdGVyPgo8cmFkaWFsR3JhZGllbnQgaWQ9InBhaW50MF9yYWRpYWxfMjIwXzIwODIiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjU2IDI1Nikgc2NhbGUoMzk3Ljk0MykiPgo8c3RvcCBzdG9wLWN2b2xvcj0iIzRhMDBlMCIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM4ZTJkZTIiLz4KPC9yYWRpYWxHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+
+        // Registrar manifest dinamicamente
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+
+        // --- BANCO DE DADOS INDEXEDDB ---
+        const DB_NAME = 'OficinaDB_v2'; 
+        const DB_VERSION = 9; 
+        let db;
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    const stores = ['clientes', 'estoque', 'categorias', 'unidades', 'cores', 'empresa', 'modelos', 'orcamentos', 'vidros_catalogo', 'financeiro'];
+                    stores.forEach(store => {
+                        if (!db.objectStoreNames.contains(store)) {
+                            db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
+                        }
+                    });
+                };
+                request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+                request.onerror = (event) => reject(event.target.error);
+            });
+        };
+
+        const LocalDB = {
+            getAll: (storeName) => new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            }),
+            getById: (storeName, id) => new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(Number(id));
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            }),
+            save: (storeName, data) => new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                if (data.id) data.id = Number(data.id);
+                const request = store.put(data);
+                request.onsuccess = (event) => resolve(event.target.result);
+                request.onerror = () => reject(request.error);
+            }),
+            delete: (storeName, id) => new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(Number(id));
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => reject(request.error);
+            }),
+            setSingleton: async (storeName, data) => {
+                const items = await LocalDB.getAll(storeName);
+                if (items.length > 0) data.id = items[0].id;
+                return await LocalDB.save(storeName, data);
+            }
+        };
+
+        let currentEditingId = null;
+        let currentBudgetItems = [];
+
+        // --- PÁGINAS ---
+        const pages = {
+            home: async () => {
+                const contatos = await LocalDB.getAll('clientes');
+                const estoque = await LocalDB.getAll('estoque');
+                const empresaData = await LocalDB.getAll('empresa');
+                const empresa = empresaData[0] || { nome: 'Sua Oficina' };
+                const alertas = estoque.filter(i => {
+                    const total = i.grade ? i.grade.reduce((acc, curr) => acc + Number(curr.quantidade), 0) : 0;
+                    const min = i.grade ? i.grade.reduce((acc, curr) => acc + Number(curr.minimo), 0) : 0;
+                    return total <= min;
+                }).length;
+                
+                return `
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-home"></i> Painel Geral - ${empresa.nome}</h2>
+                    <div class="dashboard-grid">
+                        <div class="card stat-card bg-primary-grad"><h3>Contatos</h3><p style="font-size: 2.5rem; font-weight: 800;">${contatos.length}</p></div>
+                        <div class="card stat-card bg-danger-grad"><h3>Itens em Alerta</h3><p style="font-size: 2.5rem; font-weight: 800;">${alertas}</p></div>
+                    </div>
+                </div>`;
+            },
+
+            modelos: async () => `
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-layer-group"></i> Engenharia de Modelos (Projetos)</h2>
+                    <form id="form-modelo" onsubmit="handleSalvarModelo(event)" class="form-container">
+                        <h4 id="form-label-mod" class="form-section-title">Novo Modelo de Produto</h4>
+                        <div class="form-grid">
+                            <div class="form-group col-span-2">
+                                <label>Nome do Projeto (ex: Janela 02 Folhas)</label>
+                                <input type="text" id="mod-nome" class="form-control" required placeholder="Digite o nome do produto">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label style="font-weight: 700;">Estrutura da Receita (L = Largura, H = Altura)</label>
+                            <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Exemplos: (L+50)*2 ou (L*H)/1000000 para m²</p>
+                            <div id="recipe-container" class="recipe-container"></div>
+                            <button type="button" class="btn-outline btn-dashed" onclick="adicionarLinhaReceita()"><i class="fas fa-plus"></i> Novo Componente</button>
+                        </div>
+                        <div class="btn-group mt-4">
+                            <button type="submit" class="btn-primary" id="btn-save-mod">Gravar Modelo</button>
+                            <button type="button" class="btn-outline" onclick="resetModeloForm()" id="btn-cancel-mod" style="display:none">Cancelar Edição</button>
+                        </div>
+                    </form>
+                    <div id="lista-modelos"></div>
+                </div>`,
+
+            orcamentos: async () => {
+                const modelos = await LocalDB.getAll('modelos');
+                const clientes = await LocalDB.getAll('clientes');
+                const cores = await LocalDB.getAll('cores');
+                const vidros = await LocalDB.getAll('vidros_catalogo');
+                currentBudgetItems = [];
+                return `
+                <div class="card no-print">
+                    <h2 class="card-title"><i class="fas fa-file-invoice-dollar"></i> Orçamentos Profissionais</h2>
+                    
+                    <div class="settings-tabs">
+                        <button class="tab-btn active" id="btn-tab-novo" onclick="switchBudgetTab('tab-novo-orc', event)">Gerar Novo Orçamento</button>
+                        <button class="tab-btn" id="btn-tab-hist" onclick="switchBudgetTab('tab-historico-orc', event); renderHistoricoOrcamentos();">Consultar Histórico (Baixas/Financeiro)</button>
+                    </div>
+
+                    <div id="tab-novo-orc" class="tab-content active">
+                        <div class="form-container">
+                            <div class="form-grid">
+                                <div class="form-group col-span-2">
+                                    <label>Cliente</label>
+                                    <select id="orc-cliente" class="form-control">
+                                        <option value="">Selecione o cliente...</option>
+                                        ${clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Margem de Lucro (%)</label>
+                                    <input type="number" id="orc-margem" class="form-control" value="30" onchange="renderResumoOrcamento()">
+                                </div>
+                            </div>
+                            <div class="form-grid" style="background: #f0f7ff; padding: 25px; border-radius: 12px; border: 1px solid var(--accent-color);">
+                                <div class="form-group col-span-2">
+                                    <label>Projeto Base</label>
+                                    <select id="orc-modelo" class="form-control" onchange="toggleGlassSelector(this.value)">
+                                        <option value="">Escolha o modelo...</option>
+                                        ${modelos.map(m => `<option value="${m.id}">${m.nome}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Largura L (mm)</label><input type="number" id="orc-largura" class="form-control" value="1000"></div>
+                                <div class="form-group"><label>Altura H (mm)</label><input type="number" id="orc-altura" class="form-control" value="1000"></div>
+                                <div class="form-group"><label>Cor Alumínio</label><select id="orc-cor-alu" class="form-control">${cores.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('')}</select></div>
+                                <div class="form-group" id="glass-selector-container" style="display:none"><label>Tipo de Vidro</label><select id="orc-vidro-tipo" class="form-control"><option value="">Selecione o Vidro...</option>${vidros.map(v => `<option value="${v.id}">${v.nome} - ${v.espessura}mm (${v.cor})</option>`).join('')}</select></div>
+                                <div class="form-group"><label>Qtd</label><input type="number" id="orc-qtd" class="form-control" value="1"></div>
+                                <button type="button" class="btn-primary" style="align-self: end;" onclick="adicionarItemOrcamento()"><i class="fas fa-plus"></i> Incluir no Orçamento</button>
+                            </div>
+                        </div>
+                        <div id="resumo-orcamento-lista"></div>
+                        <div id="botoes-finalizacao" style="display:none; text-align: right; margin-top: 25px;">
+                            <button class="btn-outline" onclick="loadPage('orcamentos')">Limpar Tudo</button>
+                            <button class="btn-primary" onclick="salvarOrcamentoNoBanco()" style="background: var(--info-color);"><i class="fas fa-save"></i> Gravar no Histórico</button>
+                            <button class="btn-primary" style="background: var(--success-color);" onclick="prepararPDFNovoOrcamento()"><i class="fas fa-file-pdf"></i> Imprimir PDF de Venda</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-historico-orc" class="tab-content">
+                        <div id="lista-historico-orcamentos"></div>
+                    </div>
+                </div>
+                <div id="printable-area"></div>`;
+            },
+
+            financeiro: async () => {
+                const logs = await LocalDB.getAll('financeiro');
+                const saldoTotal = logs.reduce((acc, curr) => acc + (curr.tipo === 'Crédito' ? curr.valor : -curr.valor), 0);
+                
+                return `
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-hand-holding-usd"></i> Gestão Financeira</h2>
+                    
+                    <div class="form-container">
+                        <h4 class="form-section-title">Novo Lançamento Manual</h4>
+                        <form id="form-financeiro" onsubmit="handleSalvarLancamento(event)" class="form-grid">
+                            <div class="form-group col-span-2"><label>Descrição</label><input type="text" id="fin-desc" class="form-control" required placeholder="Ex: Compra de parafusos"></div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="fin-tipo" class="form-control">
+                                    <option value="Crédito">Entrada (Crédito)</option>
+                                    <option value="Débito">Saída (Débito)</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Valor (R$)</label><input type="number" id="fin-valor" class="form-control" step="0.01" required></div>
+                            <button type="submit" class="btn-primary" style="align-self: end;">Lançar Caixa</button>
+                        </form>
+                    </div>
+
+                    <div class="dashboard-grid mb-4">
+                        <div class="card stat-card bg-primary-grad">
+                            <h3>Saldo Atual em Caixa</h3>
+                            <p style="font-size: 2.5rem; font-weight: 800;">R$ ${saldoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                    </div>
+
+                    <h4 class="form-section-title">Histórico de Movimentações</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Descrição</th>
+                                <th>Tipo</th>
+                                <th class="text-right">Valor</th>
+                                <th class="text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${logs.length === 0 ? '<tr><td colspan="5" class="empty-msg">Nenhuma movimentação.</td></tr>' : 
+                                logs.reverse().map(l => `
+                                <tr>
+                                    <td>${new Date(l.data).toLocaleString()}</td>
+                                    <td>${l.descricao}</td>
+                                    <td><span class="badge ${l.tipo === 'Crédito' ? 'badge-success' : 'badge-danger'}">${l.tipo}</span></td>
+                                    <td class="text-right" style="color: ${l.tipo === 'Crédito' ? '#27ae60' : '#e74c3c'}; font-weight:bold;">
+                                        R$ ${(l.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </td>
+                                    <td class="text-right"><button onclick="removerLancamento(${l.id})" class="action-btn delete-btn"><i class="fas fa-trash"></i></button></td>
+                                </tr>`).join('')
+                            }
+                        </tbody>
+                    </table>
+                </div>`;
+            },
+
+            clientes: async () => `
+                <div class="card">
+                    <h2 class="card-title">Gestão de Contatos</h2>
+                    <form id="form-cliente" onsubmit="handleSalvarCliente(event)" class="form-container">
+                        <div class="form-grid">
+                            <div class="form-group col-span-2"><label>Nome / Razão Social</label><input type="text" id="cli-nome" class="form-control" required></div>
+                            <div class="form-group"><label>Tipo</label><select id="cli-tipo" class="form-control"><option value="cliente">Cliente</option><option value="fornecedor">Fornecedor</option></select></div>
+                            <div class="form-group"><label>Doc (CPF/CNPJ)</label><input type="text" id="cli-doc" class="form-control"></div>
+                            <div class="form-group"><label>Telefone</label><input type="text" id="cli-tel" class="form-control" placeholder="(00) 00000-0000"></div>
+                            <div class="form-group"><label>E-mail</label><input type="email" id="cli-email" class="form-control"></div>
+                            <div class="form-group"><label>Saldo Atual (R$)</label><input type="number" id="cli-saldo" class="form-control" step="0.01" value="0.00"></div>
+                            <div class="form-group col-span-2"><label>Endereço Completo</label><input type="text" id="cli-endereco" class="form-control"></div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn-primary" id="btn-save-cli">Gravar Contato</button>
+                            <button type="button" class="btn-outline" onclick="resetClienteForm()" id="btn-cancel-cli" style="display:none">Cancelar</button>
+                        </div>
+                    </form>
+                    <div id="lista-clientes"></div>
+                </div>`,
+
+            estoque: async () => {
+                const unidades = await LocalDB.getAll('unidades');
+                const categorias = await LocalDB.getAll('categorias');
+                return `
+                <div class="card">
+                    <h2 class="card-title">Controle de Estoque Detalhado</h2>
+                    <form id="form-estoque" onsubmit="handleSalvarItem(event)" class="form-container">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Cód. SKU / Ref</label><input type="text" id="est-codigo-pai" class="form-control"></div>
+                            <div class="form-group col-span-2"><label>Nome do Produto</label><input type="text" id="est-nome" class="form-control" required></div>
+                            <div class="form-group"><label>Categoria</label><select id="est-cat" class="form-control">${categorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('')}</select></div>
+                            <div class="form-group"><label>Uni. Entrada</label><select id="est-uni-entrada" class="form-control">${unidades.map(u => `<option value="${u.sigla}">${u.sigla}</option>`).join('')}</select></div>
+                            <div class="form-group"><label>Uni. Saída</label><select id="est-uni-saida" class="form-control">${unidades.map(u => `<option value="${u.sigla}">${u.sigla}</option>`).join('')}</select></div>
+                            <div class="form-group"><label>Fator de Conversão</label><input type="number" id="est-fator" class="form-control" step="0.001" value="1.000"></div>
+                        </div>
+                        <div id="color-rows-container" class="color-rows-container"></div>
+                        <button type="button" class="btn-outline btn-dashed" onclick="adicionarLinhaCor()"><i class="fas fa-plus"></i> Adicionar Variação de Cor/Preço</button>
+                        <div class="btn-group mt-4">
+                            <button type="submit" class="btn-primary" id="btn-save-est">Confirmar Alterações</button>
+                            <button type="button" class="btn-outline" onclick="resetEstoqueForm()" id="btn-cancel-est" style="display:none">Cancelar Edição</button>
+                        </div>
+                    </form>
+                    <div id="lista-estoque"></div>
+                </div>`;
+            },
+
+            configuracoes: async () => {
+                const empresa = (await LocalDB.getAll('empresa'))[0] || {};
+                return `
+                <div class="card">
+                    <h2 class="card-title">Configurações</h2>
+                    <div class="settings-tabs">
+                        <button class="tab-btn active" onclick="switchTab('tab-empresa', event)">Dados da Empresa</button>
+                        <button class="tab-btn" onclick="switchTab('tab-vidros', event)">Catálogo de Vidros</button>
+                        <button class="tab-btn" onclick="switchTab('tab-unidades', event)">Unidades</button>
+                        <button class="tab-btn" onclick="switchTab('tab-categorias', event)">Categorias</button>
+                        <button class="tab-btn" onclick="switchTab('tab-cores', event)">Cores</button>
+                    </div>
+                    <div id="tab-empresa" class="tab-content active">
+                        <form onsubmit="handleSalvarEmpresa(event)">
+                            <div class="form-grid">
+                                <div class="form-group col-span-2"><label>Razão Social</label><input type="text" id="emp-nome" class="form-control" value="${empresa.nome || ''}"></div>
+                                <div class="form-group"><label>Telefone Contato</label><input type="text" id="emp-tel" class="form-control" value="${empresa.telefone || ''}"></div>
+                            </div>
+                            <button type="submit" class="btn-primary mt-4">Salvar Alterações</button>
+                        </form>
+                    </div>
+                    <div id="tab-vidros" class="tab-content">
+                        <form onsubmit="handleSalvarVidroCatalogo(event)" class="form-grid">
+                            <input type="text" id="vid-nome" class="form-control" placeholder="Tipo do Vidro" required>
+                            <input type="number" id="vid-esp" class="form-control" placeholder="Espessura (mm)" required>
+                            <input type="text" id="vid-cor" class="form-control" placeholder="Cor" required>
+                            <input type="number" id="vid-preco" class="form-control" placeholder="Preço m² (R$)" step="0.01" required>
+                            <button type="submit" class="btn-primary">Adicionar Vidro</button>
+                        </form>
+                        <div id="lista-vidros-catalogo" class="mt-4"></div>
+                    </div>
+                    <div id="tab-unidades" class="tab-content">
+                        <form onsubmit="handleSalvarUnidade(event)" class="form-grid"><input type="text" id="uni-sigla" class="form-control" placeholder="Ex: BARRA" required><button type="submit" class="btn-primary">Add</button></form>
+                        <div id="lista-unidades" class="mt-4"></div>
+                    </div>
+                    <div id="tab-categorias" class="tab-content">
+                        <form onsubmit="handleSalvarCategoria(event)" class="form-grid"><input type="text" id="cat-nome" class="form-control" placeholder="Ex: Acessórios" required><button type="submit" class="btn-primary">Add</button></form>
+                        <div id="lista-categorias" class="mt-4"></div>
+                    </div>
+                    <div id="tab-cores" class="tab-content">
+                        <form onsubmit="handleSalvarCor(event)" class="form-grid"><input type="text" id="cor-nome" class="form-control" placeholder="Ex: Bronze" required><button type="submit" class="btn-primary">Add</button></form>
+                        <div id="lista-cores" class="mt-4"></div>
+                    </div>
+                </div>`;
+            }
+        };
+
+        // --- LÓGICA DE FINANCEIRO ---
+        async function handleSalvarLancamento(e) {
+            e.preventDefault();
+            const lancamento = {
+                data: new Date().toISOString(),
+                descricao: document.getElementById('fin-desc').value,
+                tipo: document.getElementById('fin-tipo').value,
+                valor: Number(document.getElementById('fin-valor').value)
+            };
+            await LocalDB.save('financeiro', lancamento);
+            alert("Lançamento realizado!");
+            loadPage('financeiro');
+        }
+
+        async function removerLancamento(id) {
+            if(confirm("Excluir este lançamento permanentemente? Isso alterará o saldo.")) {
+                await LocalDB.delete('financeiro', id);
+                loadPage('financeiro');
+            }
+        }
+
+        // --- LÓGICA DE ORÇAMENTOS ---
+        function switchBudgetTab(tabId, event) {
+            document.querySelectorAll('#tab-novo-orc, #tab-historico-orc').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(event) event.target.classList.add('active');
+            const target = document.getElementById(tabId);
+            if(target) target.classList.add('active');
+        }
+
+        async function toggleGlassSelector(modId) {
+            const container = document.getElementById('glass-selector-container');
+            if(!modId) return container.style.display = 'none';
+            const modelo = await LocalDB.getById('modelos', modId);
+            container.style.display = modelo.receita.some(r => r.tipo === 'vidro') ? 'block' : 'none';
+        }
+
+        async function adicionarLinhaReceita(dados = null) {
+            const container = document.getElementById('recipe-container');
+            if(!container) return;
+            const estoque = await LocalDB.getAll('estoque');
+            const div = document.createElement('div');
+            div.className = 'recipe-row';
+            div.innerHTML = `
+                <select class="form-control rec-tipo" onchange="updateRecipeItemSelect(this)">
+                    <option value="material" ${dados?.tipo === 'material' ? 'selected' : ''}>Material Stock</option>
+                    <option value="vidro" ${dados?.tipo === 'vidro' ? 'selected' : ''}>Vidro (Encomenda)</option>
+                </select>
+                <div class="rec-select-material" style="${dados?.tipo === 'vidro' ? 'display:none' : ''}">
+                    <select class="form-control rec-item">
+                        <option value="">Escolha o item...</option>
+                        ${estoque.map(i => `<option value="${i.nome}" ${dados?.item === i.nome ? 'selected' : ''}>${i.nome}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="rec-label-vidro" style="${dados?.tipo === 'vidro' ? '' : 'display:none'}">
+                    <input type="text" class="form-control rec-vid-id" value="${dados?.item || 'Vidro 1'}" placeholder="ID do Vidro">
+                </div>
+                <input type="text" class="form-control rec-formula" value="${dados?.formula || ''}" placeholder="Fórmula (L, H)">
+                <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>`;
+            container.appendChild(div);
+        }
+
+        function updateRecipeItemSelect(el) {
+            const row = el.parentElement;
+            row.querySelector('.rec-select-material').style.display = el.value === 'material' ? 'block' : 'none';
+            row.querySelector('.rec-label-vidro').style.display = el.value === 'vidro' ? 'block' : 'none';
+        }
+
+        async function handleSalvarModelo(e) {
+            e.preventDefault();
+            const rows = document.querySelectorAll('.recipe-row');
+            const itens = Array.from(rows).map(row => ({
+                tipo: row.querySelector('.rec-tipo').value,
+                item: row.querySelector('.rec-tipo').value === 'material' ? row.querySelector('.rec-item').value : row.querySelector('.rec-vid-id').value,
+                formula: row.querySelector('.rec-formula').value.toUpperCase().replace(/\s/g, '')
+            }));
+            const modelo = { nome: document.getElementById('mod-nome').value, receita: itens };
+            if (currentEditingId) modelo.id = currentEditingId;
+            await LocalDB.save('modelos', modelo);
+            resetModeloForm(); await renderModelos();
+            alert("Modelo salvo com sucesso!");
+        }
+
+        async function renderModelos() {
+            const list = await LocalDB.getAll('modelos');
+            const container = document.getElementById('lista-modelos');
+            if(!container) return;
+            container.innerHTML = `<table class="data-table"><thead><tr><th>Modelo / Projeto</th><th class="text-right">Ações</th></tr></thead><tbody>
+                ${list.map(m => `<tr><td><strong>${m.nome}</strong></td><td class="text-right"><button onclick="editarModelo(${m.id})" class="action-btn edit-btn"><i class="fas fa-edit"></i></button><button onclick="removerModelo(${m.id})" class="action-btn delete-btn"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
+            </tbody></table>`;
+        }
+
+        async function editarModelo(id) {
+            const m = await LocalDB.getById('modelos', id);
+            document.getElementById('mod-nome').value = m.nome;
+            document.getElementById('recipe-container').innerHTML = '';
+            for (let item of m.receita) await adicionarLinhaReceita(item);
+            currentEditingId = id;
+            document.getElementById('btn-cancel-mod').style.display = 'block';
+            window.scrollTo(0,0);
+        }
+
+        function resetModeloForm() { document.getElementById('form-modelo').reset(); document.getElementById('recipe-container').innerHTML = ''; currentEditingId = null; document.getElementById('btn-cancel-mod').style.display = 'none'; adicionarLinhaReceita(); }
+        async function removerModelo(id) { if(confirm('Excluir este modelo permanentemente?')) { await LocalDB.delete('modelos', id); renderModelos(); } }
+
+        async function adicionarItemOrcamento() {
+            const modId = document.getElementById('orc-modelo').value;
+            const L = Number(document.getElementById('orc-largura').value);
+            const H = Number(document.getElementById('orc-altura').value);
+            const Q = Number(document.getElementById('orc-qtd').value);
+            const corAlu = document.getElementById('orc-cor-alu').value;
+            const vidroId = document.getElementById('orc-vidro-tipo').value;
+
+            if(!modId || !corAlu) return alert("Selecione o Projeto e a Cor do Alumínio.");
+
+            const modelo = await LocalDB.getById('modelos', modId);
+            const estoque = await LocalDB.getAll('estoque');
+            const catalogoVidros = await LocalDB.getAll('vidros_catalogo');
+
+            let custoTotalPeca = 0;
+            let infoVidro = "N/A";
+
+            modelo.receita.forEach(rec => {
+                let formula = rec.formula.replace(/L/g, L).replace(/H/g, H);
+                let calculoQuant = 0; 
+                try { calculoQuant = eval(formula); } catch(e) { calculoQuant = 0; }
+                
+                if (rec.tipo === 'material') {
+                    const material = estoque.find(e => e.nome === rec.item);
+                    const variacaoPreco = material?.grade.find(v => v.cor === corAlu)?.valor || 0;
+                    custoTotalPeca += (Number(calculoQuant) / 1000) * Number(variacaoPreco);
+                } else {
+                    const vidroEscolhido = catalogoVidros.find(v => v.id == vidroId);
+                    if(vidroEscolhido) {
+                        custoTotalPeca += (Number(calculoQuant) / 1000000) * Number(vidroEscolhido.preco_m2);
+                        infoVidro = `${vidroEscolhido.nome} ${vidroEscolhido.espessura}mm (${vidroEscolhido.cor})`;
+                    }
+                }
+            });
+
+            currentBudgetItems.push({
+                modelo_id: modId,
+                nome: modelo.nome, medida_L: L, medida_H: H, medida: `${L}x${H}mm`, cor: corAlu, vidro: infoVidro, qtd: Q, custo_unitario: custoTotalPeca, total_custo: custoTotalPeca * Q
+            });
+            renderResumoOrcamento();
+        }
+
+        function renderResumoOrcamento() {
+            const container = document.getElementById('resumo-orcamento-lista');
+            const margem = Number(document.getElementById('orc-margem').value) || 0;
+            if(!container) return;
+            document.getElementById('botoes-finalizacao').style.display = 'block';
+            
+            let totalCusto = currentBudgetItems.reduce((acc, i) => acc + i.total_custo, 0);
+            let totalVenda = totalCusto * (1 + (margem / 100));
+
+            container.innerHTML = `
+            <div style="margin-top:20px; padding:15px; background:#fff; border-radius:10px; border:1px solid #ddd;">
+                <table class="data-table">
+                    <thead><tr><th>Descrição</th><th>Configuração</th><th>Qtd</th><th class="text-right">Venda Total</th><th class="text-right">Ação</th></tr></thead>
+                    <tbody>
+                        ${currentBudgetItems.map((i, idx) => {
+                            let vendaUnit = i.custo_unitario * (1 + (margem/100));
+                            return `<tr>
+                                <td><strong>${i.nome}</strong></td>
+                                <td><small>${i.medida}<br>Alu: ${i.cor}<br>Vid: ${i.vidro}</small></td>
+                                <td>${i.qtd}</td>
+                                <td class="text-right" style="color:var(--primary-color); font-weight:bold;">R$ ${(vendaUnit * i.qtd).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td class="text-right"><button onclick="removerItemOrcamento(${idx})" class="delete-btn action-btn"><i class="fas fa-times"></i></button></td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f1f1f1;">
+                            <td colspan="3" class="text-right"><strong>VALOR TOTAL DE VENDA:</strong></td>
+                            <td class="text-right" style="color:var(--success-color); font-size:1.2rem;"><strong>R$ ${totalVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+        }
+
+        function removerItemOrcamento(index) { currentBudgetItems.splice(index, 1); renderResumoOrcamento(); }
+
+        async function salvarOrcamentoNoBanco() {
+            const cliente = document.getElementById('orc-cliente').value;
+            const margem = Number(document.getElementById('orc-margem').value) || 0;
+            if(!cliente) return alert("Selecione um cliente.");
+            if(currentBudgetItems.length === 0) return alert("Adicione itens ao orçamento.");
+
+            const totalCusto = currentBudgetItems.reduce((acc, i) => acc + i.total_custo, 0);
+            const totalVenda = totalCusto * (1 + (margem / 100));
+
+            const orcamentoData = {
+                cliente: cliente,
+                data: new Date().toISOString(),
+                itens: JSON.parse(JSON.stringify(currentBudgetItems)),
+                margem: margem,
+                total_custo: totalCusto,
+                total_venda: totalVenda,
+                status: 'Pendente'
+            };
+
+            try {
+                await LocalDB.save('orcamentos', orcamentoData);
+                alert("Orçamento salvo com sucesso!");
+                await renderHistoricoOrcamentos();
+                switchBudgetTab('tab-historico-orc', { target: document.getElementById('btn-tab-hist') });
+            } catch (err) {
+                alert("Erro ao salvar.");
+            }
+        }
+
+        async function renderHistoricoOrcamentos() {
+            const list = await LocalDB.getAll('orcamentos');
+            const container = document.getElementById('lista-historico-orcamentos');
+            if(!container) return;
+            
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Nenhum orçamento salvo no histórico.</div>';
+                return;
+            }
+
+            const sortedList = [...list].reverse();
+
+            container.innerHTML = `<table class="data-table"><thead><tr><th>Data</th><th>Cliente</th><th>Total Venda</th><th>Status</th><th class="text-right">Ações</th></tr></thead><tbody>
+                ${sortedList.map(o => {
+                    const venda = o.total_venda || 0;
+                    return `<tr>
+                        <td>${new Date(o.data).toLocaleDateString()}</td>
+                        <td><strong>${o.cliente}</strong></td>
+                        <td>R$ ${venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td><span class="badge ${o.status === 'Finalizado' ? 'badge-success' : 'badge-warning'}">${o.status || 'Pendente'}</span></td>
+                        <td class="text-right" style="display:flex; gap:10px; justify-content: flex-end; align-items: center;">
+                            ${o.status !== 'Finalizado' ? 
+                                `<button onclick="finalizarObra(${o.id})" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background: var(--success-color);" title="Fechar Obra e dar baixa"><i class="fas fa-check-circle"></i> Fechar Obra</button>` : 
+                                `<button onclick="reverterObra(${o.id})" class="btn-outline" style="padding: 5px 10px; font-size: 0.8rem; border-color: var(--danger-color); color: var(--danger-color);" title="Cancelar Baixas e Financeiro"><i class="fas fa-undo"></i> Reverter Obra</button>`
+                            }
+                            <button onclick="prepararPDFHistorico(${o.id})" class="action-btn edit-btn" title="Imprimir"><i class="fas fa-print"></i></button>
+                            <button onclick="excluirOrcamento(${o.id})" class="action-btn delete-btn" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('')}
+            </tbody></table>`;
+        }
+
+        async function finalizarObra(id) {
+            if(!confirm("Deseja fechar esta obra? Isso dará baixa no estoque e registrará o crédito no financeiro.")) return;
+            try {
+                const orc = await LocalDB.getById('orcamentos', id);
+                if(orc.status === 'Finalizado') return alert("Obra já finalizada.");
+
+                const modelos = await LocalDB.getAll('modelos');
+                const estoque = await LocalDB.getAll('estoque');
+                let baixasNecessarias = [];
+
+                for(let itemOrc of orc.itens) {
+                    const mod = modelos.find(m => m.id == itemOrc.modelo_id) || modelos.find(m => m.nome == itemOrc.nome);
+                    if(!mod) continue;
+                    for(let rec of mod.receita) {
+                        if(rec.tipo !== 'material') continue;
+                        let formula = rec.formula.replace(/L/g, itemOrc.medida_L).replace(/H/g, itemOrc.medida_H);
+                        let quantCalculada = eval(formula);
+                        let quantFinal = (quantCalculada / 1000) * itemOrc.qtd;
+                        const itemEstoque = estoque.find(e => e.nome === rec.item);
+                        if(itemEstoque) {
+                            const corGrade = itemEstoque.grade.find(g => g.cor === itemOrc.cor);
+                            if(corGrade) {
+                                corGrade.quantidade = Number(corGrade.quantidade) - quantFinal;
+                                if(!baixasNecessarias.includes(itemEstoque)) baixasNecessarias.push(itemEstoque);
+                            }
+                        }
+                    }
+                }
+                for(let itemEst of baixasNecessarias) await LocalDB.save('estoque', itemEst);
+                await LocalDB.save('financeiro', { data: new Date().toISOString(), descricao: `Venda Obra #${orc.id} - ${orc.cliente}`, tipo: 'Crédito', valor: orc.total_venda, orc_id: orc.id });
+                orc.status = 'Finalizado';
+                await LocalDB.save('orcamentos', orc);
+                alert("Obra finalizada com sucesso!");
+                renderHistoricoOrcamentos();
+            } catch (err) { alert("Erro ao finalizar obra."); }
+        }
+
+        async function reverterObra(id) {
+            if(!confirm("Deseja reverter esta obra? Isso devolverá os materiais ao estoque e lançará um estorno (saída) no seu financeiro.")) return;
+            try {
+                const orc = await LocalDB.getById('orcamentos', id);
+                if(orc.status !== 'Finalizado') return alert("Somente obras finalizadas podem ser revertidas.");
+
+                const modelos = await LocalDB.getAll('modelos');
+                const estoque = await LocalDB.getAll('estoque');
+                let retornosNecessarios = [];
+
+                for(let itemOrc of orc.itens) {
+                    const mod = modelos.find(m => m.id == itemOrc.modelo_id) || modelos.find(m => m.nome == itemOrc.nome);
+                    if(!mod) continue;
+                    for(let rec of mod.receita) {
+                        if(rec.tipo !== 'material') continue;
+                        let formula = rec.formula.replace(/L/g, itemOrc.medida_L).replace(/H/g, itemOrc.medida_H);
+                        let quantCalculada = eval(formula);
+                        let quantFinal = (quantCalculada / 1000) * itemOrc.qtd;
+                        const itemEstoque = estoque.find(e => e.nome === rec.item);
+                        if(itemEstoque) {
+                            const corGrade = itemEstoque.grade.find(g => g.cor === itemOrc.cor);
+                            if(corGrade) {
+                                corGrade.quantidade = Number(corGrade.quantidade) + quantFinal; // DEVOLVE AO ESTOQUE
+                                if(!retornosNecessarios.includes(itemEstoque)) retornosNecessarios.push(itemEstoque);
+                            }
+                        }
+                    }
+                }
+                for(let itemEst of retornosNecessarios) await LocalDB.save('estoque', itemEst);
+                await LocalDB.save('financeiro', { data: new Date().toISOString(), descricao: `Estorno de Venda (Obra #${orc.id} Revertida)`, tipo: 'Débito', valor: orc.total_venda });
+                orc.status = 'Pendente';
+                await LocalDB.save('orcamentos', orc);
+                alert("Obra revertida! Estoque e financeiro ajustados.");
+                renderHistoricoOrcamentos();
+            } catch (err) { alert("Erro ao reverter obra."); }
+        }
+
+        async function excluirOrcamento(id) { if(confirm("Deseja remover este orçamento?")) { await LocalDB.delete('orcamentos', id); renderHistoricoOrcamentos(); } }
+
+        async function prepararPDFNovoOrcamento() {
+            const cliente = document.getElementById('orc-cliente').value;
+            const margem = Number(document.getElementById('orc-margem').value) || 0;
+            if(!cliente) return alert("Selecione o cliente.");
+            const totalCusto = currentBudgetItems.reduce((acc, i) => acc + i.total_custo, 0);
+            const totalVenda = totalCusto * (1 + (margem / 100));
+            await imprimirPDFProfissional({ cliente, data: new Date().toISOString(), itens: currentBudgetItems, total_venda: totalVenda, margem });
+        }
+
+        async function prepararPDFHistorico(id) {
+            const o = await LocalDB.getById('orcamentos', id);
+            await imprimirPDFProfissional(o);
+        }
+
+        async function imprimirPDFProfissional(orc) {
+            const empresaData = await LocalDB.getAll('empresa');
+            const emp = empresaData[0] || { nome: 'Oficina da Família', telefone: '-' };
+            const margemMult = 1 + ((orc.margem || 0) / 100);
+            
+            const content = `
+                <div style="padding:50px; color:#333; font-family: sans-serif; line-height: 1.5;">
+                    <table style="width:100%; border-bottom: 4px solid var(--primary-color); padding-bottom: 20px; margin-bottom: 30px;">
+                        <tr>
+                            <td style="width:70%;">
+                                <h1 style="margin:0; color:var(--primary-color); text-transform:uppercase;">${emp.nome}</h1>
+                                <p style="margin:5px 0; font-weight:bold;">Serralheria e Vidraçaria</p>
+                                <p style="margin:0; color:#666;">Telefone: ${emp.telefone}</p>
+                            </td>
+                            <td style="width:30%; text-align:right;">
+                                <h2 style="margin:0; color:#444;">ORÇAMENTO</h2>
+                                <p style="margin:0; font-weight:bold;">DATA: ${new Date(orc.data).toLocaleDateString()}</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="background:#f5f7fa; padding:20px; border-radius:10px; border:1px solid #ddd; margin-bottom: 30px;">
+                        <span style="color:#666; font-size:12px; font-weight:bold; text-transform:uppercase;">Cliente</span>
+                        <div style="font-size:18px; font-weight:bold; margin-top:5px;">${orc.cliente}</div>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:40px;">
+                        <thead style="background:var(--primary-color); color:white;">
+                            <tr>
+                                <th style="padding:15px; text-align:left;">PROJETO</th>
+                                <th style="padding:15px; text-align:left;">ESPECIFICAÇÕES</th>
+                                <th style="padding:15px; text-align:center;">QTD</th>
+                                <th style="padding:15px; text-align:right;">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orc.itens.map(i => {
+                                let vUnit = i.custo_unitario * margemMult;
+                                return `
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:15px; vertical-align:top;"><strong>${i.nome}</strong></td>
+                                    <td style="padding:15px; font-size:13px; color:#555;">${i.medida}<br>Cor: ${i.cor} | Vidro: ${i.vidro}</td>
+                                    <td style="padding:15px; text-align:center;">${i.qtd}</td>
+                                    <td style="padding:15px; text-align:right; font-weight:bold;">R$ ${(vUnit * i.qtd).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                        <tfoot style="background:#f1f1f1;">
+                            <tr>
+                                <td colspan="3" style="padding:20px; text-align:right; font-size:18px;"><strong>VALOR TOTAL:</strong></td>
+                                <td style="padding:20px; text-align:right; font-size:22px; color:var(--primary-color);"><strong>R$ ${(orc.total_venda || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="margin-top:50px; font-size:12px; color:#777; border-top: 1px dashed #ccc; padding-top:20px;">
+                        <p>* Prazo de validade: 10 dias.<br>
+                           * Pagamento a combinar.<br>
+                           * Serviço com garantia.</p>
+                        
+                        <div style="display:flex; justify-content:space-between; margin-top:80px;">
+                            <div style="width:45%; text-align:center; border-top:1px solid #333; padding-top:10px;">${emp.nome}</div>
+                            <div style="width:45%; text-align:center; border-top:1px solid #333; padding-top:10px;">Assinatura do Cliente</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('printable-area').innerHTML = content;
+            window.print();
+        }
+
+        // --- ESTOQUE E CONTACTOS ---
+        async function handleSalvarItem(e) {
+            e.preventDefault();
+            const grade = Array.from(document.querySelectorAll('.color-row')).map(r => ({
+                cor: r.querySelector('.est-row-cor').value,
+                quantidade: r.querySelector('.est-row-qtd').value,
+                valor: r.querySelector('.est-row-valor').value,
+                minimo: r.querySelector('.est-row-min').value
+            }));
+            const item = { 
+                nome: document.getElementById('est-nome').value, codigo_pai: document.getElementById('est-codigo-pai').value,
+                cat: document.getElementById('est-cat').value, uni_ent: document.getElementById('est-uni-entrada').value,
+                uni_saida: document.getElementById('est-uni-saida').value, fator_conversao: document.getElementById('est-fator').value, grade 
+            };
+            if (currentEditingId) item.id = currentEditingId;
+            await LocalDB.save('estoque', item);
+            resetEstoqueForm(); await renderEstoque();
+            alert("Estoque atualizado.");
+        }
+
+        async function renderEstoque() {
+            const list = await LocalDB.getAll('estoque');
+            const container = document.getElementById('lista-estoque');
+            if(!container) return;
+            container.innerHTML = `<table class="data-table"><thead><tr><th>Produto</th><th>Saldo</th><th class="text-right">Ações</th></tr></thead><tbody>
+                ${list.map(i => {
+                    const tQtd = i.grade.reduce((a,b)=>a+Number(b.quantidade),0);
+                    return `<tr><td><strong>${i.nome}</strong><br><small>${i.cat}</small></td><td>${tQtd.toFixed(2)} ${i.uni_saida}</td><td class="text-right"><button onclick="editarEstoque(${i.id})" class="action-btn edit-btn"><i class="fas fa-edit"></i></button><button onclick="removerEstoque(${i.id})" class="action-btn delete-btn"><i class="fas fa-trash"></i></button></td></tr>`;
+                }).join('')}
+            </tbody></table>`;
+        }
+
+        async function editarEstoque(id) {
+            const i = await LocalDB.getById('estoque', id);
+            document.getElementById('est-nome').value = i.nome;
+            document.getElementById('est-codigo-pai').value = i.codigo_pai || '';
+            document.getElementById('est-cat').value = i.cat || '';
+            document.getElementById('est-fator').value = i.fator_conversao || 1;
+            document.getElementById('color-rows-container').innerHTML = '';
+            for (let g of i.grade) await adicionarLinhaCor(g);
+            currentEditingId = id;
+            document.getElementById('btn-cancel-est').style.display = 'block';
+            window.scrollTo(0,0);
+        }
+
+        function resetEstoqueForm() { document.getElementById('form-estoque').reset(); document.getElementById('color-rows-container').innerHTML = ''; currentEditingId = null; document.getElementById('btn-cancel-est').style.display = 'none'; adicionarLinhaCor(); }
+        async function removerEstoque(id) { if(confirm('Remover?')) { await LocalDB.delete('estoque', id); renderEstoque(); } }
+
+        async function adicionarLinhaCor(dados = null) {
+            const container = document.getElementById('color-rows-container');
+            if(!container) return;
+            const cores = await LocalDB.getAll('cores');
+            const div = document.createElement('div');
+            div.className = 'color-row';
+            div.innerHTML = `
+                <div class="form-group"><label>Cor</label><select class="form-control est-row-cor">${cores.map(c => `<option value="${c.nome}" ${dados?.cor === c.nome ? 'selected' : ''}>${c.nome}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Quant.</label><input type="number" class="form-control est-row-qtd" value="${dados?.quantidade || 0}" step="0.01"></div>
+                <div class="form-group"><label>Preço Un.</label><input type="number" class="form-control est-row-valor" value="${dados?.valor || 0}" step="0.01"></div>
+                <div class="form-group"><label>Mínimo</label><input type="number" class="form-control est-row-min" value="${dados?.minimo || 0}" step="0.01"></div>
+                <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove()" style="margin-bottom:8px"><i class="fas fa-trash"></i></button>`;
+            container.appendChild(div);
+        }
+
+        async function handleSalvarCliente(event) {
+            event.preventDefault();
+            const cliente = { 
+                nome: document.getElementById('cli-nome').value, tipo: document.getElementById('cli-tipo').value, 
+                telefone: document.getElementById('cli-tel').value, saldo: document.getElementById('cli-saldo').value, 
+                endereco: document.getElementById('cli-endereco').value, doc: document.getElementById('cli-doc').value,
+                email: document.getElementById('cli-email').value
+            };
+            if (currentEditingId) cliente.id = currentEditingId;
+            await LocalDB.save('clientes', cliente);
+            resetClienteForm(); await renderClientes();
+            alert("Contato salvo!");
+        }
+
+        async function renderClientes() {
+            const list = await LocalDB.getAll('clientes');
+            const container = document.getElementById('lista-clientes');
+            if(!container) return;
+            container.innerHTML = `<table class="data-table"><thead><tr><th>Nome</th><th>Contato</th><th class="text-right">Ações</th></tr></thead><tbody>
+                ${list.map(c => `<tr><td><strong>${c.nome}</strong></td><td>${c.telefone || '-'}</td><td class="text-right"><button onclick="editarCliente(${c.id})" class="action-btn edit-btn"><i class="fas fa-edit"></i></button><button onclick="removerCliente(${c.id})" class="action-btn delete-btn"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
+            </tbody></table>`;
+        }
+
+        async function editarCliente(id) {
+            const c = await LocalDB.getById('clientes', id);
+            document.getElementById('cli-nome').value = c.nome;
+            document.getElementById('cli-tel').value = c.telefone || '';
+            document.getElementById('cli-saldo').value = c.saldo || 0;
+            document.getElementById('cli-endereco').value = c.endereco || '';
+            document.getElementById('cli-tipo').value = c.tipo;
+            document.getElementById('cli-doc').value = c.doc || '';
+            document.getElementById('cli-email').value = c.email || '';
+            currentEditingId = id;
+            document.getElementById('btn-cancel-cli').style.display = 'block';
+            window.scrollTo(0,0);
+        }
+
+        function resetClienteForm() { document.getElementById('form-cliente').reset(); currentEditingId = null; document.getElementById('btn-cancel-cli').style.display = 'none'; }
+        async function removerCliente(id) { if(confirm('Excluir contato?')) { await LocalDB.delete('clientes', id); renderClientes(); } }
+
+        // --- CONFIGURAÇÕES ---
+        async function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            if(event) event.target.classList.add('active');
+            const target = document.getElementById(tabId);
+            if(target) target.classList.add('active');
+        }
+
+        async function handleSalvarVidroCatalogo(e) {
+            e.preventDefault();
+            await LocalDB.save('vidros_catalogo', {
+                nome: document.getElementById('vid-nome').value, espessura: document.getElementById('vid-esp').value,
+                cor: document.getElementById('vid-cor').value, preco_m2: document.getElementById('vid-preco').value
+            });
+            e.target.reset(); await renderVidrosCatalogo();
+        }
+
+        async function renderVidrosCatalogo() {
+            const list = await LocalDB.getAll('vidros_catalogo');
+            const container = document.getElementById('lista-vidros-catalogo');
+            if(!container) return;
+            container.innerHTML = `<table class="data-table"><thead><tr><th>Vidro</th><th>Esp.</th><th>Cor</th><th>Preço/m²</th><th class="text-right">Ação</th></tr></thead><tbody>
+                ${list.map(v => `<tr><td>${v.nome}</td><td>${v.espessura}mm</td><td>${v.cor}</td><td>R$ ${Number(v.preco_m2).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td><td class="text-right"><button onclick="removerVidroCatalogo(${v.id})" class="action-btn delete-btn"><i class="fas fa-times"></i></button></td></tr>`).join('')}
+            </tbody></table>`;
+        }
+        async function removerVidroCatalogo(id) { await LocalDB.delete('vidros_catalogo', id); renderVidrosCatalogo(); }
+
+        async function handleSalvarUnidade(e) { e.preventDefault(); await LocalDB.save('unidades', { sigla: document.getElementById('uni-sigla').value }); e.target.reset(); renderUnidades(); }
+        async function renderUnidades() { const list = await LocalDB.getAll('unidades'); const c = document.getElementById('lista-unidades'); if(c) c.innerHTML = list.map(i => `<span class="badge badge-outline" style="margin:2px;">${i.sigla} <i class="fas fa-times cursor-pointer" onclick="LocalDB.delete('unidades', ${i.id}).then(renderUnidades)"></i></span>`).join(''); }
+        
+        async function handleSalvarCategoria(e) { e.preventDefault(); await LocalDB.save('categorias', { nome: document.getElementById('cat-nome').value }); e.target.reset(); renderCategorias(); }
+        async function renderCategorias() { const list = await LocalDB.getAll('categorias'); const c = document.getElementById('lista-categorias'); if(c) c.innerHTML = list.map(i => `<div style="padding:5px; border-bottom:1px solid #eee;">${i.nome} <i class="fas fa-trash float-right cursor-pointer" onclick="LocalDB.delete('categorias', ${i.id}).then(renderCategorias)"></i></div>`).join(''); }
+        
+        async function handleSalvarCor(e) { e.preventDefault(); await LocalDB.save('cores', { nome: document.getElementById('cor-nome').value }); e.target.reset(); renderCores(); }
+        async function renderCores() { const list = await LocalDB.getAll('cores'); const c = document.getElementById('lista-cores'); if(c) c.innerHTML = list.map(i => `<span class="badge badge-info" style="margin:5px;">${i.nome} <i class="fas fa-times cursor-pointer" onclick="LocalDB.delete('cores', ${i.id}).then(renderCores)"></i></span>`).join(''); }
+        
+        async function handleSalvarEmpresa(e) { e.preventDefault(); await LocalDB.setSingleton('empresa', { nome: document.getElementById('emp-nome').value, telefone: document.getElementById('emp-tel').value }); alert('Dados salvos!'); }
+
+        // --- NAVEGAÇÃO ---
+        async function loadPage(page, event) {
+            if (event) event.preventDefault();
+            const content = document.getElementById('page-content');
+            content.innerHTML = typeof pages[page] === 'function' ? await pages[page]() : 'Página não encontrada';
+            
+            if (page === 'modelos') { await renderModelos(); await adicionarLinhaReceita(); }
+            if (page === 'clientes') await renderClientes();
+            if (page === 'estoque') { await renderEstoque(); await adicionarLinhaCor(); }
+            if (page === 'configuracoes') { await renderVidrosCatalogo(); await renderUnidades(); await renderCategorias(); await renderCores(); }
+            if (page === 'orcamentos') { await renderHistoricoOrcamentos(); } 
+            
+            document.querySelectorAll('#main-menu li').forEach(li => {
+                li.classList.remove('active');
+                if (li.getAttribute('data-page') === page) li.classList.add('active');
+            });
+        }
+
+        function sair() { if(confirm("Deseja sair e recarregar?")) window.location.reload(); }
+        
+        document.addEventListener('DOMContentLoaded', async () => { 
+            try { await initDB(); await loadPage('home'); } catch (err) { alert("Erro ao carregar banco."); }
+        });
+
+        // --- PWA: SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'oficina-v1.0';
+                const urlsToCache = [
+                    '/',
+                    './index.html',
+                    './?utm_source=homescreen'
+                ];
+
+                // Instalação - Cache dos recursos essenciais
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => cache.addAll(urlsToCache))
+                            .then(() => self.skipWaiting())
+                    );
+                });
+
+                // Ativação - Limpa caches antigos
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.map(cacheName => {
+                                    if (cacheName !== CACHE_NAME) {
+                                        return caches.delete(cacheName);
+                                    }
+                                })
+                            );
+                        }).then(() => self.clients.claim())
+                    );
+                });
+
+                // Estratégia: Network First, fallback para Cache
+                self.addEventListener('fetch', event => {
+                    // Ignora requisições não GET e do Chrome extension
+                    if (event.request.method !== 'GET') return;
+                    if (event.request.url.includes('chrome-extension://')) return;
+
+                    event.respondWith(
+                        fetch(event.request)
+                            .then(response => {
+                                // Se a resposta é válida, atualiza o cache
+                                if (response && response.status === 200) {
+                                    const responseClone = response.clone();
+                                    caches.open(CACHE_NAME).then(cache => {
+                                        cache.put(event.request, responseClone);
+                                    });
+                                }
+                                return response;
+                            })
+                            .catch(() => {
+                                // Fallback para cache se offline
+                                return caches.match(event.request)
+                                    .then(cachedResponse => {
+                                        if (cachedResponse) {
+                                            return cachedResponse;
+                                        }
+                                        // Se não tem no cache, retorna página offline
+                                        if (event.request.headers.get('accept').includes('text/html')) {
+                                            return caches.match('/');
+                                        }
+                                        return new Response('Offline', { status: 503 });
+                                    });
+                            })
+                    );
+                });
+            `;
+
+            // Registrar Service Worker
+            window.addEventListener('load', () => {
+                const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                const swURL = URL.createObjectURL(swBlob);
+                
+                navigator.serviceWorker.register(swURL, { 
+                    scope: './',
+                    updateViaCache: 'none' 
+                })
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration.scope);
+                    
+                    // Verificar atualizações periodicamente
+                    setInterval(() => {
+                        registration.update();
+                    }, 60 * 60 * 1000); // A cada hora
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar Service Worker:', error);
+                });
+            });
+        }
+
+        // --- PWA INSTALAÇÃO ---
+        let deferredPrompt;
+// ===== CORREÇÃO: Forçar instalação quando deferredPrompt não existe =====
+function forceInstallPWA() {
+    // Se deferredPrompt existe, usa o método normal
+    if (deferredPrompt) {
+        showInstallPrompt();
+        return;
+    }
+    
+    // Fallback para instalação manual
+    const userAgent = navigator.userAgent.toLowerCase();
+    let instructions = '';
+    
+    // Detecta o dispositivo/navegador
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+        instructions = 
+            '📱 Para instalar no iPhone/iPad:\n\n' +
+            '1. Toque no ícone de compartilhar (📤)\n' +
+            '2. Role para baixo\n' +
+            '3. Toque em "Adicionar à Tela de Início"\n' +
+            '4. Toque em "Adicionar"';
+    } 
+    else if (/android/.test(userAgent)) {
+        instructions = 
+            '📱 Para instalar no Android:\n\n' +
+            '1. Toque nos 3 pontos (⋮) no Chrome\n' +
+            '2. Selecione "Instalar aplicativo"\n' +
+            '3. Confirme "Instalar"';
+    } 
+    else if (/chrome|edge/.test(userAgent)) {
+        instructions = 
+            '💻 Para instalar no PC:\n\n' +
+            '1. Procure o ícone de instalação (⎙) na barra de endereços\n' +
+            'OU\n' +
+            '2. Menu → Mais ferramentas → Criar atalho...';
+    }
+    else {
+        instructions = 
+            '🔧 Instalação manual:\n\n' +
+            '1. No menu do navegador, procure "Instalar" ou "Criar atalho"\n' +
+            '2. Siga as instruções do seu navegador';
+    }
+    
+    // Mostra modal bonito em vez de alert
+    showCustomModal('Instalar App', instructions);
+}
+
+// Modal customizado (mais profissional que alert)
+function showCustomModal(title, message) {
+    // Remove modal anterior se existir
+    const oldModal = document.getElementById('custom-install-modal');
+    if (oldModal) oldModal.remove();
+    
+    // Cria modal
+    const modal = document.createElement('div');
+    modal.id = 'custom-install-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        font-family: 'Segoe UI', sans-serif;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        ">
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">
+                <i class="fas fa-download"></i> ${title}
+            </h2>
+            
+            <div style="
+                background: #f5f7fa;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 25px;
+                text-align: left;
+                white-space: pre-line;
+                line-height: 1.6;
+                font-size: 15px;
+            ">
+                ${message}
+            </div>
+            
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="this.closest('#custom-install-modal').remove()" 
+                        style="
+                            padding: 12px 25px;
+                            background: #e0e0e0;
+                            border: none;
+                            border-radius: 8px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        ">
+                    Fechar
+                </button>
+                <button onclick="window.location.reload()" 
+                        style="
+                            padding: 12px 25px;
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        ">
+                    <i class="fas fa-redo"></i> Recarregar
+                </button>
+            </div>
+            
+            <p style="margin-top: 20px; color: #666; font-size: 13px;">
+                Dica: Às vezes recarregar a página ativa a instalação automática.
+            </p>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Substitui o clique do botão original
+document.addEventListener('DOMContentLoaded', function() {
+    const installBtn = document.querySelector('#pwa-install-button button');
+    if (installBtn) {
+        installBtn.onclick = forceInstallPWA;
+    }
+});
+
+        // Mostrar/ocultar botão de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botão de instalação
+            const installButton = document.getElementById('pwa-install-button');
+            if (installButton) {
+                installButton.style.display = 'block';
+                
+                // Esconder automaticamente após 30 segundos
+                setTimeout(() => {
+                    installButton.style.display = 'none';
+                }, 30000);
+            }
+        });
+
+        function showInstallPrompt() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(choiceResult => {
+                    const installButton = document.getElementById('pwa-install-button');
+                    if (installButton) {
+                        installButton.style.display = 'none';
+                    }
+                    
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação');
+                        showNotification('App instalado com sucesso!', 'success');
+                    } else {
+                        console.log('Usuário recusou a instalação');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Mostrar notificações
+        // Mostrar notificações
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--danger-color)' : 
+                           'var(--info-color)';
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        'fa-info-circle';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        // Detectar se está em modo PWA instalado
+        function isInStandaloneMode() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                                window.navigator.standalone ||
+                                document.referrer.includes('android-app://');
+            
+            if (isStandalone) {
+                console.log('App rodando em modo PWA instalado');
+                const installButton = document.getElementById('pwa-install-button');
+                if (installButton) {
+                    installButton.style.display = 'none';
+                }
+            }
+            
+            return isStandalone;
+        }
+
+        // Verificar conexão
+        function updateOnlineStatus() {
+            if (!navigator.onLine) {
+                showNotification('Você está offline. Algumas funcionalidades podem estar limitadas.', 'warning');
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Inicializar verificação
+        updateOnlineStatus();
+        isInStandaloneMode();
+    </script>
+</body>
+</html>
