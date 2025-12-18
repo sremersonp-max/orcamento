@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'oficina-v1.0';
+const CACHE_NAME = 'oficina-v1.1';
 const urlsToCache = [
   '/',
   './index.html',
