@@ -1,0 +1,24 @@
+{
+    "name": "Oficina da Família - Sistema",
+    "short_name": "Oficina App",
+    "description": "Sistema de gestão para serralheria e vidraçaria",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#4a00e0",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iOTYiIHI9Ijk2IiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik01MCA1MFYxNDJIMTQyVjUwSDUwWiIgZmlsbD0id2hpdGUiLz4KPHJlY3QgeD0iNjQiIHk9IjY0IiB3aWR0aD0iNjQiIGhlaWdodD0iNTAiIGZpbGw9IiM0YTAwZTAiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxsaW5lIHgxPSI2NCIgeTE9Ijg0IiB4Mj0iMTI4IiB5Mj0iODQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIvPgo8bGluZSB4MT0iNjQiIHkxPSIxMDQiIHgyPSIxMjgiIHkyPSIxMDQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIvPgo8L3N2Zz4K",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMjU2IiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik0xMjggMTI4VjM4NEgzODRWMTI4SDEyOFoiIGZpbGw9IndoaXRlIi8+CjxwZWN0IHg9IjE3NiIgeT0iMTc2IiB3aWR0aD0iMTYwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iIzRhMDBlMCIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KPGxpbmUgeDE9IjE3NiIgeTE9IjIyMCIgeDI9IjMzNiIgeTI9IjIyMCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxsaW5lIHgxPSIxNzYiIHkxPSIyNzAiIHgyPSIzMzYiIHkyPSIyNzAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNCIvPgo8L3N2Zz4K",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

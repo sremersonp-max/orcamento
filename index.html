@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFICINA DA FAMÍLIA - Sistema de Gestão</title>
+    
+    <!-- Meta tags para PWA -->
+    <meta name="application-name" content="Oficina App">
+    <meta name="apple-mobile-web-app-title" content="Oficina App">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#4a00e0">
+    <meta name="theme-color" content="#4a00e0">
+    <meta name="msapplication-config" content="none">
+    
+    <!-- Ícones para iOS/Apple - Janelinha Simples -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjYwIiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik0zNSAzNVY4NUg4NVYzNUgzNVoiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjNGEwMGUwIiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8bGluZSB4MT0iNDAiIHkxPSI1MCIgeDI9IjgwIiB5Mj0iNTAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iNDAiIHkxPSI2MCIgeDI9IjgwIiB5Mj0iNjAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4K">
+    <link rel="apple-touch-icon" sizes="152x152" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUyIiBoZWlnaHQ9IjE1MiIgdmlld0JveD0iMCAwIDE1MiAxNTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9Ijc2IiBjeT0iNzYiIHI9Ijc2IiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik00MiA0MlYxMTBIMTEwVjQySDQyWiIgZmlsbD0id2hpdGUiLz4KPHJlY3QgeD0iNTAiIHk9IjUwIiB3aWR0aD0iNTIiIGhlaWdodD0iNDAiIGZpbGw9IiM0YTAwZTAiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxsaW5lIHgxPSI1MCIgeTE9IjY0IiB4Mj0iMTAyIiB5Mj0iNjQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iNTAiIHkxPSI3OCIgeDI9IjEwMiIgeTI9Ijc4IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+Cg==">
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iOTAiIHI9IjkwIiBmaWxsPSIjNGEwMGUwIi8+CjxwYXRoIGQ9Ik01MCA1MFYxMzBIMTMwVjUwSDUwWiIgZmlsbD0id2hpdGUiLz4KPHJlY3QgeD0iNjAiIHk9IjYwIiB3aWR0aD0iNjAiIGhlaWdodD0iNDgiIGZpbGw9IiM0YTAwZTAiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxsaW5lIHgxPSI2MCIgeTE9Ijc2IiB4Mj0iMTIwIiB5Mj0iNzYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iNjAiIHkxPSI5MiIgeDI9IjEyMCIgeTI9IjkyIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+Cg==">
+    
+    <!-- Manifest para PWA -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos principais -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>OFICINA DA FAMÍLIA</h1>
+                <small>SISTEMA DE GESTÃO v1.0</small>
+            </div>
+            
+            <nav class="menu">
+                <ul id="main-menu">
+                    <li class="active" data-page="home">
+                        <a href="#" onclick="loadPage('home', event)">
+                            <i class="fas fa-home"></i> Início
+                        </a>
+                    </li>
+                    <li data-page="modelos">
+                        <a href="#" onclick="loadPage('modelos', event)">
+                            <i class="fas fa-layer-group"></i> Modelos (Fórmulas)
+                        </a>
+                    </li>
+                    <li data-page="orcamentos">
+                        <a href="#" onclick="loadPage('orcamentos', event)">
+                            <i class="fas fa-file-invoice-dollar"></i> Orçamentos
+                        </a>
+                    </li>
+                    <li data-page="clientes">
+                        <a href="#" onclick="loadPage('clientes', event)">
+                            <i class="fas fa-users"></i> Contatos
+                        </a>
+                    </li>
+                    <li data-page="estoque">
+                        <a href="#" onclick="loadPage('estoque', event)">
+                            <i class="fas fa-boxes"></i> Estoque
+                        </a>
+                    </li>
+                    <li data-page="financeiro">
+                        <a href="#" onclick="loadPage('financeiro', event)">
+                            <i class="fas fa-hand-holding-usd"></i> Financeiro
+                        </a>
+                    </li>
+                    <li data-page="configuracoes">
+                        <a href="#" onclick="loadPage('configuracoes', event)">
+                            <i class="fas fa-cog"></i> Configurações
+                        </a>
+                    </li>
+                    <li data-page="backup">
+                        <a href="#" onclick="loadPage('backup', event)">
+                            <i class="fas fa-database"></i> Backup
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="user-area">
+                    <button class="btn-logout" onclick="sair()">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Botão de instalação PWA -->
+            <div id="pwa-install-button" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;">
+                <button onclick="showInstallPrompt()" style="background: var(--success-color); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-download"></i> Instalar App
+                </button>
+            </div>
+            
+            <!-- Área para carregar as páginas -->
+            <div id="page-content"></div>
+        </div>
+    </div>
+
+    <!-- Área para impressão -->
+    <div id="printable-area"></div>
+
+    <!-- Scripts -->
+    <script src="modules/database.js"></script>
+    <script src="modules/financeiro.js"></script>
+    <script src="modules/estoque.js"></script>
+    <script src="modules/orcamentos.js"></script>
+    <script src="modules/modelos.js"></script>
+    <script src="modules/clientes.js"></script>
+    <script src="modules/config.js"></script>
+    <script src="modules/backup.js"></script>
+    <script src="app.js"></script>
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
